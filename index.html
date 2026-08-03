@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0c14">
+<title>Fogvale — Chapter One: The Stable Door</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#07080f;
+    font-family: Georgia, 'Times New Roman', serif; color:#e8e2d0; touch-action: manipulation;
+    -webkit-user-select:none; user-select:none; }
+  #cv { position:fixed; inset:0; display:block; }
+
+  /* ---- HUD ---- */
+  #hud { position:fixed; top:0; left:0; right:0; display:flex; align-items:center; gap:10px;
+    padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 8px 12px;
+    background: linear-gradient(#0a0c14ee, #0a0c1400); pointer-events:none; z-index:5;
+    font-size:15px; }
+  #hud .spacer { flex:1; }
+  #hud button { pointer-events:auto; background:#1d2033; color:#e8e2d0; border:1px solid #3a3f5c;
+    border-radius:10px; padding:6px 12px; font-family:inherit; font-size:14px; }
+  #gold { color:#e8c454; font-weight:bold; }
+  #clock { color:#9fb0d8; }
+
+  /* ---- message log ---- */
+  #log { position:fixed; left:10px; right:10px; bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+    pointer-events:none; z-index:4; font-size:14px; line-height:1.45; }
+  #log div { text-shadow:0 1px 3px #000, 0 0 8px #000; opacity:.95; }
+  #log .new { color:#f4e9c8; }
+  #log .old { color:#b7ad93; opacity:.7; }
+
+  /* ---- overlays ---- */
+  .sheet { position:fixed; left:0; right:0; bottom:0; z-index:10; display:none;
+    background:#14162a; border-top:1px solid #3a3f5c; border-radius:18px 18px 0 0;
+    padding:14px 16px calc(env(safe-area-inset-bottom, 0px) + 14px) 16px;
+    max-height:62%; overflow-y:auto; box-shadow:0 -8px 30px #000a; }
+  .sheet h3 { margin:0 0 6px 0; font-size:17px; color:#e8c454; font-weight:normal;
+    letter-spacing:.5px; }
+  .sheet .txt { font-size:15px; line-height:1.5; color:#e8e2d0; min-height:40px;
+    margin-bottom:10px; white-space:pre-wrap; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chips button { background:#242848; color:#dfe4ff; border:1px solid #454b78; border-radius:999px;
+    padding:8px 14px; font-family:inherit; font-size:14px; }
+  .chips button.bye { background:#1a1c2e; color:#8f96b8; }
+  .chips button.trade { background:#3d3018; color:#e8c454; border-color:#6b5a2a; }
+  .chips button.choice { background:#3a2334; border-color:#6d4a63; }
+
+  /* ---- shop ---- */
+  #shop .tabs { display:flex; gap:8px; margin-bottom:10px; }
+  #shop .tabs button { flex:1; background:#1a1c2e; color:#9fa6c8; border:1px solid #3a3f5c;
+    border-radius:10px; padding:8px; font-family:inherit; font-size:15px; }
+  #shop .tabs button.on { background:#242848; color:#f4e9c8; }
+  .row { display:flex; align-items:center; gap:10px; padding:9px 2px; border-bottom:1px solid #23263e; }
+  .row .nm { flex:1; font-size:15px; }
+  .row .sub { font-size:12.5px; color:#8f96b8; }
+  .row button { background:#3d3018; color:#e8c454; border:1px solid #6b5a2a; border-radius:10px;
+    padding:7px 13px; font-family:inherit; font-size:14px; min-width:74px; }
+  .row button:disabled { opacity:.35; }
+
+  /* ---- full screens (intro / chapter end / help) ---- */
+  .full { position:fixed; inset:0; z-index:20; display:none; background:#0a0c14f5;
+    padding: 8vh 24px 24px 24px; overflow-y:auto; text-align:center; }
+  .full h1 { font-size:34px; letter-spacing:6px; color:#e8c454; margin:0 0 4px 0; font-weight:normal; }
+  .full h2 { font-size:15px; letter-spacing:2px; color:#9fb0d8; margin:0 0 26px 0; font-weight:normal; }
+  .full p { font-size:15.5px; line-height:1.65; color:#cfc8b2; max-width:480px; margin:0 auto 16px auto;
+    text-align:left; }
+  .full button { background:#3d3018; color:#e8c454; border:1px solid #6b5a2a; border-radius:12px;
+    padding:12px 30px; font-family:inherit; font-size:17px; margin-top:12px; letter-spacing:1px; }
+  .full .note { font-size:12.5px; color:#6d7391; margin-top:22px; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="hud">
+  <span id="gold">⛁ 0</span>
+  <span id="clock">☀ Day</span>
+  <span class="spacer"></span>
+  <button id="bagBtn">Bag</button>
+  <button id="helpBtn">?</button>
+</div>
+
+<div id="log"></div>
+
+<div id="dlg" class="sheet">
+  <h3 id="dlgName"></h3>
+  <div class="txt" id="dlgTxt"></div>
+  <div class="chips" id="dlgChips"></div>
+</div>
+
+<div id="shop" class="sheet">
+  <h3 id="shopName"></h3>
+  <div class="tabs"><button id="tabBuy" class="on">Buy</button><button id="tabSell">Sell</button></div>
+  <div id="shopRows"></div>
+  <div class="chips" style="margin-top:10px"><button class="bye" id="shopClose">Done</button></div>
+</div>
+
+<div id="bag" class="sheet">
+  <h3>Your Bag</h3>
+  <div id="bagRows"></div>
+  <div class="chips" style="margin-top:10px"><button class="bye" id="bagClose">Close</button></div>
+</div>
+
+<div id="intro" class="full" style="display:block">
+  <h1>FOGVALE</h1>
+  <h2>CHAPTER ONE · THE STABLE DOOR</h2>
+  <p>The letter reached you eleven days ago, sealed in grey wax. It was signed by Elder Maren
+  of Brookhollow, a village you had to search two maps to find.</p>
+  <p>It said only: <i>"Come quickly. Bring no one. Trust no one on the road."</i></p>
+  <p>Now the last hill falls away behind you and the fog thins ahead. You can see exactly as far
+  as your own two eyes allow — no further. Tap the land to walk it. Tap people to speak.
+  What you learn from one mouth, you may ask of another.</p>
+  <button id="beginBtn">Enter the Vale</button>
+  <div class="note">A prototype in one file · progress is not saved if you refresh</div>
+</div>
+
+<div id="endcard" class="full">
+  <h1>⁂</h1>
+  <h2>END OF CHAPTER ONE</h2>
+  <div id="endTxt"></div>
+  <button id="endClose">Keep Wandering</button>
+</div>
+
+<div id="help" class="full">
+  <h2>HOW TO PLAY</h2>
+  <p><b>Walk</b> — tap any ground you can see or remember. Trees, walls and mountains block your
+  sight; the world stays dark until you've laid eyes on it.</p>
+  <p><b>Talk</b> — tap a person. Conversation runs on <i>topics</i>: words you learn from one
+  person can be asked of everyone else. Listen for names.</p>
+  <p><b>Earn</b> — walk over herbs (small green sprigs) and bluecap mushrooms to gather them.
+  Shops buy them — and pay far better the further the town is from where things grow.</p>
+  <p><b>Night</b> — when night falls your sight closes to a few steps. A torch helps.
+  A lantern helps more. Both are for sale... somewhere.</p>
+  <p><b>The unseen</b> — some of what you do is measured, though no number will ever show it.
+  A seer lives at the south edge of Brookhollow, if you want a mirror.</p>
+  <button id="helpClose">Back</button>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   FOGVALE — Chapter One: The Stable Door
+   A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
+   Engine: tile map · recursive-shadowcasting fog of war · A* tap-to-walk
+   Systems: keyword dialogue web · regional economy · hidden virtue triad
+   ===================================================================== */
+
+/* ---------- deterministic RNG ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ---------- world constants ---------- */
+const W=72, H=72;
+const OPAQUE = { t:1, m:1, '#':1 };            // '+' handled via door state
+const BLOCKING = { t:1, m:1, w:1, '#':1 };     // tiles you cannot walk
+
+/* ---------- map generation (seeded, same world every run) ---------- */
+const grid = Array.from({length:H}, ()=>Array(W).fill('g'));
+(function genWorld(){
+  const r = mulberry32(1347);
+  // border mountains, rough inner edge
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    if(x<2||y<2||x>=W-2||y>=H-2) grid[y][x]='m';
+    else if((x<4||y<4||x>=W-4||y>=H-4) && r()<0.45) grid[y][x]='m';
+  }
+  // central ridge splitting south (Brookhollow) from north (Ironvale), gap at x 42..46
+  for(let x=16;x<W-3;x++){
+    if(x>=42&&x<=46) continue;
+    for(let y=28;y<=33;y++) if(r()<0.85) grid[y][x]='m';
+  }
+  // river, two tiles wide, meandering north-south
+  const riverX = y => 29 + Math.round(2*Math.sin(y/6));
+  for(let y=2;y<H-2;y++){ const rx=riverX(y); grid[y][rx]='w'; grid[y][rx+1]='w'; }
+  // tree clusters
+  function forest(cx,cy,rr,den){ for(let dy=-rr;dy<=rr;dy++)for(let dx=-rr;dx<=rr;dx++){
+    const x=cx+dx,y=cy+dy; if(x<3||y<3||x>=W-3||y>=H-3) continue;
+    if(dx*dx+dy*dy<=rr*rr && r()<den && grid[y][x]==='g') grid[y][x]='t'; } }
+  for(let i=0;i<95;i++) forest(3+Math.floor(r()*(W-6)), 3+Math.floor(r()*(H-6)), 1+Math.floor(r()*4), .72);
+  // the deep wood, north-west — dense, hides the old shrine
+  for(let i=0;i<55;i++) forest(4+Math.floor(r()*24), 4+Math.floor(r()*22), 2+Math.floor(r()*3), .85);
+  // roads: village → east → north through the ridge gap → Ironvale
+  function lay(x,y){ if(x<1||y<1||x>=W-1||y>=H-1) return;
+    grid[y][x] = (grid[y][x]==='w') ? 'b' : 'r';
+    for(const [ax,ay] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=x+ax, ny=y+ay;
+      if(grid[ny] && grid[ny][nx]==='t' && r()<0.8) grid[ny][nx]='g';
+    } }
+  for(let x=16;x<=44;x++) lay(x,52);
+  for(let y=16;y<=52;y++) lay(44,y);
+  for(let x=44;x<=62;x++) lay(x,16);
+  // trail to the shrine (narrow, winding through the deep wood)
+  function trail(x,y){ if(grid[y][x]==='w') grid[y][x]='b';
+    else if(grid[y][x]!=='r') grid[y][x]='g'; }
+  for(let y=10;y<=22;y++) trail(12,y);
+  for(let x=12;x<=44;x++) trail(x,22);
+  // town clearings
+  for(let y=45;y<=61;y++)for(let x=8;x<=26;x++) if(grid[y][x]==='t') grid[y][x]='g';
+  for(let y=7;y<=23;y++)for(let x=48;x<=66;x++) if(grid[y][x]==='t') grid[y][x]='g';
+  // buildings: perimeter walls, wood floor, one door
+  function building(bx,by,w,h,dx,dy){
+    for(let y=by;y<by+h;y++)for(let x=bx;x<bx+w;x++)
+      grid[y][x] = (y===by||y===by+h-1||x===bx||x===bx+w-1) ? '#' : 'f';
+    grid[dy][dx]='+';
+  }
+  building(10,47,5,4, 12,50);   // Brookhollow: Tobin's Provisions
+  building(17,47,5,4, 19,50);   // Elder Maren's house
+  building(9,54,7,5, 15,56);    // the stable (where Piet was found)
+  building(21,57,4,4, 22,57);   // Yseult the seer's hut
+  building(51,10,5,4, 53,13);   // Ironvale: Serra's Goods
+  building(58,9,6,6, 60,14);    // chapel of the Radiant Path
+  building(51,18,5,4, 53,18);   // Dag the miner's house
+  // the old shrine
+  grid[10][12]='S';
+})();
+
+/* ---------- gatherables ---------- */
+const objects = []; // {x,y,type}
+(function scatter(){
+  const r = mulberry32(9021);
+  const inTown = (x,y)=> (x>=8&&x<=26&&y>=45&&y<=61)||(x>=48&&x<=66&&y>=7&&y<=23);
+  let placed=0, guard=0;
+  while(placed<46 && guard++<4000){
+    const x=3+Math.floor(r()*(W-6)), y=3+Math.floor(r()*(H-6));
+    if(grid[y][x]==='g' && !inTown(x,y)){ objects.push({x,y,type:'herb'}); placed++; }
+  }
+  placed=0; guard=0;
+  while(placed<12 && guard++<4000){
+    const x=4+Math.floor(r()*24), y=4+Math.floor(r()*22);
+    if(grid[y][x]==='g'){ objects.push({x,y,type:'mushroom'}); placed++; }
+  }
+  objects.push({x:11,y:56,type:'body'}); // Piet, in the stable
+})();
+const objectAt=(x,y)=>objects.find(o=>o.x===x&&o.y===y);
+
+/* ---------- game state ---------- */
+const P = { x:17, y:60, rx:17, ry:60 };        // player tile + render position
+let path = [];                                  // queued steps [{x,y}...]
+let pending = null;                             // interaction on arrival
+let stepClock = 0;
+let time = 60;                                  // steps; day=300, night=150 per cycle
+const inv = { gold:12, herb:0, mushroom:0, bread:0, torch:0, lantern:0, sword:0, medallion:0 };
+const F = {};                                   // story flags
+const V = { truth:0, love:0, courage:0 };       // the hidden triad
+const knownTopics = new Set();
+const openDoors = new Set();
+let visible = new Set();
+const explored = new Set();
+
+const isNight = ()=> (time % 450) >= 300;
+function sightRadius(){
+  if(!isNight()) return 9;
+  if(inv.lantern) return 7;
+  if(inv.torch) return 4;
+  return 2;
+}
+
+/* ---------- fog of war: recursive shadowcasting ---------- */
+const MULT = [[1,0,0,-1,-1,0,0,1],[0,1,-1,0,0,-1,1,0],[0,1,1,0,0,-1,-1,0],[1,0,0,1,-1,0,0,-1]];
+function opaqueAt(x,y){
+  if(x<0||y<0||x>=W||y>=H) return true;
+  const c=grid[y][x];
+  if(c==='+' ) return !openDoors.has(x+','+y);
+  return !!OPAQUE[c];
+}
+function castLight(cx,cy,row,start,end,radius,xx,xy,yx,yy){
+  if(start<end) return;
+  const r2=radius*radius;
+  let newStart=start;
+  for(let j=row;j<=radius;j++){
+    let dx=-j-1, dy=-j, blocked=false;
+    while(dx<=0){
+      dx++;
+      const X=cx+dx*xx+dy*xy, Y=cy+dx*yx+dy*yy;
+      const lSlope=(dx-0.5)/(dy+0.5), rSlope=(dx+0.5)/(dy-0.5);
+      if(start<rSlope) continue;
+      if(end>lSlope) break;
+      if(dx*dx+dy*dy<r2 && X>=0&&Y>=0&&X<W&&Y<H) visible.add(X+','+Y);
+      if(blocked){
+        if(opaqueAt(X,Y)){ newStart=rSlope; continue; }
+        blocked=false; start=newStart;
+      } else if(opaqueAt(X,Y) && j<radius){
+        blocked=true;
+        castLight(cx,cy,j+1,start,lSlope,radius,xx,xy,yx,yy);
+        newStart=rSlope;
+      }
+    }
+    if(blocked) break;
+  }
+}
+function computeFOV(){
+  visible = new Set([P.x+','+P.y]);
+  const R = sightRadius();
+  for(let o=0;o<8;o++) castLight(P.x,P.y,1,1.0,0.0,R,MULT[0][o],MULT[1][o],MULT[2][o],MULT[3][o]);
+  for(const v of visible) explored.add(v);
+}
+
+/* ---------- pathfinding: A* (4-way) ---------- */
+function walkable(x,y){
+  if(x<0||y<0||x>=W||y>=H) return false;
+  if(BLOCKING[grid[y][x]]) return false;
+  const o=objectAt(x,y); if(o && o.type==='body') return false;
+  if(npcs.some(n=>n.x===x&&n.y===y)) return false;
+  return true;
+}
+function astar(sx,sy,isGoal,hx,hy){
+  const key=(x,y)=>x+','+y;
+  const open=[{x:sx,y:sy,g:0,f:0}];
+  const came=new Map(), gs=new Map([[key(sx,sy),0]]);
+  let n=0;
+  while(open.length && n++<7000){
+    let bi=0; for(let i=1;i<open.length;i++) if(open[i].f<open[bi].f) bi=i;
+    const cur=open.splice(bi,1)[0];
+    if(isGoal(cur.x,cur.y)){
+      const out=[]; let k=key(cur.x,cur.y), c=cur;
+      while(came.has(k)){ out.unshift({x:c.x,y:c.y}); c=came.get(k); k=key(c.x,c.y); }
+      return out;
+    }
+    for(const [ax,ay] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=cur.x+ax, ny=cur.y+ay;
+      if(!walkable(nx,ny)) continue;
+      const ng=cur.g+1, nk=key(nx,ny);
+      if(gs.has(nk) && gs.get(nk)<=ng) continue;
+      gs.set(nk,ng); came.set(nk,cur);
+      open.push({x:nx,y:ny,g:ng,f:ng+Math.abs(nx-hx)+Math.abs(ny-hy)});
+    }
+  }
+  return null;
+}
+
+/* ---------- message log ---------- */
+const logEl = document.getElementById('log');
+const msgs = [];
+function say(t){
+  msgs.push(t); if(msgs.length>3) msgs.shift();
+  logEl.innerHTML = msgs.map((m,i)=>'<div class="'+(i===msgs.length-1?'new':'old')+'">'+m+'</div>').join('');
+}
+
+/* ---------- topics ---------- */
+const TOPIC_LABEL = {
+  murder:'the murder', piet:'Piet', stable:'the stable', medallion:'the medallion',
+  ironvale:'Ironvale', radiantpath:'the Radiant Path', malvo:'Brother Malvo',
+  stranger:'the robed stranger', shrine:'the old shrine', codex:'the Codex',
+  found:'what I found', slip:"Malvo's slip", coin:'his plea', reading:'a reading',
+  bluecaps:'bluecaps'
+};
+function learn(...keys){
+  for(const k of keys){
+    if(knownTopics.has(k)) continue;
+    knownTopics.add(k);
+    say('◈ You can now ask about <b>'+(TOPIC_LABEL[k]||k)+'</b>.');
+  }
+}
+
+/* ===================================================================
+   CONTENT — people, words, wares
+   =================================================================== */
+function virtue(kind,amt){ V[kind]+=amt; }
+
+const SHOPS = {
+  tobin: { name:"Tobin's Provisions",
+    sells:[ {id:'torch', nm:'Pitch Torch', sub:'Sight 4 at night', price:8},
+            {id:'bread', nm:'Brown Bread', sub:'Warm. Comforting.', price:2} ],
+    buys:[ {id:'herb', nm:'Wortleaf Herb', price:3}, {id:'mushroom', nm:'Bluecap Mushroom', price:5} ] },
+  serra: { name:"Serra's Goods",
+    sells:[ {id:'lantern', nm:'Brass Lantern', sub:'Sight 7 at night', price:40},
+            {id:'sword', nm:'Star-metal Sword', sub:'Hums faintly. (Ch. 2)', price:60},
+            {id:'bread', nm:'Dark Rye Bread', sub:'Denser than it looks', price:3} ],
+    buys:[ {id:'herb', nm:'Wortleaf Herb', price:6}, {id:'mushroom', nm:'Bluecap Mushroom', price:12} ] }
+};
+
+const npcs = [
+ { id:'maren', name:'Elder Maren', x:19, y:48, c:'#b8c4e8', shop:null,
+   greet(){ learn('murder');
+     return F.metMaren ? '"You are welcome under this roof, stranger. Dark as the hour is."'
+       : (F.metMaren=true, '"You came. Thank the light for that. I am Maren — I sent the letter. Forgive its manner; there has been a murder here, and I no longer know which roads are safe, nor which friends."'); },
+   topics:{
+     name:{label:'Name', text:()=>'"Maren. Elder of Brookhollow these twenty years. Never once, before this season, did I lock my door."'},
+     job:{label:'Job', text:()=>'"I keep this village — its disputes, its stores, its dead. One more of those now than I can bear."'},
+     murder:{label:'The murder', text(){ F.knowMurder=true; learn('piet','stable');
+       return '"Piet. The stable boy — sixteen winters. Found three dawns ago among the horses, cold, and a mark carved into the stall door above him. A circle rayed like the sun. Go look, if your stomach permits. His body lies there still; the ground is too frozen to bury him."'; }},
+     piet:{label:'Piet', cond:()=>knownTopics.has('piet'), text:()=>'"A good boy. Quick with animals, slow with letters. He had begun running errands beyond the vale of late — for coin, he said. He never said whose."'},
+     stable:{label:'The stable', cond:()=>knownTopics.has('stable'), text:()=>'"West side of the village, below the shop. The door is kept shut out of respect. Nothing has been touched."'},
+     found:{label:'What I found', cond:()=>F.hasMedallion && !F.toldMaren && !F.liedMaren,
+       choice:{ prompt:'"You went to him. Did you find anything the rest of us missed?" Her eyes hold yours.',
+         a:{label:'Show her the medallion', text(){ F.toldMaren=true; virtue('truth',2);
+             return '"Silver... and cold, even by the fire." She presses it back into your hand quickly, as if it bit her. "Keep it hidden. And keep it moving — show it to those who trade in silver. Someone poured this, and pouring leaves records."'; }},
+         b:{label:'"Nothing. Nothing yet."', text(){ F.liedMaren=true; virtue('truth',-2);
+             return '"Nothing." She looks at you a moment longer than she needs to. "Well. Perhaps the frost keeps secrets better than people do."'; }} }},
+     slip:{label:"Malvo's slip", cond:()=>F.malvoSlip,
+       text(){ setTimeout(chapterEnd, 2600);
+         return '"He said WHAT?" Maren grips the table edge. "We sent no word beyond the vale. No rider, no letter — I made sure of it. If this Brother Malvo knows Piet\'s name..." She looks at the shuttered window. "...then the Path did not hear of the murder, stranger. The Path was here for it."'; }}
+   }},
+
+ { id:'tobin', name:'Tobin the Shopkeep', x:12, y:48, c:'#d8b47e', shop:'tobin',
+   greet:()=>'"Mind the step. Half my stock\'s dust and the other half\'s dusted, but the bread\'s from this morning and the torches draw clean. Something I can do for you?"',
+   topics:{
+     name:{label:'Name', text:()=>'"Tobin. Shop was my father\'s. The dust is also largely my father\'s."'},
+     job:{label:'Job', text:()=>'"I buy what the vale grows and sell what it can\'t. Wortleaf I\'ll take off you at three coin — fair warning, the Ironvale crowd pays double. Their soil grows iron and not much else."'},
+     murder:{label:'The murder', cond:()=>knownTopics.has('murder'), text:()=>'"Poor Piet. Slept above my storeroom some winters, when the stable was full. Lock your door, stranger — and I\'d not linger by the river past dark."'},
+     medallion:{label:'The medallion', cond:()=>F.hasMedallion, text(){ learn('ironvale');
+       return 'He turns it under the lamp, and his easy manner goes somewhere else. "That\'s fine silverwork. Too fine — nobody in Brookhollow pours like that. Ironvale, I\'d say. Past the ridge gap, north-east up the road. Their smith works star-metal, and their shop... their shop stocks what I can\'t." He hands it back fast.'; }},
+     ironvale:{label:'Ironvale', cond:()=>knownTopics.has('ironvale'), text:()=>'"Follow the road east, then north through the gap in the ridge. Half a day\'s walk. Mind the night — the road is safe enough, but the dark off its edges is very large."'}
+   }},
+
+ { id:'col', name:'Col the Beggar', x:16, y:53, c:'#8a7f6a', shop:null,
+   greet:()=>'"Spare a coin, traveler? Five would feed me a week. I\'d not ask, only... the Path judged me unworthy, and the unworthy don\'t eat much." He tries to smile. It doesn\'t take.',
+   topics:{
+     name:{label:'Name', text:()=>'"Col. There was a farm once, with my name on the gate. There\'s a sunburst on that gate now."'},
+     job:{label:'Job', text:()=>'"Beggar. It has short hours and no pay. Before that, barley."',},
+     coin:{label:'His plea', cond:()=>!F.gaveCol && !F.refusedCol,
+       choice:{ prompt:'Five gold would feed him a week. His hands are steady; his boots are ruined from walking.',
+         a:{label:'Give 5 gold', text(){ if(inv.gold<5){ return '"You\'d give if you had it. I can see that much. Bless you anyway."'; }
+             inv.gold-=5; updHud(); F.gaveCol=true; virtue('love',2); learn('radiantpath','ironvale');
+             return 'He holds the coins a long moment before pocketing them. "The Radiant Path — you\'ll hear them called a charity. They came to my farm smiling. Took the harvest as \'offering\', took the deed as \'trust\'... and took my son to Ironvale, for what they called the work. He never writes." He looks east. "That\'s worth five gold of warning, I hope."'; }},
+         b:{label:'Walk on', text(){ F.refusedCol=true; virtue('love',-1);
+             return '"Aye. Everyone\'s poor these days," he says, to no one in particular.'; }} }},
+     radiantpath:{label:'The Radiant Path', cond:()=>knownTopics.has('radiantpath'), text:()=>'"They preach three lights — unity, trust, worthiness. Sounded like scripture till I noticed every light pointed at my purse. Judge them yourself in Ironvale. Judge them twice."'},
+     murder:{label:'The murder', cond:()=>knownTopics.has('murder'), text(){ learn('stranger');
+       return '"I sleep where the walls cut the wind, so I see the nights whole. Before dawn, the day they found the boy — a figure in robes, down along the river. Standing in the water\'s edge, in winter, still as a post. I didn\'t call out. You wouldn\'t have either."'; }}
+   }},
+
+ { id:'bren', name:'Bren the Guard', x:27, y:52, c:'#9aa5b8', shop:null,
+   greet:()=>'"Road\'s watched by day — by me, which is to say, barely. Keep to it after dark all the same."',
+   topics:{
+     name:{label:'Name', text:()=>'"Bren. Guard, ditch-digger, and in autumn the man who climbs for apples. Small village."'},
+     job:{label:'Job', text(){ learn('shrine');
+       return '"Guard the road, mostly the bridge. Nobody guards the deep wood west of here and nobody will — there\'s an old shrine in there, older than the village, and folk keep clear. Night least of all."'; }},
+     murder:{label:'The murder', cond:()=>knownTopics.has('murder'), text(){ learn('stranger');
+       return '"Dusk before the body was found, I saw a stranger on the east road. Robed, hooded, walking away from the village — toward the ridge gap. Didn\'t stop him. No law against robes." He says it like he\'s been repeating it to himself for three days.'; }},
+     stranger:{label:'The robed stranger', cond:()=>knownTopics.has('stranger'), text:()=>'"Col swears he saw one by the river that same night. Two sightings, one night, one dead boy. I can count, stranger. I just can\'t do anything about the sum."'},
+     shrine:{label:'The old shrine', cond:()=>knownTopics.has('shrine'), text:()=>'"Follow the trail west off the road, where it forks at the riverside — if the trees haven\'t eaten it. Three circles cut in the stone, they say. My grandmother called it the Vigil. She also said never to go, so naturally I\'m telling you exactly where it is."'}
+   }},
+
+ { id:'yseult', name:'Yseult the Seer', x:23, y:59, c:'#c9a8d8', shop:null,
+   greet(){ learn('reading','codex');
+     return '"Shut the door; the fog has fingers." She does not look up from the water bowl. "I saw you before you stepped from the mist, stranger. Sit. Ask."'; },
+   topics:{
+     name:{label:'Name', text:()=>'"Yseult. The village says witch when it\'s frightened and seer when it wants something. I answer to both."'},
+     job:{label:'Job', text:()=>'"I watch what people are, underneath what they do. It is not magic. It is only unbearable attention."'},
+     reading:{label:'A reading', cond:()=>knownTopics.has('reading'), text(){
+       const t = V.truth>0 ? 'Your tongue and your heart keep one house.' : V.truth<0 ? 'You have spoken with two tongues, and the water remembers both.' : 'Truth has not yet tested you.';
+       const l = V.love>0 ? 'Your hand opens more easily than it closes. Rare.' : V.love<0 ? 'You have walked past an open hand. The water saw.' : 'Love has not yet tested you.';
+       const c = V.courage>0 ? 'You have gone where fear told you not to.' : 'Courage waits for you in a dark place. It is patient.';
+       return 'She stirs the bowl once. "Three things move in the water.\n\n' + t + '\n' + l + '\n' + c + '\n\nNo number measures these, stranger. But doors you cannot see are already deciding whether to open for you."'; }},
+     codex:{label:'The Codex', cond:()=>knownTopics.has('codex'), text:()=>'"Older than the vale, older than the Path\'s smiling missionaries: a buried book that weighs every soul on three beams — Truth, Love, Courage. Every honest faith is a footnote to it." She smiles thinly. "And every dishonest one is a forgery of it."'},
+     shrine:{label:'The old shrine', cond:()=>F.sawShrine, text:()=>'"So you stood at the Vigil and it let you stand there. Three circles interlocked: Truth, Love, Courage — the old triad. Now mark what the Radiant Path preaches: Unity. Trust. Worthiness. Say the two triads aloud, one after the other, and hear which one asks things OF you... and which one asks things FOR itself."'},
+     radiantpath:{label:'The Radiant Path', cond:()=>knownTopics.has('radiantpath'), text:()=>'"A candle that calls itself the sun. Careful — candles still burn."'}
+   }},
+
+ { id:'serra', name:'Serra of Ironvale', x:53, y:11, c:'#d89a7e', shop:'serra',
+   greet:()=>'"Welcome to the only shop in Ironvale that sells to outsiders without a sermon first. Wortleaf? I pay six. Bluecaps, twelve — nothing green grows in this soil but money."',
+   topics:{
+     name:{label:'Name', text:()=>'"Serra. Third generation behind this counter, first generation to hate the neighbors."'},
+     job:{label:'Job', text(){ learn('bluecaps');
+       return '"Goods and coin. The lantern\'s my best stock — brass, burns steady, turns night into a wide room. Dear, yes. So is walking blind."'; }},
+     bluecaps:{label:'Bluecaps', cond:()=>knownTopics.has('bluecaps'), text:()=>'"They grow only in the deep wood past Brookhollow, which is why they\'re worth twelve here and five there. Distance is the oldest alchemy — it turns mushrooms into silver."'},
+     medallion:{label:'The medallion', cond:()=>F.hasMedallion, text(){ learn('radiantpath','malvo');
+       return 'She glances at it, then at her own door. "Radiant Path work. The sunburst — every sworn member wears one, poured right here in Ironvale at the chapel\'s own bench." Quieter: "Half this town wears it now. They pay in silver that shines a little too bright. If you\'re asking questions about that medallion, ask Brother Malvo at the chapel — and stranger? Ask them near the open door."'; }},
+     radiantpath:{label:'The Radiant Path', cond:()=>knownTopics.has('radiantpath'), text:()=>'"Came two winters back with bread and blankets, and now they hold the mortgage on the smithy. Nobody remembers agreeing to that, exactly. It happened the way fog comes in."'},
+     malvo:{label:'Brother Malvo', cond:()=>knownTopics.has('malvo'), text:()=>'"Keeps the chapel. Smiles like oil on water. Buy nothing he\'s selling — especially the free things."'}
+   }},
+
+ { id:'dag', name:'Dag the Miner', x:55, y:17, c:'#b89a78', shop:null,
+   greet:()=>'"Mind yourself. Ridge road\'s honest, but this town\'s gone strange since the sunbursts came." He spits, accurately.',
+   topics:{
+     name:{label:'Name', text:()=>'"Dag. I dig. My father dug. Somewhere down there he\'s digging still, far as anyone knows."'},
+     job:{label:'Job', text:()=>'"Iron out of the ridge. Star-metal when we\'re lucky — Serra sells the blades. Lately the Path buys the ore before it\'s even weighed. Cash down. Nobody asks where a chapel gets cash, and I notice nobody asks."'},
+     radiantpath:{label:'The Radiant Path', cond:()=>knownTopics.has('radiantpath'), text:()=>'"Joined? Half the town. LEFT? Nobody. You ever know a club nobody leaves?" He lets that sit. "Aye. Me neither."'},
+     murder:{label:'The murder', cond:()=>knownTopics.has('murder'), text:()=>'"A boy dead in Brookhollow, you say." He looks at the chapel a long moment. "Runners. They\'ve had runners on the ridge road for a month. Young ones, carrying satchels by night. I mind my business, stranger. Lately that\'s harder work than the mine."'}
+   }},
+
+ { id:'malvo', name:'Brother Malvo', x:60, y:11, c:'#e8d454', shop:null,
+   greet:()=>'"A traveler! Welcome, friend — the chapel of the Radiant Path turns no one away. All are worthy who strive toward worth. Warm yourself. Ask anything." His smile arrives a half-second before his eyes do.',
+   topics:{
+     name:{label:'Name', text:()=>'"Brother Malvo — merely a servant of the light, sent to tend this humble chapel." The silver on his fingers is not humble.'},
+     job:{label:'Job', text:()=>'"I shepherd the Ironvale fellowship. We feed the hungry, house the lost, and find every soul its proper WORK. The Path provides — through the striving of its members."'},
+     radiantpath:{label:'The Radiant Path', cond:()=>knownTopics.has('radiantpath'), text:()=>'"Three lights guide us, friend: UNITY above self. TRUST in thy brothers. WORTHINESS through deeds." He counts them on his fingers like coins. "Does that not sound like simple truth? So many travelers find that it fills a hole they did not know they carried."'},
+     murder:{label:'The murder', cond:()=>knownTopics.has('murder'), text:()=>'"Violence, in Brookhollow? Tragic. Truly." A pause of precisely correct length. "The wilds are dangerous for the unworthy, friend. It is why the Path builds walls — and why we invite everyone inside them."'},
+     medallion:{label:'The medallion', cond:()=>F.hasMedallion && !F.malvoSlip && !F.malvoPass,
+       choice:{ prompt:'You open your hand. The sunburst medallion catches the candlelight. Malvo\'s smile holds — but for one instant, everything behind it steps back from the windows. "Where — ah. A fine piece. Every member\'s medallion is accounted for, friend. Every one. Perhaps a trader lost a copy."',
+         a:{label:'Press him', text(){ F.malvoSlip=true; virtue('courage',2); learn('slip');
+             return 'You hold his gaze and say nothing — the oldest trap there is. The silence stretches. His smile tightens by one turn. "Friend. Whatever became of that stable boy is no concern of the fellowship\'s—" He stops. You never said anything about a stable boy. Malvo folds his hands. "The chapel is closing for evening prayer," he says, and his voice has no warmth in it at all now. You should tell Elder Maren what he just said.'; }},
+         b:{label:'Let it pass', text(){ F.malvoPass=true;
+             return '"No doubt that\'s it," you say. His smile refills. "The Path recovers what is lost, friend. Leave it with me, if you like — I shall see it home." You do not leave it with him.'; }} }},
+     slip:{label:'His slip', cond:()=>F.malvoSlip, text:()=>'"The chapel is CLOSING, friend." Two large parishioners have appeared by the door. They are also smiling. It runs in the fellowship, apparently.'}
+   }}
+];
+
+/* ---------- body examination & shrine ---------- */
+function examineBody(){
+  if(!F.knowMurder){ say('A shrouded form lies in the straw. The villagers have kept vigil — it feels wrong to disturb it before you know more. <i>(Perhaps speak with the Elder.)</i>'); return; }
+  if(!F.hasMedallion){
+    F.hasMedallion=true; inv.medallion=1; learn('medallion');
+    say('You kneel by Piet. Above him, carved deep in the stall door: a circle, rayed like the sun. Caught in the straw beneath his hand — a <b>silver medallion</b>, stamped with that same sunburst. You pocket it quietly.');
+  } else say('Piet rests. The carved sunburst watches over him like a brand. You will not forget it.');
+}
+function visitShrine(){
+  if(F.sawShrine) { say('The three circles hold their silence. Somehow it is a companionable silence now.'); return; }
+  F.sawShrine=true;
+  const night = isNight();
+  virtue('courage', night?2:1);
+  say('The Vigil. A standing stone older than any road, carved with <b>three interlocked circles</b>' +
+      (night?' — and you came in the dark, when even the guard would not. Something in the stone seems to note it.':'.') +
+      ' Moss fills the grooves like the stone is keeping its own counsel. <i>(The seer might know these marks.)</i>');
+}
+
+/* ---------- chapter end ---------- */
+function chapterEnd(){
+  document.getElementById('endTxt').innerHTML =
+    '<p>The Path did not hear of the murder. <b>The Path was here for it.</b></p>' +
+    '<p>A dead errand-boy who ran packages by night. A medallion poured at the chapel\'s own bench. A missionary who knows names he was never told. And through it all, three lights that sound almost — almost — like the old triad on the shrine stone.</p>' +
+    '<p><i>Chapter Two: The Ledger of Worth</i> — what the runners carried, what the chapel keeps under the floor, and why the Vigil stands where it stands.</p>' +
+    '<p style="color:#8f96b8;font-size:13px">The vale stays open — wander, trade, talk. And thank you for playing the Chapter One slice.</p>';
+  document.getElementById('endcard').style.display='block';
+}
+
+/* ===================================================================
+   UI — dialogue, shop, bag, hud
+   =================================================================== */
+const $=id=>document.getElementById(id);
+let activeNpc=null, shopTab='buy', activeShop=null;
+
+function updHud(){
+  $('gold').textContent = '⛁ ' + inv.gold;
+  $('clock').textContent = isNight() ? '☾ Night' : '☀ Day';
+}
+
+function anySheetOpen(){ return ['dlg','shop','bag'].some(i=>$(i).style.display==='block') ||
+  ['intro','endcard','help'].some(i=>$(i).style.display==='block'); }
+
+function openDlg(npc){
+  activeNpc=npc; path=[]; pending=null;
+  $('dlgName').textContent = npc.name;
+  $('dlgTxt').innerHTML = typeof npc.greet==='function' ? npc.greet() : npc.greet;
+  renderChips();
+  $('dlg').style.display='block';
+}
+function renderChips(){
+  const box=$('dlgChips'); box.innerHTML='';
+  const npc=activeNpc;
+  for(const [key,t] of Object.entries(npc.topics)){
+    // a topic shows if its condition is met, or (when it has no condition)
+    // if it's a basic topic or a word the player has learned
+    if(t.cond){ if(!t.cond()) continue; }
+    else if(!(key==='name'||key==='job'||knownTopics.has(key))) continue;
+    const b=document.createElement('button');
+    b.textContent = t.label;
+    b.onclick=()=>{ if(t.choice) showChoice(t.choice); else { $('dlgTxt').innerHTML = t.text(); renderChips(); } };
+    box.appendChild(b);
+  }
+  if(npc.shop){
+    const b=document.createElement('button'); b.className='trade'; b.textContent='Trade';
+    b.onclick=()=>{ closeDlg(); openShop(npc.shop, npc.name); };
+    box.appendChild(b);
+  }
+  const bye=document.createElement('button'); bye.className='bye'; bye.textContent='Farewell';
+  bye.onclick=closeDlg;
+  box.appendChild(bye);
+}
+function showChoice(ch){
+  $('dlgTxt').innerHTML = ch.prompt;
+  const box=$('dlgChips'); box.innerHTML='';
+  for(const opt of [ch.a, ch.b]){
+    const b=document.createElement('button'); b.className='choice'; b.textContent=opt.label;
+    b.onclick=()=>{ $('dlgTxt').innerHTML = opt.text(); renderChips(); };
+    box.appendChild(b);
+  }
+}
+function closeDlg(){ $('dlg').style.display='none'; activeNpc=null; }
+
+/* ---------- shop ---------- */
+function openShop(shopId, keeper){
+  activeShop=SHOPS[shopId]; shopTab='buy';
+  $('shopName').textContent = activeShop.name;
+  renderShop();
+  $('shop').style.display='block';
+}
+function renderShop(){
+  $('tabBuy').className = shopTab==='buy'?'on':'';
+  $('tabSell').className = shopTab==='sell'?'on':'';
+  const box=$('shopRows'); box.innerHTML='';
+  if(shopTab==='buy'){
+    for(const it of activeShop.sells){
+      const row=document.createElement('div'); row.className='row';
+      const owned = inv[it.id]>0 && (it.id==='torch'||it.id==='lantern'||it.id==='sword');
+      row.innerHTML = '<div class="nm">'+it.nm+'<div class="sub">'+(it.sub||'')+'</div></div>';
+      const b=document.createElement('button');
+      b.textContent = owned ? 'Owned' : it.price+' ⛁';
+      b.disabled = owned || inv.gold<it.price;
+      b.onclick=()=>{ inv.gold-=it.price; inv[it.id]=(inv[it.id]||0)+1; updHud(); renderShop();
+        if(it.id==='torch') say('You buy the torch. Night will be four steps wide now instead of two.');
+        else if(it.id==='lantern') say('The brass lantern is heavy and warm. Night just became a wide room.');
+        else if(it.id==='sword') say('The star-metal blade hums faintly against your palm. It is waiting for Chapter Two.');
+        else say('Bought: '+it.nm+'.');
+        computeFOV(); };
+      row.appendChild(b); box.appendChild(row);
+    }
+  } else {
+    for(const it of activeShop.buys){
+      const row=document.createElement('div'); row.className='row';
+      row.innerHTML = '<div class="nm">'+it.nm+'<div class="sub">You carry: '+(inv[it.id]||0)+'</div></div>';
+      const b=document.createElement('button');
+      b.textContent = '+'+it.price+' ⛁';
+      b.disabled = !(inv[it.id]>0);
+      b.onclick=()=>{ inv[it.id]--; inv.gold+=it.price; updHud(); renderShop(); };
+      row.appendChild(b); box.appendChild(row);
+    }
+    const hint=document.createElement('div'); hint.className='sub'; hint.style.padding='8px 2px';
+    hint.textContent='Prices differ from town to town. Distance is the oldest alchemy.';
+    box.appendChild(hint);
+  }
+}
+$('tabBuy').onclick=()=>{shopTab='buy';renderShop();};
+$('tabSell').onclick=()=>{shopTab='sell';renderShop();};
+$('shopClose').onclick=()=>{$('shop').style.display='none';};
+
+/* ---------- bag ---------- */
+function openBag(){
+  const box=$('bagRows'); box.innerHTML='';
+  const rows=[
+    ['herb','Wortleaf Herb','Sells better far from where it grows'],
+    ['mushroom','Bluecap Mushroom','Only the deep wood grows these'],
+    ['bread','Bread','Tap to eat'],
+    ['torch','Pitch Torch','Lit by itself when night falls'],
+    ['lantern','Brass Lantern','Lit by itself when night falls'],
+    ['sword','Star-metal Sword','Humming, patiently'],
+    ['medallion','Silver Medallion','A sunburst. Cold to the touch.']
+  ];
+  let any=false;
+  for(const [id,nm,sub] of rows){
+    if(!(inv[id]>0)) continue; any=true;
+    const row=document.createElement('div'); row.className='row';
+    row.innerHTML='<div class="nm">'+nm+' × '+inv[id]+'<div class="sub">'+sub+'</div></div>';
+    if(id==='bread'){
+      const b=document.createElement('button'); b.textContent='Eat';
+      b.onclick=()=>{ inv.bread--; say('Warm through, even cold. (One day, hunger will matter. Today it is only comfort.)'); openBag(); };
+      row.appendChild(b);
+    }
+    box.appendChild(row);
+  }
+  if(!any) box.innerHTML='<div class="sub" style="padding:8px 2px">Nothing but road dust and ' + inv.gold + ' gold.</div>';
+  $('bag').style.display='block';
+}
+$('bagBtn').onclick=openBag;
+$('bagClose').onclick=()=>{$('bag').style.display='none';};
+$('helpBtn').onclick=()=>{$('help').style.display='block';};
+$('helpClose').onclick=()=>{$('help').style.display='none';};
+$('endClose').onclick=()=>{$('endcard').style.display='none';};
+$('beginBtn').onclick=()=>{ $('intro').style.display='none';
+  say('Brookhollow. Smoke from a few chimneys; a road; silence of the wrong kind.');
+  say('<i>(Tap the ground to walk. The elder\'s letter mentioned her house near the village square.)</i>'); };
+
+/* ===================================================================
+   RENDERING
+   =================================================================== */
+const cv=$('cv'), ctx=cv.getContext('2d');
+let dpr=1, vw=0, vh=0, ts=36;
+function resize(){
+  dpr=Math.min(window.devicePixelRatio||1,3);
+  vw=window.innerWidth; vh=window.innerHeight;
+  cv.width=vw*dpr; cv.height=vh*dpr;
+  cv.style.width=vw+'px'; cv.style.height=vh+'px';
+  ts=Math.max(26, Math.min(46, Math.floor(Math.min(vw,vh)/11)));
+}
+window.addEventListener('resize',resize); resize();
+
+const GRASS=['#37622f','#3a6835','#356030'];
+function tileBase(x,y){
+  const c=grid[y][x];
+  switch(c){
+    case 'g': return GRASS[(x*7+y*13)%3];
+    case 't': return GRASS[(x*7+y*13)%3];
+    case 'm': return '#57545f';
+    case 'w': return '#27508f';
+    case 'r': return '#9d8a60';
+    case 'b': return '#7a5c3a';
+    case '#': return '#3b3547';
+    case 'f': return '#6b5233';
+    case '+': return '#6b5233';
+    case 'S': return GRASS[(x*7+y*13)%3];
+  }
+  return '#000';
+}
+function drawTileDetail(c,sx,sy,x,y){
+  switch(c){
+    case 't':
+      ctx.fillStyle='#4a3620'; ctx.fillRect(sx+ts*0.44,sy+ts*0.55,ts*0.14,ts*0.3);
+      ctx.fillStyle='#1f4d24'; ctx.beginPath(); ctx.arc(sx+ts/2,sy+ts*0.4,ts*0.34,0,7); ctx.fill();
+      ctx.fillStyle='#2a6330'; ctx.beginPath(); ctx.arc(sx+ts*0.42,sy+ts*0.34,ts*0.18,0,7); ctx.fill();
+      break;
+    case 'm':
+      ctx.fillStyle='#6e6b78'; ctx.beginPath();
+      ctx.moveTo(sx+ts*0.5,sy+ts*0.12); ctx.lineTo(sx+ts*0.92,sy+ts*0.9); ctx.lineTo(sx+ts*0.08,sy+ts*0.9);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle='#8d8a9a'; ctx.beginPath();
+      ctx.moveTo(sx+ts*0.5,sy+ts*0.12); ctx.lineTo(sx+ts*0.66,sy+ts*0.42); ctx.lineTo(sx+ts*0.36,sy+ts*0.42);
+      ctx.closePath(); ctx.fill();
+      break;
+    case 'w':
+      ctx.strokeStyle='#3a6ab0'; ctx.lineWidth=1.4; ctx.beginPath();
+      ctx.moveTo(sx+ts*0.15,sy+ts*(0.35+((x+y)%2)*0.3));
+      ctx.quadraticCurveTo(sx+ts*0.5,sy+ts*(0.25+((x+y)%2)*0.3), sx+ts*0.85,sy+ts*(0.35+((x+y)%2)*0.3));
+      ctx.stroke();
+      break;
+    case 'b':
+      ctx.strokeStyle='#5d4227'; ctx.lineWidth=1.5;
+      for(let i=1;i<4;i++){ ctx.beginPath(); ctx.moveTo(sx,sy+ts*i/4); ctx.lineTo(sx+ts,sy+ts*i/4); ctx.stroke(); }
+      break;
+    case '#':
+      ctx.fillStyle='#4a4459'; ctx.fillRect(sx,sy,ts,ts*0.28);
+      ctx.strokeStyle='#2c2736'; ctx.lineWidth=1;
+      ctx.strokeRect(sx+0.5,sy+0.5,ts-1,ts-1);
+      break;
+    case 'f':
+      ctx.strokeStyle='#5d4527'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(sx,sy+ts/2); ctx.lineTo(sx+ts,sy+ts/2); ctx.stroke();
+      break;
+    case '+': {
+      const open=openDoors.has(x+','+y);
+      ctx.fillStyle= open ? '#6b5233' : '#8a6234';
+      ctx.fillRect(sx+ts*0.08,sy+ts*0.08,ts*0.84,ts*0.84);
+      ctx.strokeStyle='#4a3620'; ctx.lineWidth=2;
+      ctx.strokeRect(sx+ts*0.08,sy+ts*0.08,ts*0.84,ts*0.84);
+      if(!open){ ctx.fillStyle='#e8c454'; ctx.beginPath(); ctx.arc(sx+ts*0.72,sy+ts*0.52,ts*0.06,0,7); ctx.fill(); }
+      break; }
+    case 'S':
+      ctx.fillStyle='#9aa0a8'; ctx.fillRect(sx+ts*0.3,sy+ts*0.12,ts*0.4,ts*0.78);
+      ctx.strokeStyle='#e8c454'; ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.arc(sx+ts*0.5,sy+ts*0.34,ts*0.09,0,7); ctx.stroke();
+      ctx.beginPath(); ctx.arc(sx+ts*0.42,sy+ts*0.5,ts*0.09,0,7); ctx.stroke();
+      ctx.beginPath(); ctx.arc(sx+ts*0.58,sy+ts*0.5,ts*0.09,0,7); ctx.stroke();
+      break;
+  }
+}
+function drawPerson(sx,sy,color,isPlayer){
+  ctx.fillStyle='rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.ellipse(sx+ts/2,sy+ts*0.84,ts*0.24,ts*0.09,0,0,7); ctx.fill();
+  ctx.fillStyle=color;
+  ctx.beginPath(); ctx.ellipse(sx+ts/2,sy+ts*0.6,ts*0.2,ts*0.26,0,0,7); ctx.fill();
+  ctx.fillStyle= isPlayer ? '#f2d5b0' : '#e0c09a';
+  ctx.beginPath(); ctx.arc(sx+ts/2,sy+ts*0.3,ts*0.15,0,7); ctx.fill();
+  if(isPlayer){ ctx.strokeStyle='#fff'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.arc(sx+ts/2,sy+ts*0.55,ts*0.3,0,7); ctx.stroke(); }
+}
+function drawObject(o,sx,sy){
+  if(o.type==='herb'){
+    ctx.strokeStyle='#7dd870'; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(sx+ts*0.5,sy+ts*0.75); ctx.lineTo(sx+ts*0.5,sy+ts*0.45);
+    ctx.moveTo(sx+ts*0.5,sy+ts*0.6); ctx.lineTo(sx+ts*0.36,sy+ts*0.48);
+    ctx.moveTo(sx+ts*0.5,sy+ts*0.6); ctx.lineTo(sx+ts*0.64,sy+ts*0.48); ctx.stroke();
+  } else if(o.type==='mushroom'){
+    ctx.fillStyle='#e8e2d0'; ctx.fillRect(sx+ts*0.45,sy+ts*0.5,ts*0.1,ts*0.25);
+    ctx.fillStyle='#4a7ec9'; ctx.beginPath(); ctx.arc(sx+ts*0.5,sy+ts*0.5,ts*0.18,Math.PI,0); ctx.fill();
+  } else if(o.type==='body'){
+    ctx.fillStyle='#cfc8b2';
+    ctx.beginPath(); ctx.ellipse(sx+ts/2,sy+ts*0.55,ts*0.34,ts*0.2,0,0,7); ctx.fill();
+    ctx.strokeStyle='#8a8474'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.ellipse(sx+ts/2,sy+ts*0.55,ts*0.34,ts*0.2,0,0,7); ctx.stroke();
+  }
+}
+
+function draw(){
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.fillStyle='#07080f'; ctx.fillRect(0,0,vw,vh);
+  const camX=P.rx*ts+ts/2-vw/2, camY=P.ry*ts+ts/2-vh/2;
+  const x0=Math.max(0,Math.floor(camX/ts)-1), x1=Math.min(W-1,Math.ceil((camX+vw)/ts)+1);
+  const y0=Math.max(0,Math.floor(camY/ts)-1), y1=Math.min(H-1,Math.ceil((camY+vh)/ts)+1);
+  const night=isNight();
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+    const k=x+','+y, vis=visible.has(k), mem=explored.has(k);
+    if(!vis && !mem) continue;
+    const sx=Math.round(x*ts-camX), sy=Math.round(y*ts-camY);
+    ctx.fillStyle=tileBase(x,y); ctx.fillRect(sx,sy,ts+1,ts+1);
+    drawTileDetail(grid[y][x],sx,sy,x,y);
+    if(vis){
+      const o=objectAt(x,y); if(o) drawObject(o,sx,sy);
+      if(night){ ctx.fillStyle='rgba(24,32,80,.34)'; ctx.fillRect(sx,sy,ts+1,ts+1); }
+    } else {
+      ctx.fillStyle='rgba(7,9,18,.66)'; ctx.fillRect(sx,sy,ts+1,ts+1);
+    }
+  }
+  // path preview
+  ctx.fillStyle='rgba(232,196,84,.5)';
+  for(const p of path){
+    const sx=Math.round(p.x*ts-camX), sy=Math.round(p.y*ts-camY);
+    ctx.beginPath(); ctx.arc(sx+ts/2,sy+ts/2,ts*0.08,0,7); ctx.fill();
+  }
+  // npcs (only when in live sight)
+  for(const n of npcs){
+    if(!visible.has(n.x+','+n.y)) continue;
+    drawPerson(Math.round(n.x*ts-camX),Math.round(n.y*ts-camY),n.c,false);
+  }
+  drawPerson(Math.round(P.rx*ts-camX),Math.round(P.ry*ts-camY),'#5a7ec9',true);
+  // torch glow at night
+  if(night && (inv.torch||inv.lantern)){
+    const gx=P.rx*ts+ts/2-camX, gy=P.ry*ts+ts/2-camY;
+    const g=ctx.createRadialGradient(gx,gy,ts*0.2,gx,gy,ts*sightRadius());
+    g.addColorStop(0,'rgba(255,190,90,.16)'); g.addColorStop(1,'rgba(255,190,90,0)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,vw,vh);
+  }
+}
+
+/* ===================================================================
+   INPUT & GAME LOOP
+   =================================================================== */
+function tryTalk(npc){
+  if(Math.abs(npc.x-P.x)<=1 && Math.abs(npc.y-P.y)<=1){ openDlg(npc); return true; }
+  return false;
+}
+function routeTo(tx,ty,adjacentOk){
+  const goal = adjacentOk
+    ? (x,y)=> Math.abs(x-tx)<=1 && Math.abs(y-ty)<=1
+    : (x,y)=> x===tx && y===ty;
+  const p=astar(P.x,P.y,goal,tx,ty);
+  if(p){ path=p; } else say("No path leads there that you can find.");
+}
+cv.addEventListener('pointerdown', e=>{
+  if(anySheetOpen()) return;
+  const camX=P.rx*ts+ts/2-vw/2, camY=P.ry*ts+ts/2-vh/2;
+  const tx=Math.floor((e.clientX+camX)/ts), ty=Math.floor((e.clientY+camY)/ts);
+  if(tx<0||ty<0||tx>=W||ty>=H) return;
+  const k=tx+','+ty;
+  // person?
+  const npc=npcs.find(n=>n.x===tx&&n.y===ty);
+  if(npc && visible.has(k)){
+    if(!tryTalk(npc)){ pending={type:'npc',npc}; routeTo(tx,ty,true); }
+    return;
+  }
+  // the body?
+  const o=objectAt(tx,ty);
+  if(o && o.type==='body' && visible.has(k)){
+    if(Math.abs(tx-P.x)<=1&&Math.abs(ty-P.y)<=1) examineBody();
+    else { pending={type:'body'}; routeTo(tx,ty,true); }
+    return;
+  }
+  // ground
+  if(!explored.has(k)){ say('You cannot see that far. The fog keeps its secrets until you walk them.'); return; }
+  if(!walkable(tx,ty)){
+    const c=grid[ty][tx];
+    say(c==='w' ? 'The river is fast and winter-cold.' : c==='m' ? 'The mountains wall the vale like a held breath.' : c==='t' ? 'The trees grow too close there.' : 'You cannot walk there.');
+    return;
+  }
+  pending=null;
+  routeTo(tx,ty,false);
+});
+
+function step(){
+  if(!path.length) return;
+  const nxt=path.shift();
+  if(!walkable(nxt.x,nxt.y)){ path=[]; return; }
+  const wasNight=isNight();
+  P.x=nxt.x; P.y=nxt.y;
+  time++;
+  if(grid[P.y][P.x]==='+' && !openDoors.has(P.x+','+P.y)){
+    openDoors.add(P.x+','+P.y); say('The door opens with a complaint of hinges.');
+  }
+  const o=objectAt(P.x,P.y);
+  if(o && (o.type==='herb'||o.type==='mushroom')){
+    objects.splice(objects.indexOf(o),1);
+    inv[o.type]++;
+    say(o.type==='herb' ? 'You gather a sprig of wortleaf. ('+inv.herb+')' : 'A bluecap mushroom — the deep wood\'s small treasure. ('+inv.mushroom+')');
+  }
+  if(grid[P.y][P.x]==='S') visitShrine();
+  else { // shrine adjacency also counts
+    for(const [ax,ay] of [[1,0],[-1,0],[0,1],[0,-1]])
+      if(grid[P.y+ay] && grid[P.y+ay][P.x+ax]==='S') visitShrine();
+  }
+  if(isNight()!==wasNight){
+    if(isNight()) say(inv.lantern? 'Night falls. Your lantern pushes it back to a respectful distance.'
+      : inv.torch ? 'Night falls. Your torch keeps a small room of light around you.'
+      : '<b>Night falls.</b> The world closes to arm\'s reach. Roads are honest; the dark beside them is not.');
+    else say('Dawn. The vale gives itself back, one treeline at a time.');
+    updHud();
+  }
+  computeFOV();
+  if(!path.length && pending){
+    const pd=pending; pending=null;
+    if(pd.type==='npc') tryTalk(pd.npc);
+    else if(pd.type==='body' && Math.abs(P.x-11)<=1&&Math.abs(P.y-56)<=1) examineBody();
+  }
+}
+
+let last=0;
+function loop(t){
+  requestAnimationFrame(loop);
+  if(t-stepClock>150){ stepClock=t; step(); }
+  // smooth render position
+  P.rx+=(P.x-P.rx)*0.35; P.ry+=(P.y-P.ry)*0.35;
+  if(Math.abs(P.x-P.rx)<0.01) P.rx=P.x;
+  if(Math.abs(P.y-P.ry)<0.01) P.ry=P.y;
+  draw();
+}
+
+computeFOV();
+updHud();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

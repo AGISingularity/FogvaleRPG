@@ -141,7 +141,7 @@
 
 <script>
 'use strict';
-const VERSION='0.3.1';
+const VERSION='0.4.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -570,6 +570,8 @@ function anySheetOpen(){ return ['dlg','shop','bag'].some(i=>$(i).style.display=
 
 function openDlg(npc){
   activeNpc=npc; path=[]; pending=null;
+  const ddx=P.x-npc.x, ddy=P.y-npc.y;   // turn to face the player
+  npc.dir = Math.abs(ddx)>Math.abs(ddy) ? (ddx>0?'right':'left') : (ddy>0?'down':'up');
   $('dlgName').textContent = npc.name;
   $('dlgTxt').innerHTML = typeof npc.greet==='function' ? npc.greet() : npc.greet;
   renderChips();
@@ -711,26 +713,32 @@ window.addEventListener('resize',resize);
 /* sprite rects in assets/tiles.png — must match tools/atlas.html
    (make-atlas.mjs verifies the two copies are identical) */
 /*ATLAS_DEF_START*/
-const ATLAS_DEF = {
-  grass0:[0,0,16,16], grass1:[16,0,16,16], grass2:[32,0,16,16], tree:[48,0,16,16],
-  mtn0:[64,0,16,16], mtn1:[80,0,16,16], waterA:[96,0,16,16], waterB:[112,0,16,16],
-  shoreN:[0,16,16,16], shoreE:[16,16,16,16], shoreS:[32,16,16,16], shoreW:[48,16,16,16],
-  bridge:[64,16,16,16], wall:[80,16,16,16], floor:[96,16,16,16], doorC:[112,16,16,16],
-  doorO:[0,32,16,16], shrine:[16,32,16,16], herb:[32,32,16,16], mushroom:[48,32,16,16],
-  body:[64,32,16,16], tree2:[64,104,16,24],
-  road0:[0,48,16,16], road1:[16,48,16,16], road2:[32,48,16,16], road3:[48,48,16,16],
-  road4:[64,48,16,16], road5:[80,48,16,16], road6:[96,48,16,16], road7:[112,48,16,16],
-  road8:[0,64,16,16], road9:[16,64,16,16], road10:[32,64,16,16], road11:[48,64,16,16],
-  road12:[64,64,16,16], road13:[80,64,16,16], road14:[96,64,16,16], road15:[112,64,16,16],
-  player0:[0,80,16,24], player1:[16,80,16,24], player2:[32,80,16,24],
-  npc0:[48,80,16,24], npc1:[64,80,16,24], npc2:[80,80,16,24], npc3:[96,80,16,24],
-  npc4:[0,104,16,24], npc5:[16,104,16,24], npc6:[32,104,16,24], npc7:[48,104,16,24],
-  playerD1:[80,104,16,24], playerD2:[96,104,16,24], playerL0:[112,104,16,24],
-  playerU0:[0,128,16,24], playerU1:[16,128,16,24], playerU2:[32,128,16,24]
-};
+const ATLAS_DEF = (()=>{
+  const d = {
+    grass0:[0,0,16,16], grass1:[16,0,16,16], grass2:[32,0,16,16], tree:[48,0,16,16],
+    mtn0:[64,0,16,16], mtn1:[80,0,16,16], waterA:[96,0,16,16], waterB:[112,0,16,16],
+    shoreN:[0,16,16,16], shoreE:[16,16,16,16], shoreS:[32,16,16,16], shoreW:[48,16,16,16],
+    bridge:[64,16,16,16], wall:[80,16,16,16], floor:[96,16,16,16], doorC:[112,16,16,16],
+    doorO:[0,32,16,16], shrine:[16,32,16,16], herb:[32,32,16,16], mushroom:[48,32,16,16],
+    body:[64,32,16,16],
+    road0:[0,48,16,16], road1:[16,48,16,16], road2:[32,48,16,16], road3:[48,48,16,16],
+    road4:[64,48,16,16], road5:[80,48,16,16], road6:[96,48,16,16], road7:[112,48,16,16],
+    road8:[0,64,16,16], road9:[16,64,16,16], road10:[32,64,16,16], road11:[48,64,16,16],
+    road12:[64,64,16,16], road13:[80,64,16,16], road14:[96,64,16,16], road15:[112,64,16,16]
+  };
+  /* tall 16x24 cells packed from y=80: player frames, the tree, then
+     9 frames per NPC (D/L/U directions x idle,walkA,walkB) */
+  const FR = ['D0','D1','D2','L0','L1','L2','U0','U1','U2'];
+  let i = 0;
+  const cell = ()=>{ const x=(i%8)*16, y=80+((i/8)|0)*24; i++; return [x,y,16,24]; };
+  for(const f of FR) d['player'+f] = cell();
+  d.tree2 = cell();
+  for(let n=0;n<8;n++) for(const f of FR) d['npc'+n+f] = cell();
+  return d;
+})();
 /*ATLAS_DEF_END*/
 const NPC_COLORS=['#b8c4e8','#d8b47e','#8a7f6a','#9aa5b8','#c9a8d8','#d89a7e','#b89a78','#e8d454'];
-const ATLAS_W=128, ATLAS_H=160;
+const ATLAS_W=128, ATLAS_H=344;
 
 let atlasReady=false, atlasCv=null, terrainCv=null;
 const atlasImg=new Image();
@@ -831,6 +839,25 @@ function drawSprite(name,sx,sy,flip){
 const OBJ_CELL={ herb:'herb', mushroom:'mushroom', body:'body' };
 const npcCell = n => 'npc'+Math.max(0,NPC_COLORS.indexOf(n.c));
 
+/* ---------- NPC wandering: a few steps around their post ----------------- */
+for(const n of npcs){ n.hx=n.x; n.hy=n.y; n.rx=n.x; n.ry=n.y; n.dir='down'; }
+function npcTick(){
+  for(const n of npcs){
+    if(n===activeNpc || Math.random()<0.6) continue;  // unhurried folk
+    const dirs=[[1,0,'right'],[-1,0,'left'],[0,1,'down'],[0,-1,'up']];
+    const [ax,ay,dr]=dirs[Math.random()*4|0];
+    const nx=n.x+ax, ny=n.y+ay;
+    if(Math.abs(nx-n.hx)>2 || Math.abs(ny-n.hy)>2) continue;   // stay near the post
+    if(nx===P.x && ny===P.y) continue;
+    if(!walkable(nx,ny)) continue;
+    // indoor folk keep to their floor; outdoor folk never wander inside
+    const c=grid[ny][nx], home=grid[n.hy][n.hx];
+    if(home==='f' ? c!=='f' : (c==='f'||c==='+')) continue;
+    n.dir=dr; n.x=nx; n.y=ny;
+  }
+}
+setInterval(npcTick, 700);
+
 function draw(now){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.fillStyle='#07080f'; ctx.fillRect(0,0,vw,vh);
@@ -861,6 +888,11 @@ function draw(now){
   }
 
   // 4. objects & people (live sight only)
+  const ph = Math.floor(now/150)%2;
+  function personFrame(base,dir,moving){
+    const dch = dir==='up' ? 'U' : (dir==='left'||dir==='right') ? 'L' : 'D';
+    return base + dch + (moving ? (ph?1:2) : 0);
+  }
   for(const o of objects){
     if(!visible.has(o.x+','+o.y)) continue;
     const sx=o.x*ts-camX, sy=o.y*ts-camY;
@@ -869,16 +901,13 @@ function draw(now){
   }
   for(const n of npcs){
     if(!visible.has(n.x+','+n.y)) continue;
-    drawSprite(npcCell(n), n.x*ts-camX, n.y*ts-camY);
+    const moving = Math.abs(n.x-n.rx)+Math.abs(n.y-n.ry)>0.05;
+    drawSprite(personFrame(npcCell(n),n.dir,moving),
+      Math.round(n.rx*ts-camX), Math.round(n.ry*ts-camY), n.dir==='right');
   }
   const walking = path.length>0 || Math.abs(P.x-P.rx)+Math.abs(P.y-P.ry)>0.02;
-  const ph = Math.floor(now/150)%2;
-  let frame, flip=false;
-  if(P.dir==='up')        frame = walking ? (ph?'playerU1':'playerU2') : 'playerU0';
-  else if(P.dir==='down') frame = walking ? (ph?'playerD1':'playerD2') : 'player0';
-  else { frame = walking ? (ph?'player1':'player2') : 'playerL0';
-         flip = P.dir==='right'; }              // profile art faces left
-  drawSprite(frame, Math.round(P.rx*ts-camX), Math.round(P.ry*ts-camY), flip);
+  drawSprite(personFrame('player',P.dir,walking),
+    Math.round(P.rx*ts-camX), Math.round(P.ry*ts-camY), P.dir==='right');
 
   // 5. fog & night, upscaled from the lightmap with smoothing for soft edges
   ctx.imageSmoothingEnabled=true;
@@ -974,7 +1003,10 @@ function step(){
   computeFOV();
   if(!path.length && pending){
     const pd=pending; pending=null;
-    if(pd.type==='npc') tryTalk(pd.npc);
+    if(pd.type==='npc'){
+      // the target may have wandered off mid-walk — follow them
+      if(!tryTalk(pd.npc)){ pending=pd; routeTo(pd.npc.x,pd.npc.y,true); }
+    }
     else if(pd.type==='body' && Math.abs(P.x-11)<=1&&Math.abs(P.y-56)<=1) examineBody();
   }
 }
@@ -987,6 +1019,11 @@ function loop(t){
   P.rx+=(P.x-P.rx)*0.35; P.ry+=(P.y-P.ry)*0.35;
   if(Math.abs(P.x-P.rx)<0.01) P.rx=P.x;
   if(Math.abs(P.y-P.ry)<0.01) P.ry=P.y;
+  for(const n of npcs){
+    n.rx+=(n.x-n.rx)*0.2; n.ry+=(n.y-n.ry)*0.2;
+    if(Math.abs(n.x-n.rx)<0.01) n.rx=n.x;
+    if(Math.abs(n.y-n.ry)<0.01) n.ry=n.y;
+  }
   draw(t);
 }
 

@@ -23,23 +23,29 @@
    fails the export if the two copies drift. */
 
 /*ATLAS_DEF_START*/
-const ATLAS_DEF = {
-  grass0:[0,0,16,16], grass1:[16,0,16,16], grass2:[32,0,16,16], tree:[48,0,16,16],
-  mtn0:[64,0,16,16], mtn1:[80,0,16,16], waterA:[96,0,16,16], waterB:[112,0,16,16],
-  shoreN:[0,16,16,16], shoreE:[16,16,16,16], shoreS:[32,16,16,16], shoreW:[48,16,16,16],
-  bridge:[64,16,16,16], wall:[80,16,16,16], floor:[96,16,16,16], doorC:[112,16,16,16],
-  doorO:[0,32,16,16], shrine:[16,32,16,16], herb:[32,32,16,16], mushroom:[48,32,16,16],
-  body:[64,32,16,16], tree2:[64,104,16,24],
-  road0:[0,48,16,16], road1:[16,48,16,16], road2:[32,48,16,16], road3:[48,48,16,16],
-  road4:[64,48,16,16], road5:[80,48,16,16], road6:[96,48,16,16], road7:[112,48,16,16],
-  road8:[0,64,16,16], road9:[16,64,16,16], road10:[32,64,16,16], road11:[48,64,16,16],
-  road12:[64,64,16,16], road13:[80,64,16,16], road14:[96,64,16,16], road15:[112,64,16,16],
-  player0:[0,80,16,24], player1:[16,80,16,24], player2:[32,80,16,24],
-  npc0:[48,80,16,24], npc1:[64,80,16,24], npc2:[80,80,16,24], npc3:[96,80,16,24],
-  npc4:[0,104,16,24], npc5:[16,104,16,24], npc6:[32,104,16,24], npc7:[48,104,16,24],
-  playerD1:[80,104,16,24], playerD2:[96,104,16,24], playerL0:[112,104,16,24],
-  playerU0:[0,128,16,24], playerU1:[16,128,16,24], playerU2:[32,128,16,24]
-};
+const ATLAS_DEF = (()=>{
+  const d = {
+    grass0:[0,0,16,16], grass1:[16,0,16,16], grass2:[32,0,16,16], tree:[48,0,16,16],
+    mtn0:[64,0,16,16], mtn1:[80,0,16,16], waterA:[96,0,16,16], waterB:[112,0,16,16],
+    shoreN:[0,16,16,16], shoreE:[16,16,16,16], shoreS:[32,16,16,16], shoreW:[48,16,16,16],
+    bridge:[64,16,16,16], wall:[80,16,16,16], floor:[96,16,16,16], doorC:[112,16,16,16],
+    doorO:[0,32,16,16], shrine:[16,32,16,16], herb:[32,32,16,16], mushroom:[48,32,16,16],
+    body:[64,32,16,16],
+    road0:[0,48,16,16], road1:[16,48,16,16], road2:[32,48,16,16], road3:[48,48,16,16],
+    road4:[64,48,16,16], road5:[80,48,16,16], road6:[96,48,16,16], road7:[112,48,16,16],
+    road8:[0,64,16,16], road9:[16,64,16,16], road10:[32,64,16,16], road11:[48,64,16,16],
+    road12:[64,64,16,16], road13:[80,64,16,16], road14:[96,64,16,16], road15:[112,64,16,16]
+  };
+  /* tall 16x24 cells packed from y=80: player frames, the tree, then
+     9 frames per NPC (D/L/U directions x idle,walkA,walkB) */
+  const FR = ['D0','D1','D2','L0','L1','L2','U0','U1','U2'];
+  let i = 0;
+  const cell = ()=>{ const x=(i%8)*16, y=80+((i/8)|0)*24; i++; return [x,y,16,24]; };
+  for(const f of FR) d['player'+f] = cell();
+  d.tree2 = cell();
+  for(let n=0;n<8;n++) for(const f of FR) d['npc'+n+f] = cell();
+  return d;
+})();
 /*ATLAS_DEF_END*/
 
 /* must match the npc definitions' c: values in index.html, in order:
@@ -47,7 +53,7 @@ const ATLAS_DEF = {
 const NPC_COLORS = ['#b8c4e8','#d8b47e','#8a7f6a','#9aa5b8','#c9a8d8','#d89a7e','#b89a78','#e8d454'];
 
 const atlas = document.getElementById('atlas');
-atlas.width = 128; atlas.height = 160;
+atlas.width = 128; atlas.height = 344;
 const ctx = atlas.getContext('2d');
 
 const OW = new Image(), CH = new Image();
@@ -91,8 +97,10 @@ put(OW, T(0), T(0),  'grass0');
 put(OW, T(5), T(9),  'grass1');
 put(OW, T(5), T(10), 'grass2');
 
-// tree: the big round tree at (5,16)-(7,18), 32x48 crop scaled 2:1 → 16x24 tall sprite
+// tree: the big round tree at (5,16)-(7,18), 32x48 crop scaled 2:1 → 16x24 tall
+// sprite; the crop's top-left corner catches a neighboring bush — blank it
 put(OW, 80, 244, 'tree2', { sw:32, sh:48 });
+{ const [tx,ty] = at('tree2'); ctx.clearRect(tx,ty,8,5); }
 // legacy 16x16 slot keeps a canopy crop as fallback (unused by the game)
 put(OW, 88, 260, 'tree');
 
@@ -204,33 +212,34 @@ for(let mask=0; mask<16; mask++){
    Row groups: y=0 walk down · y=64 left profile · y=128 walk up (back view).
    Right-facing is the left profile flipped at draw time. */
 const CROP_Y = 8;
-put(CH, 0,  32*0+CROP_Y, 'player0',  { sh:24 });  // idle, facing down
-put(CH, 16, 32*0+CROP_Y, 'playerD1', { sh:24 });  // walk down A
-put(CH, 48, 32*0+CROP_Y, 'playerD2', { sh:24 });  // walk down B
-put(CH, 0,  32*2+CROP_Y, 'playerL0', { sh:24 });  // idle, profile
-put(CH, 16, 32*2+CROP_Y, 'player1',  { sh:24 });  // walk profile A
-put(CH, 48, 32*2+CROP_Y, 'player2',  { sh:24 });  // walk profile B
-put(CH, 0,  32*4+CROP_Y, 'playerU0', { sh:24 });  // idle, facing up
-put(CH, 16, 32*4+CROP_Y, 'playerU1', { sh:24 });  // walk up A
-put(CH, 48, 32*4+CROP_Y, 'playerU2', { sh:24 });  // walk up B
-NPC_COLORS.forEach((c,i)=> put(CH, 0, CROP_Y, 'npc'+i, { sh:24 }) );
+/* band layout (verified in test/out/band-audit.html): y=0 front, y=32 left
+   profile, y=64 back view, y=96 second profile, y=128+ sword attacks */
+const DIR_SY = { D:0, L:32, U:64 };
+const FRAME_SX = { D:[0,16,48], L:[0,16,48], U:[0,16,48] };
+for(const dch of ['D','L','U']) for(const f of [0,1,2]){
+  put(CH, FRAME_SX[dch][f], DIR_SY[dch]+CROP_Y, 'player'+dch+f, { sh:24 });
+  for(let n=0;n<8;n++)
+    put(CH, FRAME_SX[dch][f], DIR_SY[dch]+CROP_Y, 'npc'+n+dch+f, { sh:24 });
+}
 
 /* recolor npc shirts: strong-red pixels → the npc's robe color */
 function hex(c){ const n=parseInt(c.slice(1),16); return [n>>16&255, n>>8&255, n&255]; }
 for(let i=0;i<NPC_COLORS.length;i++){
-  const [dx,dy,w,h] = at('npc'+i);
   const [tr,tg,tb] = hex(NPC_COLORS[i]);
-  const d = ctx.getImageData(dx,dy,w,h);
-  for(let p=0;p<d.data.length;p+=4){
-    const r=d.data[p], g=d.data[p+1], b=d.data[p+2];
-    if(d.data[p+3]>0 && r>90 && g<95 && b<95 && r>g*1.55 && r>b*1.55){
-      const lum = Math.min(1.25, r/180);
-      d.data[p]  =Math.min(255, tr*lum);
-      d.data[p+1]=Math.min(255, tg*lum);
-      d.data[p+2]=Math.min(255, tb*lum);
+  for(const dch of ['D','L','U']) for(const f of [0,1,2]){
+    const [dx,dy,w,h] = at('npc'+i+dch+f);
+    const d = ctx.getImageData(dx,dy,w,h);
+    for(let p=0;p<d.data.length;p+=4){
+      const r=d.data[p], g=d.data[p+1], b=d.data[p+2];
+      if(d.data[p+3]>0 && r>90 && g<95 && b<95 && r>g*1.55 && r>b*1.55){
+        const lum = Math.min(1.25, r/180);
+        d.data[p]  =Math.min(255, tr*lum);
+        d.data[p+1]=Math.min(255, tg*lum);
+        d.data[p+2]=Math.min(255, tb*lum);
+      }
     }
+    ctx.putImageData(d,dx,dy);
   }
-  ctx.putImageData(d,dx,dy);
 }
 
 /* ---------------- small sprites ------------------------------------------ */
@@ -302,7 +311,7 @@ function preview(){
     else if(c==='f') blit('floor',x,y);
     else if(c==='D') blit('doorC',x,y);
   }));
-  blit('player1',1,2,true); blit('npc0',6,4,true); blit('npc7',5,0,true);
+  blit('playerL1',1,2,true); blit('npc0D0',6,4,true); blit('npc7L1',5,0,true);
   blit('herb',0,3); blit('mushroom',4,0); blit('shrine',7,2); blit('body',1,4);
 }
 </script>

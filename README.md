@@ -24,6 +24,10 @@ server required. Open it in any mobile or desktop browser.
 - **Regional economy** — herbs and mushrooms are gathered where they grow and sell for
   roughly double in the far town. Advanced goods (lantern, star-metal sword) only exist
   in the distant shop. "Distance is the oldest alchemy."
+- **A living village** — every character has full 4-direction walk animation
+  (player and NPCs alike); NPCs idle-wander near their posts, keep to their own
+  ground (indoor folk stay indoors), turn to face you in conversation, and if
+  your tap-target strolls off you follow them automatically.
 - **Keyword dialogue web** — NPCs speak in topics. Words learned from one mouth can be
   asked of any other; the story is gated by *what you know to ask*, not by levels.
 - **Hidden virtue triad** — Truth, Love, and Courage are silently scored by your choices
@@ -76,5 +80,6 @@ One-time setup: `npm install && npx playwright install chromium`.
 ## Known limitations (prototype)
 
 - No combat yet — the sword hums, patiently, until Chapter Two.
-- NPCs are stationary (no schedules yet).
+- NPCs wander a few steps around their posts but have no schedules yet
+  (homes at night, work by day — that's the Chapter Two roadmap).
 - Saves are per-browser (no cloud sync).

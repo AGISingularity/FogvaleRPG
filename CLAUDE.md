@@ -62,6 +62,8 @@ it also profiles frame time under 4× CPU throttle.
 - Grow the map (chunk the world if memory/perf demands), add 2–3 more settlements, a
   dungeon or two, and wilderness landmarks that reward looking (towers extend sight).
 - NPC schedules (Ultima VII's soul): homes at night, work by day, doors that lock.
+  (Idle wandering near posts + 4-direction frames for everyone shipped in v0.4.0 —
+  schedules can build on npcTick and the per-NPC direction cells.)
 - Chapter Two content: the chapel ledger, the runners' satchels, why the Vigil stands
   where it stands. Combat (the star-metal sword already exists and "hums, patiently").
 

@@ -36,7 +36,9 @@ const ATLAS_DEF = {
   road12:[64,64,16,16], road13:[80,64,16,16], road14:[96,64,16,16], road15:[112,64,16,16],
   player0:[0,80,16,24], player1:[16,80,16,24], player2:[32,80,16,24],
   npc0:[48,80,16,24], npc1:[64,80,16,24], npc2:[80,80,16,24], npc3:[96,80,16,24],
-  npc4:[0,104,16,24], npc5:[16,104,16,24], npc6:[32,104,16,24], npc7:[48,104,16,24]
+  npc4:[0,104,16,24], npc5:[16,104,16,24], npc6:[32,104,16,24], npc7:[48,104,16,24],
+  playerD1:[80,104,16,24], playerD2:[96,104,16,24], playerL0:[112,104,16,24],
+  playerU0:[0,128,16,24], playerU1:[16,128,16,24], playerU2:[32,128,16,24]
 };
 /*ATLAS_DEF_END*/
 
@@ -45,7 +47,7 @@ const ATLAS_DEF = {
 const NPC_COLORS = ['#b8c4e8','#d8b47e','#8a7f6a','#9aa5b8','#c9a8d8','#d89a7e','#b89a78','#e8d454'];
 
 const atlas = document.getElementById('atlas');
-atlas.width = 128; atlas.height = 128;
+atlas.width = 128; atlas.height = 160;
 const ctx = atlas.getContext('2d');
 
 const OW = new Image(), CH = new Image();
@@ -199,11 +201,18 @@ for(let mask=0; mask<16; mask++){
 
 /* ---------------- people: hero frames, cropped 16x24, NPCs recolored ----- */
 /* character.png frames are 16x32; the figure lives in the lower ~24px.
-   Row 0 (y=0): walk down. Profile row (y=64): used for walk L/R via flip. */
+   Row groups: y=0 walk down · y=64 left profile · y=128 walk up (back view).
+   Right-facing is the left profile flipped at draw time. */
 const CROP_Y = 8;
-put(CH, 0,  32*0+CROP_Y, 'player0', { sh:24 });   // down-facing idle
-put(CH, 16, 32*2+CROP_Y, 'player1', { sh:24 });   // profile stride A
-put(CH, 48, 32*2+CROP_Y, 'player2', { sh:24 });   // profile stride B
+put(CH, 0,  32*0+CROP_Y, 'player0',  { sh:24 });  // idle, facing down
+put(CH, 16, 32*0+CROP_Y, 'playerD1', { sh:24 });  // walk down A
+put(CH, 48, 32*0+CROP_Y, 'playerD2', { sh:24 });  // walk down B
+put(CH, 0,  32*2+CROP_Y, 'playerL0', { sh:24 });  // idle, profile
+put(CH, 16, 32*2+CROP_Y, 'player1',  { sh:24 });  // walk profile A
+put(CH, 48, 32*2+CROP_Y, 'player2',  { sh:24 });  // walk profile B
+put(CH, 0,  32*4+CROP_Y, 'playerU0', { sh:24 });  // idle, facing up
+put(CH, 16, 32*4+CROP_Y, 'playerU1', { sh:24 });  // walk up A
+put(CH, 48, 32*4+CROP_Y, 'playerU2', { sh:24 });  // walk up B
 NPC_COLORS.forEach((c,i)=> put(CH, 0, CROP_Y, 'npc'+i, { sh:24 }) );
 
 /* recolor npc shirts: strong-red pixels → the npc's robe color */

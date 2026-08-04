@@ -141,7 +141,7 @@
 
 <script>
 'use strict';
-const VERSION='0.3.0';
+const VERSION='0.3.1';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -236,7 +236,7 @@ const objects = []; // {x,y,type}
 const objectAt=(x,y)=>objects.find(o=>o.x===x&&o.y===y);
 
 /* ---------- game state ---------- */
-const P = { x:17, y:60, rx:17, ry:60, face:1 }; // player tile + render position + facing
+const P = { x:17, y:60, rx:17, ry:60, dir:'down' }; // player tile + render position + 4-way facing
 let path = [];                                  // queued steps [{x,y}...]
 let pending = null;                             // interaction on arrival
 let stepClock = 0;
@@ -525,7 +525,7 @@ function saveGame(){
   if(!started) return;
   try{
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      v:1, x:P.x, y:P.y, face:P.face, time, inv, F, V,
+      v:1, x:P.x, y:P.y, dir:P.dir, time, inv, F, V,
       topics:[...knownTopics], doors:[...openDoors], seen:[...explored],
       left:objects.filter(o=>o.type!=='body').map(o=>o.x+','+o.y)
     }));
@@ -540,7 +540,7 @@ function loadGame(){
     say('Your old tale could not follow you here; the vale begins anew.');
     return false;
   }
-  P.x=s.x; P.y=s.y; P.rx=s.x; P.ry=s.y; P.face=s.face||1;
+  P.x=s.x; P.y=s.y; P.rx=s.x; P.ry=s.y; P.dir=s.dir||'down';
   time=s.time|0;
   Object.assign(inv,s.inv); Object.assign(F,s.F); Object.assign(V,s.V);
   for(const t of s.topics) knownTopics.add(t);
@@ -724,11 +724,13 @@ const ATLAS_DEF = {
   road12:[64,64,16,16], road13:[80,64,16,16], road14:[96,64,16,16], road15:[112,64,16,16],
   player0:[0,80,16,24], player1:[16,80,16,24], player2:[32,80,16,24],
   npc0:[48,80,16,24], npc1:[64,80,16,24], npc2:[80,80,16,24], npc3:[96,80,16,24],
-  npc4:[0,104,16,24], npc5:[16,104,16,24], npc6:[32,104,16,24], npc7:[48,104,16,24]
+  npc4:[0,104,16,24], npc5:[16,104,16,24], npc6:[32,104,16,24], npc7:[48,104,16,24],
+  playerD1:[80,104,16,24], playerD2:[96,104,16,24], playerL0:[112,104,16,24],
+  playerU0:[0,128,16,24], playerU1:[16,128,16,24], playerU2:[32,128,16,24]
 };
 /*ATLAS_DEF_END*/
 const NPC_COLORS=['#b8c4e8','#d8b47e','#8a7f6a','#9aa5b8','#c9a8d8','#d89a7e','#b89a78','#e8d454'];
-const ATLAS_W=128, ATLAS_H=128;
+const ATLAS_W=128, ATLAS_H=160;
 
 let atlasReady=false, atlasCv=null, terrainCv=null;
 const atlasImg=new Image();
@@ -870,8 +872,13 @@ function draw(now){
     drawSprite(npcCell(n), n.x*ts-camX, n.y*ts-camY);
   }
   const walking = path.length>0 || Math.abs(P.x-P.rx)+Math.abs(P.y-P.ry)>0.02;
-  const frame = walking ? (Math.floor(now/150)%2 ? 'player1':'player2') : 'player0';
-  drawSprite(frame, Math.round(P.rx*ts-camX), Math.round(P.ry*ts-camY), P.face>0); // art faces left
+  const ph = Math.floor(now/150)%2;
+  let frame, flip=false;
+  if(P.dir==='up')        frame = walking ? (ph?'playerU1':'playerU2') : 'playerU0';
+  else if(P.dir==='down') frame = walking ? (ph?'playerD1':'playerD2') : 'player0';
+  else { frame = walking ? (ph?'player1':'player2') : 'playerL0';
+         flip = P.dir==='right'; }              // profile art faces left
+  drawSprite(frame, Math.round(P.rx*ts-camX), Math.round(P.ry*ts-camY), flip);
 
   // 5. fog & night, upscaled from the lightmap with smoothing for soft edges
   ctx.imageSmoothingEnabled=true;
@@ -938,7 +945,8 @@ function step(){
   const nxt=path.shift();
   if(!walkable(nxt.x,nxt.y)){ path=[]; return; }
   const wasNight=isNight();
-  if(nxt.x!==P.x) P.face = nxt.x>P.x ? 1 : -1;
+  if(nxt.y>P.y) P.dir='down'; else if(nxt.y<P.y) P.dir='up';
+  else if(nxt.x>P.x) P.dir='right'; else if(nxt.x<P.x) P.dir='left';
   P.x=nxt.x; P.y=nxt.y;
   time++;
   if(grid[P.y][P.x]==='+' && !openDoors.has(P.x+','+P.y)){

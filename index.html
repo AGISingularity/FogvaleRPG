@@ -112,7 +112,7 @@
   as your own two eyes allow — no further. Tap the land to walk it. Tap people to speak.
   What you learn from one mouth, you may ask of another.</p>
   <button id="beginBtn">Enter the Vale</button>
-  <div class="note">A prototype in one file · progress is not saved if you refresh</div>
+  <div class="note">Your tale is remembered on this device · clearing browser data clears the vale's memory of you</div>
 </div>
 
 <div id="endcard" class="full">
@@ -233,7 +233,7 @@ const objects = []; // {x,y,type}
 const objectAt=(x,y)=>objects.find(o=>o.x===x&&o.y===y);
 
 /* ---------- game state ---------- */
-const P = { x:17, y:60, rx:17, ry:60 };        // player tile + render position
+const P = { x:17, y:60, rx:17, ry:60, face:1 }; // player tile + render position + facing
 let path = [];                                  // queued steps [{x,y}...]
 let pending = null;                             // interaction on arrival
 let stepClock = 0;
@@ -292,6 +292,7 @@ function computeFOV(){
   const R = sightRadius();
   for(let o=0;o<8;o++) castLight(P.x,P.y,1,1.0,0.0,R,MULT[0][o],MULT[1][o],MULT[2][o],MULT[3][o]);
   for(const v of visible) explored.add(v);
+  updateFog();
 }
 
 /* ---------- pathfinding: A* (4-way) ---------- */
@@ -514,6 +515,42 @@ function chapterEnd(){
   document.getElementById('endcard').style.display='block';
 }
 
+/* ---------- autosave: localStorage, per-browser -------------------------- */
+const SAVE_KEY='fogvale_ch1';
+let started=false;                               // true once the intro is dismissed
+function saveGame(){
+  if(!started) return;
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      v:1, x:P.x, y:P.y, face:P.face, time, inv, F, V,
+      topics:[...knownTopics], doors:[...openDoors], seen:[...explored],
+      left:objects.filter(o=>o.type!=='body').map(o=>o.x+','+o.y)
+    }));
+  }catch(e){ /* storage may be unavailable (private mode) — play on */ }
+}
+function loadGame(){
+  let s=null;
+  try{ s=JSON.parse(localStorage.getItem(SAVE_KEY)); }catch(e){}
+  if(!s) return false;
+  if(s.v!==1){
+    try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+    say('Your old tale could not follow you here; the vale begins anew.');
+    return false;
+  }
+  P.x=s.x; P.y=s.y; P.rx=s.x; P.ry=s.y; P.face=s.face||1;
+  time=s.time|0;
+  Object.assign(inv,s.inv); Object.assign(F,s.F); Object.assign(V,s.V);
+  for(const t of s.topics) knownTopics.add(t);
+  for(const d of s.doors) openDoors.add(d);
+  for(const k of s.seen) explored.add(k);
+  const keep=new Set(s.left);
+  for(let i=objects.length-1;i>=0;i--){
+    const o=objects[i];
+    if(o.type!=='body' && !keep.has(o.x+','+o.y)) objects.splice(i,1);
+  }
+  return true;
+}
+
 /* ===================================================================
    UI — dialogue, shop, bag, hud
    =================================================================== */
@@ -646,156 +683,194 @@ $('bagClose').onclick=()=>{$('bag').style.display='none';};
 $('helpBtn').onclick=()=>{$('help').style.display='block';};
 $('helpClose').onclick=()=>{$('help').style.display='none';};
 $('endClose').onclick=()=>{$('endcard').style.display='none';};
-$('beginBtn').onclick=()=>{ $('intro').style.display='none';
+$('beginBtn').onclick=()=>{ $('intro').style.display='none'; started=true; saveGame();
   say('Brookhollow. Smoke from a few chimneys; a road; silence of the wrong kind.');
   say('<i>(Tap the ground to walk. The elder\'s letter mentioned her house near the village square.)</i>'); };
 
 /* ===================================================================
-   RENDERING
+   RENDERING — pixel-art atlas (assets/tiles.png) + cached layers
+   Terrain never changes (except doors), so the whole map is baked once
+   to an offscreen canvas; fog/night live in a 1px-per-tile lightmap
+   drawn upscaled with bilinear smoothing for a soft vision edge.
    =================================================================== */
 const cv=$('cv'), ctx=cv.getContext('2d');
 let dpr=1, vw=0, vh=0, ts=36;
 function resize(){
-  dpr=Math.min(window.devicePixelRatio||1,3);
+  dpr=Math.min(window.devicePixelRatio||1,2);   // 2 is plenty for pixel art
   vw=window.innerWidth; vh=window.innerHeight;
   cv.width=vw*dpr; cv.height=vh*dpr;
   cv.style.width=vw+'px'; cv.style.height=vh+'px';
   ts=Math.max(26, Math.min(46, Math.floor(Math.min(vw,vh)/11)));
+  if(atlasReady){ bakeAtlas(); bakeTerrain(); }
 }
-window.addEventListener('resize',resize); resize();
+window.addEventListener('resize',resize);
 
-const GRASS=['#37622f','#3a6835','#356030'];
-function tileBase(x,y){
-  const c=grid[y][x];
-  switch(c){
-    case 'g': return GRASS[(x*7+y*13)%3];
-    case 't': return GRASS[(x*7+y*13)%3];
-    case 'm': return '#57545f';
-    case 'w': return '#27508f';
-    case 'r': return '#9d8a60';
-    case 'b': return '#7a5c3a';
-    case '#': return '#3b3547';
-    case 'f': return '#6b5233';
-    case '+': return '#6b5233';
-    case 'S': return GRASS[(x*7+y*13)%3];
-  }
-  return '#000';
+/* cell order must match NAMES in tools/atlas.html (make-atlas.mjs verifies) */
+const ATLAS_NAMES = [
+  'grass0','grass1','grass2','tree','mtn0','mtn1','waterA','waterB',
+  'shoreN','shoreE','shoreS','shoreW','bridge','wall','floor','doorC',
+  'doorO','shrine','herb','mushroom','body','player0','player1','player2',
+  'road0','road1','road2','road3','road4','road5','road6','road7',
+  'road8','road9','road10','road11','road12','road13','road14','road15',
+  'npc0','npc1','npc2','npc3','npc4','npc5','npc6','npc7'
+];
+const AT={}; ATLAS_NAMES.forEach((n,i)=>AT[n]=i);
+const NPC_COLORS=['#b8c4e8','#d8b47e','#8a7f6a','#9aa5b8','#c9a8d8','#d89a7e','#b89a78','#e8d454'];
+const ACOLS=8;
+
+let atlasReady=false, atlasCv=null, terrainCv=null;
+const atlasImg=new Image();
+atlasImg.onload=()=>{ atlasReady=true; resize(); };
+atlasImg.onerror=()=>{ say('The vale is missing its colors (assets/tiles.png failed to load).'); };
+atlasImg.src='assets/tiles.png';
+resize();
+
+function bakeAtlas(){
+  atlasCv=document.createElement('canvas');
+  atlasCv.width=ACOLS*ts; atlasCv.height=Math.ceil(ATLAS_NAMES.length/ACOLS)*ts;
+  const c=atlasCv.getContext('2d'); c.imageSmoothingEnabled=false;
+  for(let i=0;i<ATLAS_NAMES.length;i++)
+    c.drawImage(atlasImg,(i%ACOLS)*16,(i/ACOLS|0)*16,16,16,(i%ACOLS)*ts,(i/ACOLS|0)*ts,ts,ts);
 }
-function drawTileDetail(c,sx,sy,x,y){
-  switch(c){
-    case 't':
-      ctx.fillStyle='#4a3620'; ctx.fillRect(sx+ts*0.44,sy+ts*0.55,ts*0.14,ts*0.3);
-      ctx.fillStyle='#1f4d24'; ctx.beginPath(); ctx.arc(sx+ts/2,sy+ts*0.4,ts*0.34,0,7); ctx.fill();
-      ctx.fillStyle='#2a6330'; ctx.beginPath(); ctx.arc(sx+ts*0.42,sy+ts*0.34,ts*0.18,0,7); ctx.fill();
-      break;
-    case 'm':
-      ctx.fillStyle='#6e6b78'; ctx.beginPath();
-      ctx.moveTo(sx+ts*0.5,sy+ts*0.12); ctx.lineTo(sx+ts*0.92,sy+ts*0.9); ctx.lineTo(sx+ts*0.08,sy+ts*0.9);
-      ctx.closePath(); ctx.fill();
-      ctx.fillStyle='#8d8a9a'; ctx.beginPath();
-      ctx.moveTo(sx+ts*0.5,sy+ts*0.12); ctx.lineTo(sx+ts*0.66,sy+ts*0.42); ctx.lineTo(sx+ts*0.36,sy+ts*0.42);
-      ctx.closePath(); ctx.fill();
-      break;
-    case 'w':
-      ctx.strokeStyle='#3a6ab0'; ctx.lineWidth=1.4; ctx.beginPath();
-      ctx.moveTo(sx+ts*0.15,sy+ts*(0.35+((x+y)%2)*0.3));
-      ctx.quadraticCurveTo(sx+ts*0.5,sy+ts*(0.25+((x+y)%2)*0.3), sx+ts*0.85,sy+ts*(0.35+((x+y)%2)*0.3));
-      ctx.stroke();
-      break;
-    case 'b':
-      ctx.strokeStyle='#5d4227'; ctx.lineWidth=1.5;
-      for(let i=1;i<4;i++){ ctx.beginPath(); ctx.moveTo(sx,sy+ts*i/4); ctx.lineTo(sx+ts,sy+ts*i/4); ctx.stroke(); }
-      break;
-    case '#':
-      ctx.fillStyle='#4a4459'; ctx.fillRect(sx,sy,ts,ts*0.28);
-      ctx.strokeStyle='#2c2736'; ctx.lineWidth=1;
-      ctx.strokeRect(sx+0.5,sy+0.5,ts-1,ts-1);
-      break;
-    case 'f':
-      ctx.strokeStyle='#5d4527'; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(sx,sy+ts/2); ctx.lineTo(sx+ts,sy+ts/2); ctx.stroke();
-      break;
-    case '+': {
-      const open=openDoors.has(x+','+y);
-      ctx.fillStyle= open ? '#6b5233' : '#8a6234';
-      ctx.fillRect(sx+ts*0.08,sy+ts*0.08,ts*0.84,ts*0.84);
-      ctx.strokeStyle='#4a3620'; ctx.lineWidth=2;
-      ctx.strokeRect(sx+ts*0.08,sy+ts*0.08,ts*0.84,ts*0.84);
-      if(!open){ ctx.fillStyle='#e8c454'; ctx.beginPath(); ctx.arc(sx+ts*0.72,sy+ts*0.52,ts*0.06,0,7); ctx.fill(); }
-      break; }
-    case 'S':
-      ctx.fillStyle='#9aa0a8'; ctx.fillRect(sx+ts*0.3,sy+ts*0.12,ts*0.4,ts*0.78);
-      ctx.strokeStyle='#e8c454'; ctx.lineWidth=1.4;
-      ctx.beginPath(); ctx.arc(sx+ts*0.5,sy+ts*0.34,ts*0.09,0,7); ctx.stroke();
-      ctx.beginPath(); ctx.arc(sx+ts*0.42,sy+ts*0.5,ts*0.09,0,7); ctx.stroke();
-      ctx.beginPath(); ctx.arc(sx+ts*0.58,sy+ts*0.5,ts*0.09,0,7); ctx.stroke();
-      break;
-  }
-}
-function drawPerson(sx,sy,color,isPlayer){
-  ctx.fillStyle='rgba(0,0,0,.3)';
-  ctx.beginPath(); ctx.ellipse(sx+ts/2,sy+ts*0.84,ts*0.24,ts*0.09,0,0,7); ctx.fill();
-  ctx.fillStyle=color;
-  ctx.beginPath(); ctx.ellipse(sx+ts/2,sy+ts*0.6,ts*0.2,ts*0.26,0,0,7); ctx.fill();
-  ctx.fillStyle= isPlayer ? '#f2d5b0' : '#e0c09a';
-  ctx.beginPath(); ctx.arc(sx+ts/2,sy+ts*0.3,ts*0.15,0,7); ctx.fill();
-  if(isPlayer){ ctx.strokeStyle='#fff'; ctx.lineWidth=1.2;
-    ctx.beginPath(); ctx.arc(sx+ts/2,sy+ts*0.55,ts*0.3,0,7); ctx.stroke(); }
-}
-function drawObject(o,sx,sy){
-  if(o.type==='herb'){
-    ctx.strokeStyle='#7dd870'; ctx.lineWidth=1.6;
-    ctx.beginPath(); ctx.moveTo(sx+ts*0.5,sy+ts*0.75); ctx.lineTo(sx+ts*0.5,sy+ts*0.45);
-    ctx.moveTo(sx+ts*0.5,sy+ts*0.6); ctx.lineTo(sx+ts*0.36,sy+ts*0.48);
-    ctx.moveTo(sx+ts*0.5,sy+ts*0.6); ctx.lineTo(sx+ts*0.64,sy+ts*0.48); ctx.stroke();
-  } else if(o.type==='mushroom'){
-    ctx.fillStyle='#e8e2d0'; ctx.fillRect(sx+ts*0.45,sy+ts*0.5,ts*0.1,ts*0.25);
-    ctx.fillStyle='#4a7ec9'; ctx.beginPath(); ctx.arc(sx+ts*0.5,sy+ts*0.5,ts*0.18,Math.PI,0); ctx.fill();
-  } else if(o.type==='body'){
-    ctx.fillStyle='#cfc8b2';
-    ctx.beginPath(); ctx.ellipse(sx+ts/2,sy+ts*0.55,ts*0.34,ts*0.2,0,0,7); ctx.fill();
-    ctx.strokeStyle='#8a8474'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.ellipse(sx+ts/2,sy+ts*0.55,ts*0.34,ts*0.2,0,0,7); ctx.stroke();
-  }
+function blitCell(c,name,dx,dy){
+  const i=AT[name];
+  c.drawImage(atlasCv,(i%ACOLS)*ts,(i/ACOLS|0)*ts,ts,ts,dx,dy,ts,ts);
 }
 
-function draw(){
+const isWet=(x,y)=>{ const t=grid[y]&&grid[y][x]; return t==='w'||t==='b'; };
+function shoreCells(x,y){
+  const o=[];
+  if(!isWet(x,y-1)) o.push('shoreN');
+  if(!isWet(x,y+1)) o.push('shoreS');
+  if(!isWet(x-1,y)) o.push('shoreW');
+  if(!isWet(x+1,y)) o.push('shoreE');
+  return o;
+}
+function roadMask(x,y){
+  const rd=(ax,ay)=>{ const t=grid[ay]&&grid[ay][ax]; return t==='r'||t==='b'; };
+  return (rd(x,y-1)?1:0)|(rd(x+1,y)?2:0)|(rd(x,y+1)?4:0)|(rd(x-1,y)?8:0);
+}
+function tileCells(x,y){
+  const c=grid[y][x], g='grass'+((x*7+y*13)%3);
+  switch(c){
+    case 'g': return [g];
+    case 't': return [g,'tree'];
+    case 'S': return [g,'shrine'];
+    case 'm': return ['mtn'+((x*5+y*11)%2)];
+    case 'w': return ['waterA', ...shoreCells(x,y)];
+    case 'b': return ['waterA','bridge'];
+    case 'r': return ['road'+roadMask(x,y)];
+    case '#': return ['wall'];
+    case 'f': return ['floor'];
+    case '+': return [openDoors.has(x+','+y)?'doorO':'doorC'];
+  }
+  return [g];
+}
+function bakeTerrain(){
+  terrainCv=document.createElement('canvas');
+  terrainCv.width=W*ts; terrainCv.height=H*ts;
+  const c=terrainCv.getContext('2d'); c.imageSmoothingEnabled=false;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)
+    for(const n of tileCells(x,y)) blitCell(c,n,x*ts,y*ts);
+}
+function patchTerrainTile(x,y){
+  if(!terrainCv) return;
+  const c=terrainCv.getContext('2d'); c.imageSmoothingEnabled=false;
+  for(const n of tileCells(x,y)) blitCell(c,n,x*ts,y*ts);
+}
+/* water tiles that shimmer (bridges keep still planks over them) */
+const waterTiles=[];
+for(let y=0;y<H;y++)for(let x=0;x<W;x++)
+  if(grid[y][x]==='w') waterTiles.push({x,y,shores:shoreCells(x,y)});
+
+/* ---------- fog & night lightmap (1px per tile, upscaled bilinear) ------- */
+const fogCv=document.createElement('canvas'); fogCv.width=W; fogCv.height=H;
+const fogCtx=fogCv.getContext('2d');
+const fogImg=fogCtx.createImageData(W,H);
+function updateFog(){
+  const d=fogImg.data, night=isNight(), R=sightRadius();
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const i=(y*W+x)*4, k=x+','+y;
+    let r=7,g=8,b=15,a;
+    if(!explored.has(k)) a=255;
+    else if(!visible.has(k)){ a=175; if(night){ r=13; g=12; b=30; a=200; } }
+    else{
+      const dist=Math.hypot(x-P.x,y-P.y);
+      a=Math.max(0,Math.min(1,(dist-(R-2.5))/2.5))*150;  // soft edge of sight
+      if(night){ r=30; g=24; b=58; a=Math.max(a,92); }    // warm indigo dusk
+    }
+    d[i]=r; d[i+1]=g; d[i+2]=b; d[i+3]=a;
+  }
+  fogCtx.putImageData(fogImg,0,0);
+}
+
+function drawSprite(name,sx,sy,flip){
+  const i=AT[name], ax=(i%ACOLS)*ts, ay=(i/ACOLS|0)*ts;
+  if(flip){
+    ctx.save(); ctx.translate(sx+ts,sy); ctx.scale(-1,1);
+    ctx.drawImage(atlasCv,ax,ay,ts,ts,0,0,ts,ts);
+    ctx.restore();
+  } else ctx.drawImage(atlasCv,ax,ay,ts,ts,sx,sy,ts,ts);
+}
+const OBJ_CELL={ herb:'herb', mushroom:'mushroom', body:'body' };
+const npcCell = n => 'npc'+Math.max(0,NPC_COLORS.indexOf(n.c));
+
+function draw(now){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.fillStyle='#07080f'; ctx.fillRect(0,0,vw,vh);
-  const camX=P.rx*ts+ts/2-vw/2, camY=P.ry*ts+ts/2-vh/2;
-  const x0=Math.max(0,Math.floor(camX/ts)-1), x1=Math.min(W-1,Math.ceil((camX+vw)/ts)+1);
-  const y0=Math.max(0,Math.floor(camY/ts)-1), y1=Math.min(H-1,Math.ceil((camY+vh)/ts)+1);
+  if(!atlasReady||!terrainCv) return;
+  const camX=Math.round(P.rx*ts+ts/2-vw/2), camY=Math.round(P.ry*ts+ts/2-vh/2);
   const night=isNight();
-  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
-    const k=x+','+y, vis=visible.has(k), mem=explored.has(k);
-    if(!vis && !mem) continue;
-    const sx=Math.round(x*ts-camX), sy=Math.round(y*ts-camY);
-    ctx.fillStyle=tileBase(x,y); ctx.fillRect(sx,sy,ts+1,ts+1);
-    drawTileDetail(grid[y][x],sx,sy,x,y);
-    if(vis){
-      const o=objectAt(x,y); if(o) drawObject(o,sx,sy);
-      if(night){ ctx.fillStyle='rgba(24,32,80,.34)'; ctx.fillRect(sx,sy,ts+1,ts+1); }
-    } else {
-      ctx.fillStyle='rgba(7,9,18,.66)'; ctx.fillRect(sx,sy,ts+1,ts+1);
+  ctx.imageSmoothingEnabled=false;
+
+  // 1. the whole terrain in one blit (GPU clips to the viewport)
+  ctx.drawImage(terrainCv,-camX,-camY);
+
+  // 2. water shimmer: swap in frame B on visible river tiles
+  if(Math.floor(now/600)%2===1){
+    for(const wt of waterTiles){
+      const sx=wt.x*ts-camX, sy=wt.y*ts-camY;
+      if(sx<-ts||sy<-ts||sx>vw||sy>vh) continue;
+      if(!visible.has(wt.x+','+wt.y)) continue;
+      drawSprite('waterB',sx,sy);
+      for(const s of wt.shores) drawSprite(s,sx,sy);
     }
   }
-  // path preview
+
+  // 3. path preview
   ctx.fillStyle='rgba(232,196,84,.5)';
   for(const p of path){
-    const sx=Math.round(p.x*ts-camX), sy=Math.round(p.y*ts-camY);
+    const sx=p.x*ts-camX, sy=p.y*ts-camY;
     ctx.beginPath(); ctx.arc(sx+ts/2,sy+ts/2,ts*0.08,0,7); ctx.fill();
   }
-  // npcs (only when in live sight)
+
+  // 4. objects & people (live sight only)
+  for(const o of objects){
+    if(!visible.has(o.x+','+o.y)) continue;
+    const sx=o.x*ts-camX, sy=o.y*ts-camY;
+    if(sx<-ts||sy<-ts||sx>vw||sy>vh) continue;
+    drawSprite(OBJ_CELL[o.type],sx,sy);
+  }
   for(const n of npcs){
     if(!visible.has(n.x+','+n.y)) continue;
-    drawPerson(Math.round(n.x*ts-camX),Math.round(n.y*ts-camY),n.c,false);
+    drawSprite(npcCell(n), n.x*ts-camX, n.y*ts-camY);
   }
-  drawPerson(Math.round(P.rx*ts-camX),Math.round(P.ry*ts-camY),'#5a7ec9',true);
-  // torch glow at night
+  const walking = path.length>0 || Math.abs(P.x-P.rx)+Math.abs(P.y-P.ry)>0.02;
+  const frame = walking ? (Math.floor(now/150)%2 ? 'player1':'player2') : 'player0';
+  drawSprite(frame, Math.round(P.rx*ts-camX), Math.round(P.ry*ts-camY), P.face<0);
+
+  // 5. fog & night, upscaled from the lightmap with smoothing for soft edges
+  ctx.imageSmoothingEnabled=true;
+  ctx.drawImage(fogCv,0,0,W,H,-camX,-camY,W*ts,H*ts);
+  ctx.imageSmoothingEnabled=false;
+
+  // 6. light-source glow at night, with a live flicker
   if(night && (inv.torch||inv.lantern)){
     const gx=P.rx*ts+ts/2-camX, gy=P.ry*ts+ts/2-camY;
-    const g=ctx.createRadialGradient(gx,gy,ts*0.2,gx,gy,ts*sightRadius());
-    g.addColorStop(0,'rgba(255,190,90,.16)'); g.addColorStop(1,'rgba(255,190,90,0)');
+    const fl = inv.lantern ? 1 : 1 + 0.05*Math.sin(now/90) + 0.04*Math.sin(now/47+2);
+    const g=ctx.createRadialGradient(gx,gy,ts*0.2,gx,gy,ts*sightRadius()*fl);
+    g.addColorStop(0,'rgba(255,176,76,'+(inv.lantern?0.16:0.15+0.04*Math.sin(now/71))+')');
+    g.addColorStop(1,'rgba(255,176,76,0)');
     ctx.fillStyle=g; ctx.fillRect(0,0,vw,vh);
   }
 }
@@ -849,10 +924,12 @@ function step(){
   const nxt=path.shift();
   if(!walkable(nxt.x,nxt.y)){ path=[]; return; }
   const wasNight=isNight();
+  if(nxt.x!==P.x) P.face = nxt.x>P.x ? 1 : -1;
   P.x=nxt.x; P.y=nxt.y;
   time++;
   if(grid[P.y][P.x]==='+' && !openDoors.has(P.x+','+P.y)){
     openDoors.add(P.x+','+P.y); say('The door opens with a complaint of hinges.');
+    patchTerrainTile(P.x,P.y);
   }
   const o=objectAt(P.x,P.y);
   if(o && (o.type==='herb'||o.type==='mushroom')){
@@ -888,11 +965,17 @@ function loop(t){
   P.rx+=(P.x-P.rx)*0.35; P.ry+=(P.y-P.ry)*0.35;
   if(Math.abs(P.x-P.rx)<0.01) P.rx=P.x;
   if(Math.abs(P.y-P.ry)<0.01) P.ry=P.y;
-  draw();
+  draw(t);
 }
 
+if(loadGame()){
+  started=true; $('intro').style.display='none';
+  say('The vale remembers you. Your road resumes where it paused.');
+}
 computeFOV();
 updHud();
+setInterval(saveGame, 4000);
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) saveGame(); });
 requestAnimationFrame(loop);
 </script>
 </body>

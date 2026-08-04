@@ -11,9 +11,11 @@ server required. Open it in any mobile or desktop browser.
   Trees, mountains, and walls block vision; explored terrain stays as dimmed "memory,"
   but people and items only render in live sight. The vision edge fades softly via an
   upscaled per-tile lightmap rather than a hard tile cutoff.
-- **Pixel-art rendering** — a 16×16 tile atlas (code-generated, see `tools/`) with
-  grass variants, road autotiling (16 edge cases), river shores, 2-frame water
-  shimmer, a player walk cycle with facing, and per-NPC robe colors. The full map is
+- **Pixel-art rendering** — a 16px tile atlas composited by `tools/` from the CC0
+  "Zelda-like tilesets and sprites" pack by ArMM1998 (see `assets/CREDITS.md`):
+  textured grass, road autotiling (16 edge cases), foam river shores, 2-frame water
+  shimmer, tall trees and characters (16×24, feet-aligned, overhanging the tile
+  above), and per-NPC shirt recolors of the pack's hero sprite. The full map is
   baked once to an offscreen canvas, so a frame is a handful of blits.
 - **Tap-to-walk** — A* pathfinding; tapping a person or object walks over and interacts.
 - **Day/night** — at night sight collapses to 2 tiles; a torch widens it to 4 (and
@@ -38,8 +40,9 @@ server required. Open it in any mobile or desktop browser.
 | Path | What it holds |
 |---|---|
 | `index.html` | The whole game (see section table below) |
-| `assets/tiles.png` | The 48-cell spritesheet the game renders from |
-| `tools/atlas.html` | The pixel art itself, authored as code (string maps + procedural tiles) |
+| `assets/tiles.png` | The spritesheet the game renders from (`assets/CREDITS.md` for art credits) |
+| `tools/atlas.html` | Atlas compositor: crops/recolors the CC0 source sheets, builds autotiles |
+| `tools/src/` | Vendored CC0 source sheets (ArMM1998's Zelda-like pack) |
 | `tools/make-atlas.mjs` | Renders `atlas.html` headless → writes `assets/tiles.png` + a preview |
 | `test/run.mjs` | Headless Playwright test harness (see Development) |
 
@@ -64,9 +67,11 @@ One-time setup: `npm install && npx playwright install chromium`.
   errors, A* reachability of every key destination, save/restore round-trip,
   day/night screenshots, and a frame-time profile under 4× CPU throttle. Run it
   before every push; pushing to `main` deploys the live game.
-- `node tools/make-atlas.mjs` — regenerate `assets/tiles.png` after editing the art
-  in `tools/atlas.html` (it also fails loudly if the atlas cell order and
-  `index.html`'s `ATLAS_NAMES` copy drift apart).
+- `node tools/make-atlas.mjs` — regenerate `assets/tiles.png` after editing
+  `tools/atlas.html` (it also fails loudly if the sprite-rect table and
+  `index.html`'s `ATLAS_DEF` copy drift apart).
+- The version stamp (`VERSION` in `index.html`) shows on the intro card and the
+  How to Play screen, and cache-busts the spritesheet URL — bump it on release.
 
 ## Known limitations (prototype)
 

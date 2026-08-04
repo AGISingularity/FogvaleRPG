@@ -113,6 +113,7 @@
   What you learn from one mouth, you may ask of another.</p>
   <button id="beginBtn">Enter the Vale</button>
   <div class="note">Your tale is remembered on this device · clearing browser data clears the vale's memory of you</div>
+  <div class="note" id="verNote"></div>
 </div>
 
 <div id="endcard" class="full">
@@ -128,17 +129,19 @@
   sight; the world stays dark until you've laid eyes on it.</p>
   <p><b>Talk</b> — tap a person. Conversation runs on <i>topics</i>: words you learn from one
   person can be asked of everyone else. Listen for names.</p>
-  <p><b>Earn</b> — walk over herbs (small green sprigs) and bluecap mushrooms to gather them.
+  <p><b>Earn</b> — walk over wortleaf herbs (small white-flowered sprigs) and bluecap mushrooms to gather them.
   Shops buy them — and pay far better the further the town is from where things grow.</p>
   <p><b>Night</b> — when night falls your sight closes to a few steps. A torch helps.
   A lantern helps more. Both are for sale... somewhere.</p>
   <p><b>The unseen</b> — some of what you do is measured, though no number will ever show it.
   A seer lives at the south edge of Brookhollow, if you want a mirror.</p>
   <button id="helpClose">Back</button>
+  <div class="note" id="helpVer"></div>
 </div>
 
 <script>
 'use strict';
+const VERSION='0.3.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -705,36 +708,46 @@ function resize(){
 }
 window.addEventListener('resize',resize);
 
-/* cell order must match NAMES in tools/atlas.html (make-atlas.mjs verifies) */
-const ATLAS_NAMES = [
-  'grass0','grass1','grass2','tree','mtn0','mtn1','waterA','waterB',
-  'shoreN','shoreE','shoreS','shoreW','bridge','wall','floor','doorC',
-  'doorO','shrine','herb','mushroom','body','player0','player1','player2',
-  'road0','road1','road2','road3','road4','road5','road6','road7',
-  'road8','road9','road10','road11','road12','road13','road14','road15',
-  'npc0','npc1','npc2','npc3','npc4','npc5','npc6','npc7'
-];
-const AT={}; ATLAS_NAMES.forEach((n,i)=>AT[n]=i);
+/* sprite rects in assets/tiles.png — must match tools/atlas.html
+   (make-atlas.mjs verifies the two copies are identical) */
+/*ATLAS_DEF_START*/
+const ATLAS_DEF = {
+  grass0:[0,0,16,16], grass1:[16,0,16,16], grass2:[32,0,16,16], tree:[48,0,16,16],
+  mtn0:[64,0,16,16], mtn1:[80,0,16,16], waterA:[96,0,16,16], waterB:[112,0,16,16],
+  shoreN:[0,16,16,16], shoreE:[16,16,16,16], shoreS:[32,16,16,16], shoreW:[48,16,16,16],
+  bridge:[64,16,16,16], wall:[80,16,16,16], floor:[96,16,16,16], doorC:[112,16,16,16],
+  doorO:[0,32,16,16], shrine:[16,32,16,16], herb:[32,32,16,16], mushroom:[48,32,16,16],
+  body:[64,32,16,16], tree2:[64,104,16,24],
+  road0:[0,48,16,16], road1:[16,48,16,16], road2:[32,48,16,16], road3:[48,48,16,16],
+  road4:[64,48,16,16], road5:[80,48,16,16], road6:[96,48,16,16], road7:[112,48,16,16],
+  road8:[0,64,16,16], road9:[16,64,16,16], road10:[32,64,16,16], road11:[48,64,16,16],
+  road12:[64,64,16,16], road13:[80,64,16,16], road14:[96,64,16,16], road15:[112,64,16,16],
+  player0:[0,80,16,24], player1:[16,80,16,24], player2:[32,80,16,24],
+  npc0:[48,80,16,24], npc1:[64,80,16,24], npc2:[80,80,16,24], npc3:[96,80,16,24],
+  npc4:[0,104,16,24], npc5:[16,104,16,24], npc6:[32,104,16,24], npc7:[48,104,16,24]
+};
+/*ATLAS_DEF_END*/
 const NPC_COLORS=['#b8c4e8','#d8b47e','#8a7f6a','#9aa5b8','#c9a8d8','#d89a7e','#b89a78','#e8d454'];
-const ACOLS=8;
+const ATLAS_W=128, ATLAS_H=128;
 
 let atlasReady=false, atlasCv=null, terrainCv=null;
 const atlasImg=new Image();
 atlasImg.onload=()=>{ atlasReady=true; resize(); };
 atlasImg.onerror=()=>{ say('The vale is missing its colors (assets/tiles.png failed to load).'); };
-atlasImg.src='assets/tiles.png';
+atlasImg.src='assets/tiles.png?v='+VERSION;
 resize();
 
 function bakeAtlas(){
+  const s=ts/16;
   atlasCv=document.createElement('canvas');
-  atlasCv.width=ACOLS*ts; atlasCv.height=Math.ceil(ATLAS_NAMES.length/ACOLS)*ts;
+  atlasCv.width=Math.ceil(ATLAS_W*s); atlasCv.height=Math.ceil(ATLAS_H*s);
   const c=atlasCv.getContext('2d'); c.imageSmoothingEnabled=false;
-  for(let i=0;i<ATLAS_NAMES.length;i++)
-    c.drawImage(atlasImg,(i%ACOLS)*16,(i/ACOLS|0)*16,16,16,(i%ACOLS)*ts,(i/ACOLS|0)*ts,ts,ts);
+  c.drawImage(atlasImg,0,0,atlasCv.width,atlasCv.height);
 }
+/* tall cells (h>16) are feet-aligned: they overhang the tile above */
 function blitCell(c,name,dx,dy){
-  const i=AT[name];
-  c.drawImage(atlasCv,(i%ACOLS)*ts,(i/ACOLS|0)*ts,ts,ts,dx,dy,ts,ts);
+  const s=ts/16, r=ATLAS_DEF[name];
+  c.drawImage(atlasCv, r[0]*s, r[1]*s, r[2]*s, r[3]*s, dx, dy-(r[3]-16)*s, r[2]*s, r[3]*s);
 }
 
 const isWet=(x,y)=>{ const t=grid[y]&&grid[y][x]; return t==='w'||t==='b'; };
@@ -754,7 +767,7 @@ function tileCells(x,y){
   const c=grid[y][x], g='grass'+((x*7+y*13)%3);
   switch(c){
     case 'g': return [g];
-    case 't': return [g,'tree'];
+    case 't': return [g,'tree2'];
     case 'S': return [g,'shrine'];
     case 'm': return ['mtn'+((x*5+y*11)%2)];
     case 'w': return ['waterA', ...shoreCells(x,y)];
@@ -805,12 +818,13 @@ function updateFog(){
 }
 
 function drawSprite(name,sx,sy,flip){
-  const i=AT[name], ax=(i%ACOLS)*ts, ay=(i/ACOLS|0)*ts;
+  const s=ts/16, r=ATLAS_DEF[name];
+  const w=r[2]*s, h=r[3]*s, dy=sy-(r[3]-16)*s;   // feet-aligned
   if(flip){
-    ctx.save(); ctx.translate(sx+ts,sy); ctx.scale(-1,1);
-    ctx.drawImage(atlasCv,ax,ay,ts,ts,0,0,ts,ts);
+    ctx.save(); ctx.translate(sx+w,dy); ctx.scale(-1,1);
+    ctx.drawImage(atlasCv,r[0]*s,r[1]*s,w,h,0,0,w,h);
     ctx.restore();
-  } else ctx.drawImage(atlasCv,ax,ay,ts,ts,sx,sy,ts,ts);
+  } else ctx.drawImage(atlasCv,r[0]*s,r[1]*s,w,h,sx,dy,w,h);
 }
 const OBJ_CELL={ herb:'herb', mushroom:'mushroom', body:'body' };
 const npcCell = n => 'npc'+Math.max(0,NPC_COLORS.indexOf(n.c));
@@ -857,7 +871,7 @@ function draw(now){
   }
   const walking = path.length>0 || Math.abs(P.x-P.rx)+Math.abs(P.y-P.ry)>0.02;
   const frame = walking ? (Math.floor(now/150)%2 ? 'player1':'player2') : 'player0';
-  drawSprite(frame, Math.round(P.rx*ts-camX), Math.round(P.ry*ts-camY), P.face<0);
+  drawSprite(frame, Math.round(P.rx*ts-camX), Math.round(P.ry*ts-camY), P.face>0); // art faces left
 
   // 5. fog & night, upscaled from the lightmap with smoothing for soft edges
   ctx.imageSmoothingEnabled=true;
@@ -968,6 +982,8 @@ function loop(t){
   draw(t);
 }
 
+$('verNote').textContent='v'+VERSION;
+$('helpVer').textContent='Fogvale v'+VERSION;
 if(loadGame()){
   started=true; $('intro').style.display='none';
   say('The vale remembers you. Your road resumes where it paused.');

@@ -9,9 +9,12 @@ the Codex). Chapter One ("The Stable Door") is complete and live on GitHub Pages
 https://agisingularity.github.io/FogvaleRPG/ — deployed from `main`, root folder.
 Every push to `main` redeploys automatically.
 
-The game is `index.html` (~980 lines) plus `assets/tiles.png`, a 48-cell pixel-art
-spritesheet generated from code in `tools/atlas.html` (export it with
-`node tools/make-atlas.mjs`). Engine: seeded deterministic map generation,
+The game is `index.html` (~1000 lines) plus `assets/tiles.png`, a pixel-art
+spritesheet composited by `tools/atlas.html` from the CC0 "Zelda-like tilesets and
+sprites" pack (ArMM1998; sources vendored in `tools/src/`, credits in
+`assets/CREDITS.md`; export with `node tools/make-atlas.mjs`). A `VERSION` const in
+`index.html` shows on the intro/help screens and cache-busts the spritesheet — bump
+it on every release. Engine: seeded deterministic map generation,
 recursive-shadowcasting fog of war rendered through a soft-edged lightmap, A*
 tap-to-walk, keyword-topic dialogue, a two-town distance-priced economy, a hidden
 Truth/Love/Courage score, and localStorage autosave (per-browser, saves on tab-hide +
@@ -46,9 +49,11 @@ it also profiles frame time under 4× CPU throttle.
 ## Roadmap — next level (in priority order)
 
 ### 1. Better graphics — DONE (Aug 2026)
-- Pixel-art tile atlas in `assets/tiles.png`, authored as code in `tools/atlas.html`.
-- Grass variants, 16-case road autotiling, river shore foam, 2-frame water shimmer,
-  torch flicker, player walk cycle with facing.
+- SNES-style art composited from ArMM1998's CC0 Zelda-like pack (v0.3.0): textured
+  terrain, stone buildings, castle doors, tall trees and 16×24 characters
+  (feet-aligned tall sprites overhang the tile above), per-NPC recolors.
+- 16-case road autotiling, river shore foam, 2-frame water shimmer, torch flicker,
+  player walk cycle with facing (profile frames face left; flipped when moving right).
 - Soft-edged fog via an upscaled 1px-per-tile lightmap; warmer indigo night.
 - Perf: whole-map terrain cache + DPR cap 2; draw() went 1.66ms → 0.07ms per frame
   at 4× CPU throttle (measured by test/run.mjs).

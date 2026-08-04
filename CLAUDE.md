@@ -1,0 +1,87 @@
+# CLAUDE.md — Fogvale project context
+
+## What this is
+
+Fogvale is a phone-first, browser-based RPG inspired by *Ultima VII: The Black Gate*
+(world simulation, keyword dialogue, a friendly-faced cult) and the virtue system of
+*Ultima IV/V* (Truth, Love, Courage — the three Principles behind the eight virtues and
+the Codex). Chapter One ("The Stable Door") is complete and live on GitHub Pages at
+https://agisingularity.github.io/FogvaleRPG/ — deployed from `main`, root folder.
+Every push to `main` redeploys automatically.
+
+The game is `index.html` (~980 lines) plus `assets/tiles.png`, a 48-cell pixel-art
+spritesheet generated from code in `tools/atlas.html` (export it with
+`node tools/make-atlas.mjs`). Engine: seeded deterministic map generation,
+recursive-shadowcasting fog of war rendered through a soft-edged lightmap, A*
+tap-to-walk, keyword-topic dialogue, a two-town distance-priced economy, a hidden
+Truth/Love/Courage score, and localStorage autosave (per-browser, saves on tab-hide +
+every 4s). `README.md` documents the architecture section by section — read it first.
+
+## Design pillars — do not break these
+
+1. **Fog of war is the core verb.** Line of sight is gameplay, not decoration. Trees,
+   walls, mountains block sight; explored terrain is dimmed memory; living things render
+   only in live sight. Night collapses sight radius; light sources are economy items.
+2. **Knowledge is the inventory.** Story progress is gated by learned dialogue topics
+   (words heard from one NPC asked of another), never by levels or XP.
+3. **The economy is geography.** Goods are cheap where they grow, dear far away.
+   Advanced items exist only in distant towns. Walking further = earning more.
+4. **The triad stays hidden.** Truth/Love/Courage are scored silently by choices.
+   No meters, no popups. The seer gives cryptic readings; doors open or don't.
+5. **The story is a slow reveal.** The Radiant Path cult preaches a counterfeit triad
+   (Unity/Trust/Worthiness — a warped mirror of Truth/Love/Courage). Chapter One ended
+   with Brother Malvo's slip proving the Path was present for Piet's murder.
+   Chapter Two is titled "The Ledger of Worth."
+6. **Phone-first.** Tap targets, portrait layout, one-finger play. Test at 390×844.
+
+## Testing convention
+
+Test headless with Playwright (chromium) before every deploy: check for zero pageerrors,
+verify save/restore round-trips, verify A* reachability of all key destinations, and
+screenshot at phone viewport. Serve over `python3 -m http.server` when testing
+localStorage (matches the Pages origin model). All of this is wired up in
+`node test/run.mjs` (one-time setup: `npm install && npx playwright install chromium`);
+it also profiles frame time under 4× CPU throttle.
+
+## Roadmap — next level (in priority order)
+
+### 1. Better graphics — DONE (Aug 2026)
+- Pixel-art tile atlas in `assets/tiles.png`, authored as code in `tools/atlas.html`.
+- Grass variants, 16-case road autotiling, river shore foam, 2-frame water shimmer,
+  torch flicker, player walk cycle with facing.
+- Soft-edged fog via an upscaled 1px-per-tile lightmap; warmer indigo night.
+- Perf: whole-map terrain cache + DPR cap 2; draw() went 1.66ms → 0.07ms per frame
+  at 4× CPU throttle (measured by test/run.mjs).
+
+### 2. Bigger world
+- Grow the map (chunk the world if memory/perf demands), add 2–3 more settlements, a
+  dungeon or two, and wilderness landmarks that reward looking (towers extend sight).
+- NPC schedules (Ultima VII's soul): homes at night, work by day, doors that lock.
+- Chapter Two content: the chapel ledger, the runners' satchels, why the Vigil stands
+  where it stands. Combat (the star-metal sword already exists and "hums, patiently").
+
+### 3. Ship it to many players ("web-scale")
+- It is already a website; scale for players means: keep GitHub Pages as free global
+  hosting, add a proper domain later if desired, add PWA manifest + service worker so
+  it installs to home screens and plays offline, add Open Graph/social preview tags,
+  and add a version stamp + update notice so returning players get new chapters cleanly.
+- Cross-device cloud saves need a small backend (localStorage is per-browser). Prefer a
+  free-tier serverless option (e.g. Supabase or Cloudflare Workers + KV): anonymous save
+  codes first ("write down this rune-word to restore your tale anywhere") before real accounts.
+
+### 4. Email capture (for future promotion)
+- In-fiction, opt-in only: at the chapter-end card, offer "Be told when Chapter Two
+  arrives" with an email field. Never gate gameplay behind it.
+- Static hosting cannot store emails; use a lightweight endpoint or form service
+  (e.g. Buttondown, Formspree, or a Supabase table) — pick one, wire it, and keep the
+  submission JS graceful when offline/blocked.
+- Compliance basics: explicit consent language at the field, a one-line privacy note
+  (what we store, what we send), and honor unsubscribes. No pre-checked boxes,
+  no third-party sharing.
+
+## Working agreements
+
+- Keep `README.md` accurate as the architecture changes; it is the map of the code.
+- Preserve save-compatibility where cheap (version key `fogvale_ch1`, `v:1`); when a
+  save format must break, migrate or fail gracefully to a fresh start with a message.
+- Small commits, descriptive messages, push to `main` deploys — so never push untested.

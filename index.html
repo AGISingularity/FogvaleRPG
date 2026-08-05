@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.16.0';
+const VERSION='0.17.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -298,7 +298,7 @@ let path = [];                                  // queued steps [{x,y}...]
 let pending = null;                             // interaction on arrival
 let stepClock = 0;
 let time = 60;                                  // steps; day=300, night=150 per cycle
-const inv = { gold:12, herb:0, mushroom:0, bread:0, torch:0, lantern:0, sword:0, knife:0, leather:0, iron:0, medallion:0, satchel:0, heartwood:0, blank:0 };
+const inv = { gold:12, herb:0, mushroom:0, bread:0, torch:0, lantern:0, sword:0, knife:0, leather:0, iron:0, medallion:0, satchel:0, heartwood:0, blank:0, pelt:0 };
 const F = {};                                   // story flags
 const V = { truth:0, love:0, courage:0 };       // the hidden triad
 const knownTopics = new Set();
@@ -435,12 +435,12 @@ const SHOPS = {
     sells:[ {id:'torch', nm:'Pitch Torch', sub:'Sight 4 at night', price:8},
             {id:'knife', nm:'Hunting Knife', sub:'Honest steel. (Damage 2)', price:12},
             {id:'bread', nm:'Brown Bread', sub:'Warm. Comforting.', price:2} ],
-    buys:[ {id:'herb', nm:'Wortleaf Herb', price:3}, {id:'mushroom', nm:'Bluecap Mushroom', price:5} ] },
+    buys:[ {id:'herb', nm:'Wortleaf Herb', price:3}, {id:'mushroom', nm:'Bluecap Mushroom', price:5}, {id:'pelt', nm:'Wolf Pelt', price:4} ] },
   serra: { name:"Serra's Goods",
     sells:[ {id:'lantern', nm:'Brass Lantern', sub:'Sight 7 at night', price:40},
             {id:'sword', nm:'Star-metal Sword', sub:'Hums, impatiently. (Damage 3)', price:60},
             {id:'bread', nm:'Dark Rye Bread', sub:'Denser than it looks', price:3} ],
-    buys:[ {id:'herb', nm:'Wortleaf Herb', price:6}, {id:'mushroom', nm:'Bluecap Mushroom', price:12} ] },
+    buys:[ {id:'herb', nm:'Wortleaf Herb', price:6}, {id:'mushroom', nm:'Bluecap Mushroom', price:12}, {id:'pelt', nm:'Wolf Pelt', price:8} ] },
   hetta: { name:"The Forgeworks",
     sells:[ {id:'leather', nm:'Leather Jerkin', sub:'Turns a claw. (Armour 1)', price:25},
             {id:'iron', nm:'Iron Hauberk', sub:'Turns most teeth. (Armour 2)', price:70},
@@ -894,7 +894,8 @@ function openBag(){
     ['medallion','Silver Medallion','A sunburst. Cold to the touch.'],
     ['satchel','Courier\'s Satchel','Sunburst-stamped. Straps cut, not unbuckled.'],
     ['heartwood','Pale Heartwood','Warm as a held hand. It remembers.'],
-    ['blank','Silver Blank','Unstamped. Bright skin, thin heart.']
+    ['blank','Silver Blank','Unstamped. Bright skin, thin heart.'],
+    ['pelt','Wolf Pelt','Night-priced warmth. Iron country pays best.']
   ];
   let any=false;
   for(const [id,nm,sub] of rows){
@@ -970,6 +971,7 @@ const ATLAS_DEF = (()=>{
   /* cave furnishings */
   d.cavefloor=[96,32,16,16]; d.chest=[112,32,16,16]; d.exitrune=[0,408,16,16];
   d.wardenA=[16,408,16,16]; d.wardenB=[32,408,16,16]; d.ledger=[48,408,16,16]; d.cache=[64,408,16,16];
+  d.wolfA=[80,408,16,16]; d.wolfB=[96,408,16,16];
   /* midnight runners: walk frames only — they never stand still */
   ['D1','D2','L1','L2','U1','U2'].forEach((f,j)=>{ d['runner'+f]=[j*16,424,16,24]; });
   return d;
@@ -1147,6 +1149,7 @@ const MOB_TYPES = {
   bat:  { nm:'dusk bat',     hp:2, dmg:1, evil:true,  spr:'bat' },
   log:  { nm:'bough-fiend',  hp:8, dmg:2, evil:true,  spr:'log' },
   wisp: { nm:'pale wisp',    hp:1, dmg:0, evil:false, spr:'wisp' },
+  wolf: { nm:'vale wolf',    hp:5, dmg:2, evil:true,  spr:'wolf' },
   warden:{nm:'the Hollow Warden', hp:15, dmg:3, evil:true, spr:'warden', big:true }
 };
 const WARDEN_POSTS = { ridge:[26,122], outcrop:[120,119] };
@@ -1184,7 +1187,8 @@ function spawnMobs(){
     let type;
     if(below) type = roll<0.75 ? 'bat' : 'slime';
     else if(roll<0.12) type='wisp';
-    else if(isNight() && roll<0.5) type='bat';
+    else if(isNight() && roll<0.35) type='bat';
+    else if(isNight() && roll<0.65) type='wolf';
     else {
       const nearTrees=[[1,0],[-1,0],[0,1],[0,-1]].some(([ax,ay])=>{
         const row=grid[y+ay]; return row && row[x+ax]==='t'; });
@@ -1223,7 +1227,8 @@ function mobTick(){
     }
     if(m.type==='warden' && dist>3) continue;   // it guards; it does not hunt
     let step=null;
-    if(t.evil && dist<=6 && Math.random()<0.85){
+    const range = m.angry ? 10 : 6;
+    if(t.evil && dist<=range && (m.angry || Math.random()<0.85)){
       const opts=[];
       if(dx!==0) opts.push([Math.sign(dx),0, dx>0?'right':'left']);
       if(dy!==0) opts.push([0,Math.sign(dy), dy>0?'down':'up']);
@@ -1274,6 +1279,9 @@ function attackMob(m){
   }
   m.hp-=weaponDmg();
   m.hitAt=performance.now();
+  if(m.type==='wolf')
+    for(const o of mobs)
+      if(o!==m && o.type==='wolf' && Math.abs(o.x-m.x)+Math.abs(o.y-m.y)<=8) o.angry=true;
   m.rx=m.x+(m.x-P.x)*0.35; m.ry=m.y+(m.y-P.y)*0.35;   // knocked back a breath
   if(m.hp<=0){
     mobs.splice(mobs.indexOf(m),1);
@@ -1292,7 +1300,10 @@ function attackMob(m){
     const g = m.type==='log' ? 6 : 2+(Math.random()*3|0);
     inv.gold+=g; updHud();
     if(!F.firstBlood){ F.firstBlood=true; virtue('courage',1); }
-    say('The '+t.nm+' comes apart. Among the leavings: '+g+' gold.');
+    if(m.type==='wolf'){
+      inv.pelt++;
+      say('The '+t.nm+' falls mid-lunge. You take '+g+' gold from an old kill in its den-scrap \u2014 and the pelt, which is worth more.');
+    } else say('The '+t.nm+' comes apart. Among the leavings: '+g+' gold.');
   } else {
     say(inv.sword ? 'The star-metal bites the '+t.nm+'. It does not approve.'
                   : 'You strike the '+t.nm+' bare-handed. Effective, but it has opinions.');

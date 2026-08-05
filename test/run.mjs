@@ -399,6 +399,26 @@ try {
   ok(vigil.yseult && vigil.bren, 'vigil: the seer and the guard have their say');
   ok(vigil.ch2 && vigil.card, 'vigil: Chapter Two closes, the Gardener is named');
 
+  // -- wolves: the pack angers together, the pelt pays twice over -----------
+  const wolves = await page.evaluate(() => {
+    mobs.length = 0;
+    inv.sword = 1;
+    mobs.push({ type:'wolf', hp:5, x:P.x+1, y:P.y, rx:P.x+1, ry:P.y, dir:'left' });
+    mobs.push({ type:'wolf', hp:5, x:P.x+5, y:P.y, rx:P.x+5, ry:P.y, dir:'left' });
+    const near = mobs[0], far = mobs[1];
+    attackMob(near);
+    const packAngry = far.angry === true;
+    attackMob(near);                              // 5hp / 3dmg = dead on second blow
+    const pelts = inv.pelt;
+    const tobinBuys = SHOPS.tobin.buys.some(b => b.id === 'pelt' && b.price === 4);
+    const serraBuys = SHOPS.serra.buys.some(b => b.id === 'pelt' && b.price === 8);
+    inv.sword = 0; mobs.length = 0; P.hp = P.maxHp; updHud();
+    return { packAngry, pelts, tobinBuys, serraBuys };
+  });
+  ok(wolves.packAngry, 'wolves: wounding one rouses the pack');
+  ok(wolves.pelts === 1, 'wolves: a felled wolf yields its pelt', String(wolves.pelts));
+  ok(wolves.tobinBuys && wolves.serraBuys, 'wolves: pelts sell for 4 near, 8 far');
+
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));
 } finally {

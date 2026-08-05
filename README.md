@@ -61,7 +61,9 @@ server required. Open it in any mobile or desktop browser.
   weapon ladder runs fists (1) → Tobin's hunting knife (2) → the star-metal sword (3), and the Forgeworks in Ironvale sells
   leather and iron armour that absorb hits. Creatures great and small roam the wilds
   (marsh slimes, dusk bats, bough-fiends near the woods) and shy away from towns;
-  night breeds more. Not all are evil — pale wisps drift toward hidden things
+  night breeds more — including vale wolves, who hunt in loose packs after dark:
+  wound one and its packmates join the chase. A felled wolf yields its pelt,
+  worth 4 gold at Tobin's and 8 in iron country. Not all are evil — pale wisps drift toward hidden things
   (herbs, bluecaps, buried chests) and go out upon them like a marker; striking
   one is silently, permanently noticed by the hidden virtues. Shops trade by
   day and bar the counter at night — the inn is the only midnight business. Falling in battle

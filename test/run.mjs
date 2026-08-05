@@ -578,6 +578,27 @@ try {
   ok(gate.yseult && gate.dag, 'gate: the seer names the seal; Dag names his drills');
   ok(gate.fell && gate.staysDown, 'gate: the third Warden falls and stays fallen');
 
+  // -- the small hand: Col names his boy, and every door answers ------------
+  const joren = await page.evaluate(() => {
+    const by = id => npcs.find(n => n.id === id);
+    // 'gardener' is known from the grove test
+    const colSees = by('col').topics.gardener.cond();
+    by('col').topics.gardener.text();
+    const named = !!F.gardenerNamed && knownTopics.has('joren');
+    const onceOnly = !by('col').topics.gardener.cond();
+    by('col').topics.joren.text();
+    const quest = !!F.jorenQuest;
+    const maren = !!by('maren').topics.joren.cond();
+    const yseult = !!by('yseult').topics.joren.cond();
+    const threat = by('malvo').topics.joren.text();
+    const threatened = !!F.malvoThreatened && threat.includes('choose between');
+    return { colSees, named, onceOnly, quest, maren, yseult, threatened };
+  });
+  ok(joren.colSees && joren.named && joren.onceOnly, 'joren: Col knows the trowel, once, forever');
+  ok(joren.quest, "joren: 'Bring him back. HIM.'");
+  ok(joren.maren && joren.yseult, 'joren: the Elder weighs the entry; the seer names the crime');
+  ok(joren.threatened, 'joren: Malvo stops smiling');
+
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));
 } finally {

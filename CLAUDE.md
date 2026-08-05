@@ -128,8 +128,12 @@ it also profiles frame time under 4× CPU throttle.
   keeps no garden"). v0.23.0 added the Hollow Gate ('H' at 4,16, spur off the
   shrine trail at y16): drag-marks topic in the grove, third Warden post (gated
   on knowing 'gardener'), gateStone discovery + 'gate' topic, Yseult (the seal
-  answers to meaning, not iron) and Dag (his missing drills). Next threads: who
-  the small hand belongs to; what it takes to open — or defend — the Gate.
+  answers to meaning, not iron) and Dag (his missing drills). v0.24.0 named the Gardener:
+  Joren, Col's nine-year-old son (planted in Col's v0.6.0 'took my son to
+  Ironvale' line). Col's trowel-recognition (F.gardenerNamed, learn 'joren'),
+  the plea (F.jorenQuest), Maren/Yseult reactions, Malvo's first open threat
+  (F.malvoThreatened). Final threads: meeting Joren (deep-night at the grove?),
+  and the Gate's answer — the seal responds to meaning, i.e. the virtues.
 
 ### 3. Ship it to many players ("web-scale")
 - It is already a website; scale for players means: keep GitHub Pages as free global

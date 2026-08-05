@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.23.0';
+const VERSION='0.24.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -443,7 +443,7 @@ const TOPIC_LABEL = {
   ironvale:'Ironvale', radiantpath:'the Radiant Path', malvo:'Brother Malvo',
   stranger:'the robed stranger', shrine:'the old shrine', codex:'the Codex',
   found:'what I found', slip:"Malvo's slip", coin:'his plea', reading:'a reading',
-  bluecaps:'bluecaps', satchel:'the satchel', ledger:'the ledger', blanks:'the silver blanks', vigil:'the Vigil', gardener:'the Gardener', gate:'the Hollow Gate'
+  bluecaps:'bluecaps', satchel:'the satchel', ledger:'the ledger', blanks:'the silver blanks', vigil:'the Vigil', gardener:'the Gardener', gate:'the Hollow Gate', joren:'Joren'
 };
 function learn(...keys){
   for(const k of keys){
@@ -495,6 +495,7 @@ const npcs = [
          b:{label:'"Nothing. Nothing yet."', text(){ F.liedMaren=true; virtue('truth',-2);
              return '"Nothing." She looks at you a moment longer than she needs to. "Well. Perhaps the frost keeps secrets better than people do."'; }} }},
      blanks:{label:'The silver blanks', cond:()=>knownTopics.has('blanks'), text:()=>'"Piet\u2019s errands. \u2018Carried eleven.\u2019" She sets the blank down as if it burns. "He ran THEIR satchels, stranger. My stable boy carried this slug-silver under the ridge eleven times \u2014 and the twelfth time he asked what it was. For asking, they reassessed him." The word has not grown kinder in her mouth. "Bring me the man who poured this. The vale will do the weighing."'},
+     joren:{label:'Joren', cond:()=>knownTopics.has('joren'), text:()=>'"Col\u2019s boy. Col\u2019s BOY." She reaches for the table\u2019s edge, the way she did the night you told her about the slip. "The ledger said it plainly and I read past it: farm-holder, three, seized. They did not only take the farm, stranger. They took the heir \u2014 and priced the pair of them at three." Her voice drops to the register she saves for oaths. "Whatever the vale weighs when this ends, that entry weighs most."'},
      ledger:{label:'The ledger', cond:()=>knownTopics.has('ledger'), text:()=>'"A number. Against every name in my village." Maren is very still, the way deep water is still. "Piet carried eleven — eleven WHAT, stranger? Loads? Letters? And when he asked, they reassessed him." She folds the word away like a blade. "Chapter and verse, they will answer for that book. Bring me anything more you find, and tell no one else you saw it."'},
      slip:{label:"Malvo's slip", cond:()=>F.malvoSlip,
        text(){ setTimeout(chapterEnd, 2600);
@@ -526,6 +527,11 @@ const npcs = [
          b:{label:'Walk on', text(){ F.refusedCol=true; virtue('love',-1);
              return '"Aye. Everyone\'s poor these days," he says, to no one in particular.'; }} }},
      ledger:{label:'The ledger', cond:()=>knownTopics.has('ledger'), text:()=>'"Three." He says it before you finish describing the column. "That\'s what my farm scored, is it. Three." He looks at his hands a long while. "They wrote my whole life next to a number small enough to seize. You keep that book\'s memory, stranger. Some day a judge should read it aloud."'},
+     gardener:{label:'The Gardener', cond:()=>knownTopics.has('gardener') && !F.gardenerNamed, text(){
+       F.gardenerNamed=true; learn('joren'); virtue('love',1);
+       return '"A small trowel. Kept sharp, kept clean." He goes very still. "Barley-handled? Notch in the tang, about here?" You had not said so. His face says he did not need you to. "That trowel was MINE, stranger. I put it in Joren\u2019s hand the day he could walk, and taught him what my father taught me: keep your tools clean, keep your rows straight." His voice does not break. It does something worse \u2014 it goes flat. "They took my boy for \u2018the work\u2019. And the work was this."'; }},
+     joren:{label:'Joren', cond:()=>knownTopics.has('joren'), text(){ F.jorenQuest=true;
+       return '"He is nine, stranger. Nine, and he could coax green out of a gravel pit, and I was PROUD of that." Col looks at his open hands. "I do not want the trowel back. I do not want proof, or justice, or the Path\u2019s smiling apology. Bring him back. HIM. Everything else the vale can keep."'; }},
      radiantpath:{label:'The Radiant Path', cond:()=>knownTopics.has('radiantpath'), text:()=>'"They preach three lights — unity, trust, worthiness. Sounded like scripture till I noticed every light pointed at my purse. Judge them yourself in Ironvale. Judge them twice."'},
      murder:{label:'The murder', cond:()=>knownTopics.has('murder'), text(){ learn('stranger');
        return '"I sleep where the walls cut the wind, so I see the nights whole. Before dawn, the day they found the boy — a figure in robes, down along the river. Standing in the water\'s edge, in winter, still as a post. I didn\'t call out. You wouldn\'t have either."'; }}
@@ -557,6 +563,7 @@ const npcs = [
        const c = V.courage>0 ? 'You have gone where fear told you not to.' : 'Courage waits for you in a dark place. It is patient.';
        return 'She stirs the bowl once. "Three things move in the water.\n\n' + t + '\n' + l + '\n' + c + '\n\nNo number measures these, stranger. But doors you cannot see are already deciding whether to open for you."'; }},
      ledger:{label:'The ledger', cond:()=>knownTopics.has('ledger'), text:()=>'"So it has pages now." She does not ask what you risked to read it. "Understand what you saw, stranger: the old triad asks what you ARE. Their ledger prices what you\'re WORTH. Between those two words is every grave the Path has ever dug — and the water says it has dug more than one."'},
+     joren:{label:'Joren', cond:()=>knownTopics.has('joren'), text:()=>'"A child. Of course a child \u2014 the old craft passes through blood, and the barley-folk have coaxed things green for a hundred generations. The Path did not find a gardener, stranger. It found a GIFT, nine years old, and bent it to a nursery of guards." She finally uncovers the water, and her hands are steady again, and that is somehow worse. "A child cannot be blamed. But a child can be USED \u2014 and that is the blackest line in their ledger yet."'},
      gate:{label:'The Hollow Gate', cond:()=>knownTopics.has('gate'), text:()=>'"So they found the door." She says it the way one confirms a death long feared. "The Vigil watches; the Gate is WHAT it watches. Three circles a hand deep, and every scratch the Path leaves on it costs them a drill and gains them nothing \u2014 because that seal does not answer to iron. It answers to what the circles MEAN, stranger. Pray they never learn the difference."'},
      gardener:{label:'The Gardener', cond:()=>knownTopics.has('gardener'), text:()=>'"A nursery. Rows. FRAMES." She is quiet for longer than you have ever seen her quiet. "They grew the guards from Vigil-stock like beans, stranger \u2014 and the hand that tends them is small." She looks at the covered water bowl and does not uncover it. "I have read many things in that water. This is the first time I have been afraid to."'},
      vigil:{label:'The Vigil', cond:()=>knownTopics.has('vigil'), text:()=>'"So the stone finally spoke, and you were worth speaking to." She covers the water bowl, gently, as if letting it sleep. "A watch-stone. Older than the vale\u2019s name. The old folk set three circles over the deep ways and swore nothing crooked would pass below \u2014 and now a smiling charity mints lies a mile from its feet and grows guardians from its grove." She looks at you, and for once there is nothing cryptic in it. "The Path has a gardener, stranger. Chapter Three will want a name."'},
@@ -618,6 +625,8 @@ const npcs = [
              return 'You hold his gaze and say nothing — the oldest trap there is. The silence stretches. His smile tightens by one turn. "Friend. Whatever became of that stable boy is no concern of the fellowship\'s—" He stops. You never said anything about a stable boy. Malvo folds his hands. "The chapel is closing for evening prayer," he says, and his voice has no warmth in it at all now. You should tell Elder Maren what he just said.'; }},
          b:{label:'Let it pass', text(){ F.malvoPass=true;
              return '"No doubt that\'s it," you say. His smile refills. "The Path recovers what is lost, friend. Leave it with me, if you like — I shall see it home." You do not leave it with him.'; }} }},
+     joren:{label:'Joren', cond:()=>knownTopics.has('joren'), text(){ F.malvoThreatened=true;
+       return '"...You have been busy, friend." There is no smile at all now, and the room is suddenly the temperature of the chapel\u2019s silver. "The boy is beloved of the fellowship. He eats. He learns. He MATTERS \u2014 which is more than the barley ever offered him." A pause, measured to the drop. "Do not make the fellowship choose between its gardener and a stranger."'; }},
      gardener:{label:'The Gardener', cond:()=>knownTopics.has('gardener'), text(){ F.askedMalvoGardener=true;
        return '"...The chapel keeps no garden, friend." His voice is perfectly level. Every candle in the room leans, very slightly, toward the door. "Whoever has been walking the deep wood should stop. The wood is not OURS to forgive trespass in."'; }},
      slip:{label:'His slip', cond:()=>F.malvoSlip, text:()=>'"The chapel is CLOSING, friend." Two large parishioners have appeared by the door. They are also smiling. It runs in the fellowship, apparently.'}

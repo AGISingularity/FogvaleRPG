@@ -40,6 +40,13 @@ server required. Open it in any mobile or desktop browser.
   bread for the hungry dead, a pelt for their warmth — paid silently in Love;
   the wax at the Path's altar reads once, in Truth: two sets of knee-prints,
   and the small set dug deeper.
+- **The small hand has a name** — describe the trowel to Col and he knows it
+  before you finish: barley-handled, notch in the tang, his own — put in his
+  son's hand the day the boy could walk. The Gardener is Joren, nine years old,
+  taken by the Path 'for the work'. Maren re-reads the ledger's cruelest entry,
+  Yseult names the crime (a child cannot be blamed, but a child can be used),
+  Col asks for one thing only — him, back — and Malvo, asked about the boy,
+  stops smiling for the first time.
 - **The Hollow Gate** — follow the drag-marks from the nursery's stump to a
   door in the mountain's root: three circles carved a hand deep, fresh drill-scars
   skittering off the seal like matches on glass. The harvested third Warden

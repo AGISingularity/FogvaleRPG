@@ -50,7 +50,7 @@ const ATLAS_DEF = (()=>{
   MB.forEach((m,j)=>{ d[m+'A']=[j*32,392,16,16]; d[m+'B']=[j*32+16,392,16,16]; });
   /* cave furnishings */
   d.cavefloor=[96,32,16,16]; d.chest=[112,32,16,16]; d.exitrune=[0,408,16,16];
-  d.wardenA=[16,408,16,16]; d.wardenB=[32,408,16,16];
+  d.wardenA=[16,408,16,16]; d.wardenB=[32,408,16,16]; d.ledger=[48,408,16,16];
   /* midnight runners: walk frames only — they never stand still */
   ['D1','D2','L1','L2','U1','U2'].forEach((f,j)=>{ d['runner'+f]=[j*16,424,16,24]; });
   return d;
@@ -336,6 +336,14 @@ for(const [src,dst] of [['logA','wardenA'],['logB','wardenB']]){
   }
   ctx.putImageData(d,dx,dy);
 }
+
+/* the ledger: a thin black book, silver sunburst on the cover */
+sm('ledger',[
+  '................','................','................','................',
+  '...KKKKKKKKKK...','...KbbbbbbbbP...','...KbbbssbbbP...','...Kbbs..sbbP...',
+  '...Kbbs..sbbP...','...KbbbssbbbP...','...KbbbbbbbbP...','...KKKKKKKKKK...',
+  '....ssssssss....','................','................','................',
+],{ K:'#1c1826', b:'#2e2838', P:'#4a4258', s:'#b8b4c8' });
 
 /* ---------------- cave furnishings ---------------------------------------- */
 // cavern floor: dark stone, speckled

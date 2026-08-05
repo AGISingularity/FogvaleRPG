@@ -28,6 +28,12 @@ server required. Open it in any mobile or desktop browser.
   Orla the Waykeeper: five gold buys a bed that heals you whole and skips to morning,
   her free road-news points wanderers at the shrine, watchtower, and altar, and if
   you've found the satchel she has seen who crosses her bridge at midnight.
+- **The Ledger of Worth** — Chapter Two opens. Slip into the chapel at dusk, wait
+  out the small hours while Malvo sleeps with his eyes open, and read what the
+  Path keeps on its bench: every soul in the vale priced with a number — and one
+  fresh entry that explains a murder. Maren, Yseult, and Col each have words for
+  what you found. The old triad asks what you are; the ledger prices what you're
+  worth.
 - **The midnight runners** — in the deep of night, hooded couriers really do cross
   the vale, chapel to ridge cave, over Orla's bridge — never stopping, never
   speaking. Stake out the route with a light and you'll see one pass; Bren has

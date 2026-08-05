@@ -259,8 +259,10 @@ try {
       bren: gap('bren', npcs.find(n=>n.id==='bren').night),
       dag: gap('dag', npcs.find(n=>n.id==='dag').night),
     };
+    time = 360;                                // the deep of night
     const chapelLocked = !astar(P.x, P.y,
       (x, y) => Math.abs(x-110)<=1 && Math.abs(y-14)<=1, 110, 14);
+    time = 320;
     time = 60;                                   // morning
     for (let i = 0; i < 90; i++) npcTick();
     const day = {
@@ -328,6 +330,26 @@ try {
     return { settled };
   });
   ok(wispy.settled, 'wisps: drift to the hidden thing and go out upon it');
+
+  // -- the ledger: locked away by day, damning at deep night ----------------
+  const ledger = await page.evaluate(() => {
+    mobs.length = 0;
+    time = 60;                                   // by day: nothing to find
+    P.x = 110; P.y = 16; P.rx = 110; P.ry = 16; computeFOV();
+    path = [{ x: 109, y: 16 }]; step();
+    const dayRead = !!F.readLedger;
+    time = 360;                                  // the small hours
+    P.x = 110; P.y = 16; P.rx = 110; P.ry = 16; computeFOV();
+    path = [{ x: 109, y: 16 }]; step();
+    const nightRead = !!F.readLedger && knownTopics.has('ledger');
+    const marenHasTopic = !!npcs.find(n => n.id === 'maren').topics.ledger.cond();
+    time = 60;
+    P.x = 21; P.y = 110; P.rx = 21; P.ry = 110; computeFOV();
+    return { dayRead, nightRead, marenHasTopic };
+  });
+  ok(!ledger.dayRead, 'ledger: locked away by day');
+  ok(ledger.nightRead, 'ledger: read in the small hours, word learned');
+  ok(ledger.marenHasTopic, 'ledger: Maren will hear of it');
 
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));

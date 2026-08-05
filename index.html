@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.13.0';
+const VERSION='0.14.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -274,6 +274,7 @@ const objects = []; // {x,y,type}
     if(grid[y][x]==='g'){ objects.push({x,y,type:'mushroom'}); placed++; }
   }
   objects.push({x:15,y:106,type:'body'}); // Piet, in the stable
+  objects.push({x:109,y:16,type:'ledger'}); // the Ledger of Worth, out only at deep night
   // bluecaps grow in the dark too — the caves pay twice
   placed=0; guard=0;
   while(placed<8 && guard++<4000){
@@ -366,8 +367,8 @@ function computeFOV(){
 function walkable(x,y){
   if(x<0||y<0||x>=W||y>=H) return false;
   if(BLOCKING[grid[y][x]]) return false;
-  if(x===110 && y===17 && grid[y][x]==='+' && isNight()
-     && !(P.x>=109&&P.x<=112&&P.y>=13&&P.y<=16))   // barred, unless you're already inside
+  if(x===110 && y===17 && grid[y][x]==='+' && (time % 450) >= 330
+     && !(P.x>=109&&P.x<=112&&P.y>=13&&P.y<=16))   // barred at deep night, unless you're already inside
     return false;
   const o=objectAt(x,y); if(o && o.type==='body') return false;
   if(npcs.some(n=>n.x===x&&n.y===y)) return false;
@@ -413,7 +414,7 @@ const TOPIC_LABEL = {
   ironvale:'Ironvale', radiantpath:'the Radiant Path', malvo:'Brother Malvo',
   stranger:'the robed stranger', shrine:'the old shrine', codex:'the Codex',
   found:'what I found', slip:"Malvo's slip", coin:'his plea', reading:'a reading',
-  bluecaps:'bluecaps', satchel:'the satchel'
+  bluecaps:'bluecaps', satchel:'the satchel', ledger:'the ledger'
 };
 function learn(...keys){
   for(const k of keys){
@@ -464,6 +465,7 @@ const npcs = [
              return '"Silver... and cold, even by the fire." She presses it back into your hand quickly, as if it bit her. "Keep it hidden. And keep it moving — show it to those who trade in silver. Someone poured this, and pouring leaves records."'; }},
          b:{label:'"Nothing. Nothing yet."', text(){ F.liedMaren=true; virtue('truth',-2);
              return '"Nothing." She looks at you a moment longer than she needs to. "Well. Perhaps the frost keeps secrets better than people do."'; }} }},
+     ledger:{label:'The ledger', cond:()=>knownTopics.has('ledger'), text:()=>'"A number. Against every name in my village." Maren is very still, the way deep water is still. "Piet carried eleven — eleven WHAT, stranger? Loads? Letters? And when he asked, they reassessed him." She folds the word away like a blade. "Chapter and verse, they will answer for that book. Bring me anything more you find, and tell no one else you saw it."'},
      slip:{label:"Malvo's slip", cond:()=>F.malvoSlip,
        text(){ setTimeout(chapterEnd, 2600);
          return '"He said WHAT?" Maren grips the table edge. "We sent no word beyond the vale. No rider, no letter — I made sure of it. If this Brother Malvo knows Piet\'s name..." She looks at the shuttered window. "...then the Path did not hear of the murder, stranger. The Path was here for it."'; }}
@@ -493,6 +495,7 @@ const npcs = [
              return 'He holds the coins a long moment before pocketing them. "The Radiant Path — you\'ll hear them called a charity. They came to my farm smiling. Took the harvest as \'offering\', took the deed as \'trust\'... and took my son to Ironvale, for what they called the work. He never writes." He looks east. "That\'s worth five gold of warning, I hope."'; }},
          b:{label:'Walk on', text(){ F.refusedCol=true; virtue('love',-1);
              return '"Aye. Everyone\'s poor these days," he says, to no one in particular.'; }} }},
+     ledger:{label:'The ledger', cond:()=>knownTopics.has('ledger'), text:()=>'"Three." He says it before you finish describing the column. "That\'s what my farm scored, is it. Three." He looks at his hands a long while. "They wrote my whole life next to a number small enough to seize. You keep that book\'s memory, stranger. Some day a judge should read it aloud."'},
      radiantpath:{label:'The Radiant Path', cond:()=>knownTopics.has('radiantpath'), text:()=>'"They preach three lights — unity, trust, worthiness. Sounded like scripture till I noticed every light pointed at my purse. Judge them yourself in Ironvale. Judge them twice."'},
      murder:{label:'The murder', cond:()=>knownTopics.has('murder'), text(){ learn('stranger');
        return '"I sleep where the walls cut the wind, so I see the nights whole. Before dawn, the day they found the boy — a figure in robes, down along the river. Standing in the water\'s edge, in winter, still as a post. I didn\'t call out. You wouldn\'t have either."'; }}
@@ -522,6 +525,7 @@ const npcs = [
        const l = V.love>0 ? 'Your hand opens more easily than it closes. Rare.' : V.love<0 ? 'You have walked past an open hand. The water saw.' : 'Love has not yet tested you.';
        const c = V.courage>0 ? 'You have gone where fear told you not to.' : 'Courage waits for you in a dark place. It is patient.';
        return 'She stirs the bowl once. "Three things move in the water.\n\n' + t + '\n' + l + '\n' + c + '\n\nNo number measures these, stranger. But doors you cannot see are already deciding whether to open for you."'; }},
+     ledger:{label:'The ledger', cond:()=>knownTopics.has('ledger'), text:()=>'"So it has pages now." She does not ask what you risked to read it. "Understand what you saw, stranger: the old triad asks what you ARE. Their ledger prices what you\'re WORTH. Between those two words is every grave the Path has ever dug — and the water says it has dug more than one."'},
      heartwood:{label:'The heartwood', cond:()=>inv.heartwood>0, text:()=>'"Give it here— oh." She sets it down quickly, then picks it back up slowly. "Heartwood, from a thing that should never have had a heart. The caves did not grow that guardian on their own, stranger. Something taught the wood to stand up, and set it over a chest like a dog over a bone. Keep it close. Wood remembers — and this piece remembers being given orders."'},
      codex:{label:'The Codex', cond:()=>knownTopics.has('codex'), text:()=>'"Older than the vale, older than the Path\'s smiling missionaries: a buried book that weighs every soul on three beams — Truth, Love, Courage. Every honest faith is a footnote to it." She smiles thinly. "And every dishonest one is a forgery of it."'},
      altar:{label:'The old altar', cond:()=>F.sawAltar, text:()=>'"So you found the kneeling stone, away in the south-east wilds. Older than my art, older than the Vigil maybe. The wax is fresh because the Path\'s missionaries pray there — to what, they never say. Mark this: they chose an altar far from every road and every witness."'},
@@ -553,7 +557,8 @@ const npcs = [
      murder:{label:'The murder', cond:()=>knownTopics.has('murder'), text:()=>'"A boy dead in Brookhollow, you say." He looks at the chapel a long moment. "Runners. They\'ve had runners on the ridge road for a month. Young ones, carrying satchels by night. I mind my business, stranger. Lately that\'s harder work than the mine."'}
    }},
 
- { id:'malvo', name:'Brother Malvo', x:110, y:14, c:'#e8d454', shop:null,
+ { id:'malvo', name:'Brother Malvo', x:110, y:14, night:[112,13], c:'#e8d454', shop:null,
+   nightGreet:'"The chapel is closed, friend." Brother Malvo does not sit up. His eyes are open in the dark, and you understand they have been for some time. "Whatever you came for — be wiser than that."',
    greet:()=>'"A traveler! Welcome, friend — the chapel of the Radiant Path turns no one away. All are worthy who strive toward worth. Warm yourself. Ask anything." His smile arrives a half-second before his eyes do.',
    topics:{
      name:{label:'Name', text:()=>'"Brother Malvo — merely a servant of the light, sent to tend this humble chapel." The silver on his fingers is not humble.'},
@@ -760,7 +765,8 @@ function openDlg(npc){
   const ddx=P.x-npc.x, ddy=P.y-npc.y;   // turn to face the player
   npc.dir = Math.abs(ddx)>Math.abs(ddy) ? (ddx>0?'right':'left') : (ddy>0?'down':'up');
   $('dlgName').textContent = npc.name;
-  $('dlgTxt').innerHTML = typeof npc.greet==='function' ? npc.greet() : npc.greet;
+  $('dlgTxt').innerHTML = (isNight() && npc.nightGreet) ? npc.nightGreet
+    : (typeof npc.greet==='function' ? npc.greet() : npc.greet);
   if(npc.shop && isNight())
     $('dlgTxt').innerHTML += '<br><br><i>'+(npc.closed||'"The shop is shut till sunup."')+'</i>';
   renderChips();
@@ -938,7 +944,7 @@ const ATLAS_DEF = (()=>{
   MB.forEach((m,j)=>{ d[m+'A']=[j*32,392,16,16]; d[m+'B']=[j*32+16,392,16,16]; });
   /* cave furnishings */
   d.cavefloor=[96,32,16,16]; d.chest=[112,32,16,16]; d.exitrune=[0,408,16,16];
-  d.wardenA=[16,408,16,16]; d.wardenB=[32,408,16,16];
+  d.wardenA=[16,408,16,16]; d.wardenB=[32,408,16,16]; d.ledger=[48,408,16,16];
   /* midnight runners: walk frames only — they never stand still */
   ['D1','D2','L1','L2','U1','U2'].forEach((f,j)=>{ d['runner'+f]=[j*16,424,16,24]; });
   return d;
@@ -1062,7 +1068,7 @@ function drawSprite(name,sx,sy,flip){
     ctx.restore();
   } else ctx.drawImage(atlasCv,r[0]*s,r[1]*s,w,h,sx,dy,w,h);
 }
-const OBJ_CELL={ herb:'herb', mushroom:'mushroom', body:'body', chest:'chest' };
+const OBJ_CELL={ herb:'herb', mushroom:'mushroom', body:'body', chest:'chest', ledger:'ledger' };
 const npcCell = n => 'npc'+Math.max(0,NPC_COLORS.indexOf(n.c));
 
 /* ---------- NPC wandering: a few steps around their post ----------------- */
@@ -1201,7 +1207,7 @@ function mobTick(){
     } else if(m.type==='wisp'){
       let best=null, bd=13;
       for(const o of objects){
-        if(o.type==='body') continue;
+        if(o.type==='body'||o.type==='ledger') continue;
         const d=Math.abs(o.x-m.x)+Math.abs(o.y-m.y);
         if(d<bd){ bd=d; best=o; }
       }
@@ -1320,6 +1326,7 @@ function draw(now){
     return base + dch + (moving ? (ph?1:2) : 0);
   }
   for(const o of objects){
+    if(o.type==='ledger' && !deepNight()) continue;   // locked away till the small hours
     if(!visible.has(o.x+','+o.y)) continue;
     const sx=o.x*ts-camX, sy=o.y*ts-camY;
     if(sx<-ts||sy<-ts||sx>vw||sy>vh) continue;
@@ -1461,6 +1468,14 @@ function step(){
       inv.satchel=1; F.foundSatchel=true; learn('satchel');
       say('A chest shut fast with rust. Inside: '+o.gold+' gold — and a courier\'s satchel stamped with a sunburst, its straps <b>cut</b>, not unbuckled. <i>(Dag knows every kit that crosses the ridge.)</i>');
     } else say('A chest shut fast with rust. It gives up '+o.gold+' gold and an offended creak.');
+  }
+  {
+    const lg=objectAt(P.x,P.y);
+    if(lg && lg.type==='ledger' && deepNight() && !F.readLedger){
+      F.readLedger=true; learn('ledger');
+      virtue('courage',2); virtue('truth',1);
+      say('<b>The Ledger of Worth.</b> Thin, black, sunburst-stamped — and inside, the whole vale in columns: names, tithes, and a number against every soul. <i>Col, farm-holder: 3, seized. Serra, provisioner: 6, pending. Dag, miner: 5, watched.</i> And near the end, in fresher ink: <i>"P., stable — carried 11, asked questions. Reassessed."</i> They metered what must never be metered — and Piet\'s number came up. <i>(Maren must hear of this.)</i>');
+    }
   }
   if(grid[P.y][P.x]==='X'){ exitCave(); return; }
   if(P.hp<P.maxHp && time%8===0){ P.hp++; updHud(); }   // the road mends you, slowly

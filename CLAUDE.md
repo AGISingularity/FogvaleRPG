@@ -89,8 +89,11 @@ it also profiles frame time under 4× CPU throttle.
   re-anchors to the current target, doors open on NPC passage); the chapel door
   (110,17) is impassable from outside at night. Remaining: schedules for
   shopkeepers (shops closing), more locked doors.
-- Chapter Two content: the chapel ledger, the runners' satchels, why the Vigil stands
-  where it stands.
+- Chapter Two content: the chapel ledger — OPENED v0.14.0 (chapel bars only at deep
+  night so dusk visitors can stay; Malvo sleeps at [112,13] with a nightGreet; the
+  ledger object appears/reads only at deepNight, granting Courage+Truth and the
+  'ledger' topic; Maren/Yseult/Col reactions; Piet's entry states the motive).
+  Remaining: the runners' satchels payoff, why the Vigil stands where it stands.
 - Combat — SHIPPED v0.6.0: HP + regen + bread heals, weapon/armour stats (auto-worn,
   no equip UI), Forgeworks armoury + Hetta the Smith (10th NPC), four creatures
   (slime/bat/bough-fiend/wisp) with spawn/chase AI that avoids towns, wisp = good

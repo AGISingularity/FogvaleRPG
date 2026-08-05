@@ -51,6 +51,8 @@ const ATLAS_DEF = (()=>{
   /* cave furnishings */
   d.cavefloor=[96,32,16,16]; d.chest=[112,32,16,16]; d.exitrune=[0,408,16,16];
   d.wardenA=[16,408,16,16]; d.wardenB=[32,408,16,16];
+  /* midnight runners: walk frames only — they never stand still */
+  ['D1','D2','L1','L2','U1','U2'].forEach((f,j)=>{ d['runner'+f]=[j*16,424,16,24]; });
   return d;
 })();
 /*ATLAS_DEF_END*/
@@ -60,7 +62,7 @@ const ATLAS_DEF = (()=>{
 const NPC_COLORS = ['#b8c4e8','#d8b47e','#8a7f6a','#9aa5b8','#c9a8d8','#d89a7e','#b89a78','#e8d454','#4a7a4a','#607a8a'];
 
 const atlas = document.getElementById('atlas');
-atlas.width = 128; atlas.height = 424;
+atlas.width = 128; atlas.height = 448;
 const ctx = atlas.getContext('2d');
 
 const OW = new Image(), CH = new Image(), LOG = new Image();
@@ -298,6 +300,27 @@ sm('wispB',[
   '....hmccmh......','.....hmmh.......','......hh........','................',
   '................','................','................','................',
 ],{ c:'#fff8d8', m:'#ffe89a', h:'rgba(255,232,150,.35)' });
+
+/* midnight runners: the hero frames recolored to unlit charcoal */
+{
+  const RSRC = { D1:[16,0], D2:[48,0], L1:[16,32], L2:[48,32], U1:[16,64], U2:[48,64] };
+  for(const f in RSRC){
+    const [sx,sy]=RSRC[f], [dx,dy]=at('runner'+f);
+    ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(CH, sx, sy+8, 16, 24, dx, dy, 16, 24);
+    const d=ctx.getImageData(dx,dy,16,24);
+    for(let p=0;p<d.data.length;p+=4){
+      if(!d.data[p+3]) continue;
+      const r=d.data[p], g=d.data[p+1], b=d.data[p+2];
+      const lum=(r+g+b)/3;
+      // everything goes to shadow-cloth; faces too — hoods, or near enough
+      d.data[p]  =Math.round(30+lum*0.16);
+      d.data[p+1]=Math.round(28+lum*0.15);
+      d.data[p+2]=Math.round(44+lum*0.18);
+    }
+    ctx.putImageData(d,dx,dy);
+  }
+}
 
 /* the Hollow Warden: an ashen, bleached bough-fiend */
 for(const [src,dst] of [['logA','wardenA'],['logB','wardenB']]){

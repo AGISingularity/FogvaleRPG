@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.11.0';
+const VERSION='0.12.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -505,6 +505,7 @@ const npcs = [
        return '"Guard the road, mostly the bridge. Nobody guards the deep wood west of here and nobody will — there\'s an old shrine in there, older than the village, and folk keep clear. Night least of all."'; }},
      murder:{label:'The murder', cond:()=>knownTopics.has('murder'), text(){ learn('stranger');
        return '"Dusk before the body was found, I saw a stranger on the east road. Robed, hooded, walking away from the village — toward the ridge gap. Didn\'t stop him. No law against robes." He says it like he\'s been repeating it to himself for three days.'; }},
+     runners:{label:'The night runners', cond:()=>F.sawRunner, text:()=>'"You SAW one. At night, on the open road." He lets out a breath he has plainly been holding for a month. "Then I\'m not mad. I\'ve counted eleven since midwinter — always south over the bridge, always loaded going, always empty coming back. I put it in my reports. My reports go to the Elder. Somebody\'s reports go somewhere else."'},
      stranger:{label:'The robed stranger', cond:()=>knownTopics.has('stranger'), text:()=>'"Col swears he saw one by the river that same night. Two sightings, one night, one dead boy. I can count, stranger. I just can\'t do anything about the sum."'},
      shrine:{label:'The old shrine', cond:()=>knownTopics.has('shrine'), text:()=>'"Follow the trail west off the road, where it forks at the riverside — if the trees haven\'t eaten it. Three circles cut in the stone, they say. My grandmother called it the Vigil. She also said never to go, so naturally I\'m telling you exactly where it is."'}
    }},
@@ -705,6 +706,37 @@ function loadGame(){
   return true;
 }
 
+/* ---------- the midnight runners ----------------------------------------
+   In the deep of night, hooded couriers cross the vale from the chapel
+   to the ridge cave. They never stop and never speak. Seeing one is
+   its own kind of knowledge. */
+let runner=null;
+const deepNight = ()=> (time % 450) >= 330 && (time % 450) < 430;
+function spawnRunner(){
+  const path = astar(98, 18, (x,y)=>x===34&&y===66, 34, 66);
+  if(!path) return;
+  runner = { x:98, y:18, rx:98, ry:18, dir:'left', route:path, hailed:false };
+}
+function runnerTick(){
+  if(!started || anySheetOpen()) return;
+  if(!deepNight()){ runner=null; return; }
+  if(!runner){ if(Math.random()<0.12) spawnRunner(); return; }
+  const nxt=runner.route[0];
+  if(!nxt){ runner=null; return; }                 // gone under the ridge
+  if(nxt.x===P.x && nxt.y===P.y) return;           // waits out the obstruction
+  runner.route.shift();
+  if(nxt.x!==runner.x) runner.dir = nxt.x>runner.x?'right':'left';
+  else if(nxt.y!==runner.y) runner.dir = nxt.y>runner.y?'down':'up';
+  runner.x=nxt.x; runner.y=nxt.y;
+  if(!runner.hailed && visible.has(runner.x+','+runner.y)
+     && Math.abs(runner.x-P.x)<=3 && Math.abs(runner.y-P.y)<=3){
+    runner.hailed=true;
+    if(!F.sawRunner){ F.sawRunner=true; virtue('courage',1); }
+    say('A hooded figure passes without a word — footsteps light, satchel heavy, never once looking your way.');
+  }
+}
+setInterval(runnerTick, 400);
+
 /* ===================================================================
    UI — dialogue, shop, bag, hud
    =================================================================== */
@@ -902,11 +934,13 @@ const ATLAS_DEF = (()=>{
   /* cave furnishings */
   d.cavefloor=[96,32,16,16]; d.chest=[112,32,16,16]; d.exitrune=[0,408,16,16];
   d.wardenA=[16,408,16,16]; d.wardenB=[32,408,16,16];
+  /* midnight runners: walk frames only — they never stand still */
+  ['D1','D2','L1','L2','U1','U2'].forEach((f,j)=>{ d['runner'+f]=[j*16,424,16,24]; });
   return d;
 })();
 /*ATLAS_DEF_END*/
 const NPC_COLORS=['#b8c4e8','#d8b47e','#8a7f6a','#9aa5b8','#c9a8d8','#d89a7e','#b89a78','#e8d454','#4a7a4a','#607a8a'];
-const ATLAS_W=128, ATLAS_H=424;
+const ATLAS_W=128, ATLAS_H=448;
 
 let atlasReady=false, atlasCv=null;
 const atlasImg=new Image();
@@ -1287,6 +1321,12 @@ function draw(now){
       ctx.arc(sx+ts/2, sy+ts/2, ts*(0.3+0.5*hitAge/180), 0, 7);
       ctx.stroke();
     }
+  }
+  if(runner && visible.has(runner.x+','+runner.y)){
+    runner.rx+=(runner.x-runner.rx)*0.3; runner.ry+=(runner.y-runner.ry)*0.3;
+    const dch = runner.dir==='up' ? 'U' : (runner.dir==='left'||runner.dir==='right') ? 'L' : 'D';
+    drawSprite('runner'+dch+(ph?1:2),
+      Math.round(runner.rx*ts-camX), Math.round(runner.ry*ts-camY), runner.dir==='right');
   }
   const walking = path.length>0 || Math.abs(P.x-P.rx)+Math.abs(P.y-P.ry)>0.02;
   drawSprite(personFrame('player',P.dir,walking),

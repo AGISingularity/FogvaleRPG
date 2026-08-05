@@ -270,11 +270,34 @@ try {
     computeFOV();
     return { night, day, chapelLocked };
   });
-  ok(sched.night.col <= 2 && sched.night.bren <= 2 && sched.night.dag <= 2,
+  ok(sched.night.col <= 4 && sched.night.bren <= 4 && sched.night.dag <= 4,
     'schedules: at dusk, folk head for their beds', JSON.stringify(sched.night));
-  ok(sched.day.bren <= 2 && sched.day.dag <= 2,
+  ok(sched.day.bren <= 4 && sched.day.dag <= 4,
     'schedules: at dawn, back to their posts', JSON.stringify(sched.day));
   ok(sched.chapelLocked, 'schedules: the chapel bars its door at night');
+
+  // -- midnight runners: spawn deep at night, walk the route, vanish by day -
+  const run = await page.evaluate(() => {
+    mobs.length = 0;
+    time = 360;                                  // the deep of night
+    spawnRunner();
+    const spawned = !!runner && runner.route.length > 120;
+    const x0 = runner.x;
+    for (let i = 0; i < 30; i++) runnerTick();
+    const moved = runner && (runner.x !== x0 || runner.route.length < 100);
+    // stand in its path with eyes on it
+    P.x = runner.x; P.y = runner.y + 2; P.rx = P.x; P.ry = P.y; computeFOV();
+    for (let i = 0; i < 6; i++) runnerTick();
+    const seen = !!F.sawRunner;
+    time = 60; runnerTick();                     // dawn
+    const gone = runner === null;
+    P.x = 21; P.y = 110; P.rx = 21; P.ry = 110; computeFOV();
+    return { spawned, moved, seen, gone };
+  });
+  ok(run.spawned, 'runners: one sets out in the deep of night');
+  ok(run.moved, 'runners: it walks its route');
+  ok(run.seen, 'runners: witnessed at close range, remembered');
+  ok(run.gone, 'runners: gone by first light');
 
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));

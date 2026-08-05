@@ -28,6 +28,10 @@ server required. Open it in any mobile or desktop browser.
   Orla the Waykeeper: five gold buys a bed that heals you whole and skips to morning,
   her free road-news points wanderers at the shrine, watchtower, and altar, and if
   you've found the satchel she has seen who crosses her bridge at midnight.
+- **The midnight runners** — in the deep of night, hooded couriers really do cross
+  the vale, chapel to ridge cave, over Orla's bridge — never stopping, never
+  speaking. Stake out the route with a light and you'll see one pass; Bren has
+  been counting them, and finally someone believes him.
 - **The dark below** — the two cave mouths open (once you carry a blade and a light)
   into walled cavern complexes: permanently dark whatever the hour, sight cut to your
   torch or lantern's reach, bats in the black, rusted chests of gold, and a Path

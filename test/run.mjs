@@ -372,6 +372,33 @@ try {
   ok(cache.pried, 'cache: pried once wise — a blank in the pocket, a word learned');
   ok(cache.maren && cache.serra, 'cache: Maren and Serra have words for it');
 
+  // -- the Vigil: with both artifacts in hand, the stone speaks -------------
+  const vigil = await page.evaluate(() => {
+    mobs.length = 0;
+    // heartwood, blank, ledger, and cache flags are all set by earlier tests
+    P.x = 22; P.y = 14; P.rx = 22; P.ry = 14; computeFOV();
+    path = [{ x: 22, y: 13 }]; step();           // first touch (companionable silence or first visit)
+    P.x = 22; P.y = 14; path = [{ x: 22, y: 13 }]; step();  // and the reveal
+    return {
+      revealed: !!F.vigilRevealed,
+      topic: knownTopics.has('vigil'),
+      yseult: !!npcs.find(n => n.id === 'yseult').topics.vigil.cond(),
+      bren: !!npcs.find(n => n.id === 'bren').topics.vigil.cond(),
+      ch2: !!F.ch2Ended,
+    };
+  });
+  await page.waitForTimeout(3600);               // the end card takes a breath first
+  vigil.card = await page.evaluate(() => {
+    const shown = document.getElementById('endcard').style.display === 'block'
+      && document.getElementById('endTxt').innerHTML.includes('Gardener');
+    document.getElementById('endcard').style.display = 'none';
+    P.x = 21; P.y = 110; P.rx = 21; P.ry = 110; computeFOV();
+    return shown;
+  });
+  ok(vigil.revealed && vigil.topic, 'vigil: the stone speaks to laden hands');
+  ok(vigil.yseult && vigil.bren, 'vigil: the seer and the guard have their say');
+  ok(vigil.ch2 && vigil.card, 'vigil: Chapter Two closes, the Gardener is named');
+
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));
 } finally {

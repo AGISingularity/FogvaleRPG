@@ -34,6 +34,11 @@ server required. Open it in any mobile or desktop browser.
   fresh entry that explains a murder. Maren, Yseult, and Col each have words for
   what you found. The old triad asks what you are; the ledger prices what you're
   worth.
+- **Why the Vigil stands** — bring the heartwood and a silver blank to the old
+  shrine and the stone answers: kin knows kin. The Wardens were grown from the
+  Vigil's own grove; the three circles are a seal — LET NOTHING ELSE PASS BELOW —
+  and the Path is mining toward whatever they guard. Chapter Two closes with its
+  own end-card, and Chapter Three gets its title: The Gardener.
 - **What the runners carry** — in the ridge cave's back room, tarred crates wait
   for someone who knows enough to pry: silver blanks, medallions before the
   sunburst finds them, eleven to a satchel. Serra assays the lie (half tin under

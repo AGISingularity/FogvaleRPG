@@ -95,8 +95,11 @@ it also profiles frame time under 4× CPU throttle.
   'ledger' topic; Maren/Yseult/Col reactions; Piet's entry states the motive).
   v0.15.0 landed the satchel payoff: the cache object in ridge-cave room B pries
   open once F.readLedger||F.sawRunner, yielding the Silver Blank + 'blanks' topic
-  (Serra assay / Dag ore / Maren: Piet-was-a-runner). Remaining thread: why the
-  Vigil stands where it stands.
+  (Serra assay / Dag ore / Maren: Piet-was-a-runner). v0.16.0 closed the arc: the
+  Vigil reveal (heartwood+blank at the shrine, all three virtues +1, 'vigil'
+  topic, Yseult/Bren reactions) and a Chapter Two end-card once ledger+cache are
+  also done. Chapter Two is COMPLETE; Chapter Three is titled 'The Gardener'
+  (who taught the wood to stand up; what sleeps beneath the vale).
 - Combat — SHIPPED v0.6.0: HP + regen + bread heals, weapon/armour stats (auto-worn,
   no equip UI), Forgeworks armoury + Hetta the Smith (10th NPC), four creatures
   (slime/bat/bough-fiend/wisp) with spawn/chase AI that avoids towns, wisp = good

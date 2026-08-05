@@ -67,7 +67,12 @@ it also profiles frame time under 4× CPU throttle.
   (Idle wandering near posts + 4-direction frames for everyone shipped in v0.4.0 —
   schedules can build on npcTick and the per-NPC direction cells.)
 - Chapter Two content: the chapel ledger, the runners' satchels, why the Vigil stands
-  where it stands. Combat (the star-metal sword already exists and "hums, patiently").
+  where it stands.
+- Combat — SHIPPED v0.6.0: HP + regen + bread heals, weapon/armour stats (auto-worn,
+  no equip UI), Forgeworks armoury + Hetta the Smith (10th NPC), four creatures
+  (slime/bat/bough-fiend/wisp) with spawn/chase AI that avoids towns, wisp = good
+  creature whose killing costs hidden Love, death = respawn at the seer's with 25%
+  gold loss. Dungeons behind the cave mouths are the remaining piece.
 
 ### 3. Ship it to many players ("web-scale")
 - It is already a website; scale for players means: keep GitHub Pages as free global

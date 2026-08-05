@@ -52,6 +52,7 @@ try {
 
   // -- A* reachability of every key destination -----------------------------
   const reach = await page.evaluate(() => {
+    mobs.length = 0;   // creatures must not block reachability checks
     const targets = npcs.map(n => ({ name: n.name, x: n.x, y: n.y }));
     targets.push({ name: "Piet's body", x: 15, y: 106 });
     targets.push({ name: 'the old shrine', x: 22, y: 12 });
@@ -140,6 +141,25 @@ try {
   } else {
     console.log('  ▸ no save system detected — save/restore test skipped');
   }
+
+  // -- combat: kill a slime, take a hit, survive the accounting -------------
+  const combat = await page.evaluate(() => {
+    const before = { hp: P.hp, gold: inv.gold };
+    mobs.length = 0;
+    mobs.push({ type:'slime', hp:3, x:P.x+1, y:P.y, rx:P.x+1, ry:P.y, dir:'left' });
+    const m = mobs[0];
+    attackMob(m); attackMob(m); attackMob(m);            // fists do 1 each
+    const killed = !mobs.includes(m);
+    mobs.push({ type:'slime', hp:3, x:P.x+1, y:P.y, rx:P.x+1, ry:P.y, dir:'left' });
+    mobTick();                                           // it bites back
+    const out = { killed, goldGain: inv.gold-before.gold, hpBefore: before.hp, hpAfter: P.hp };
+    mobs.length = 0; P.hp = P.maxHp; updHud();
+    return out;
+  });
+  ok(combat.killed, 'combat: three bare-handed hits kill a slime');
+  ok(combat.goldGain > 0, 'combat: slain slime drops gold', '+'+combat.goldGain);
+  ok(combat.hpAfter < combat.hpBefore, 'combat: adjacent slime bites back',
+    combat.hpBefore+'→'+combat.hpAfter);
 
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));

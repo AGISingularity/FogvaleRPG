@@ -24,6 +24,13 @@ server required. Open it in any mobile or desktop browser.
 - **Regional economy** — herbs and mushrooms are gathered where they grow and sell for
   roughly double in the far town. Advanced goods (lantern, star-metal sword) only exist
   in the distant shop. "Distance is the oldest alchemy."
+- **Steel and teeth** — a fighting system: tap an adjacent creature to strike; the
+  star-metal sword (damage 3) beats fists (1), and the Forgeworks in Ironvale sells
+  leather and iron armour that absorb hits. Creatures great and small roam the wilds
+  (marsh slimes, dusk bats, bough-fiends near the woods) and shy away from towns;
+  night breeds more. Not all are evil — pale wisps drift harmlessly, and striking
+  one is silently, permanently noticed by the hidden virtues. Falling in battle
+  means waking at the seer's door, lighter of purse — never a lost save.
 - **A living village** — every character has full 4-direction walk animation
   (player and NPCs alike); NPCs idle-wander near their posts, keep to their own
   ground (indoor folk stay indoors), turn to face you in conversation, and if
@@ -79,7 +86,6 @@ One-time setup: `npm install && npx playwright install chromium`.
 
 ## Known limitations (prototype)
 
-- No combat yet — the sword hums, patiently, until Chapter Two.
 - NPCs wander a few steps around their posts but have no schedules yet
   (homes at night, work by day — that's the Chapter Two roadmap).
 - Saves are per-browser (no cloud sync).

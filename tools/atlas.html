@@ -43,26 +43,30 @@ const ATLAS_DEF = (()=>{
   const cell = ()=>{ const x=(i%8)*16, y=80+((i/8)|0)*24; i++; return [x,y,16,24]; };
   for(const f of FR) d['player'+f] = cell();
   d.tree2 = cell(); d.tower = cell(); d.altar = cell();
-  for(let n=0;n<8;n++) for(const f of FR) d['npc'+n+f] = cell();
+  for(let n=0;n<10;n++) for(const f of FR) d['npc'+n+f] = cell();
   d.cave = [80,32,16,16];
+  /* creatures: 2 frames each, in their own 16px row */
+  const MB = ['slime','bat','wisp','log'];
+  MB.forEach((m,j)=>{ d[m+'A']=[j*32,392,16,16]; d[m+'B']=[j*32+16,392,16,16]; });
   return d;
 })();
 /*ATLAS_DEF_END*/
 
 /* must match the npc definitions' c: values in index.html, in order:
    maren, tobin, col, bren, yseult, serra, dag, malvo */
-const NPC_COLORS = ['#b8c4e8','#d8b47e','#8a7f6a','#9aa5b8','#c9a8d8','#d89a7e','#b89a78','#e8d454'];
+const NPC_COLORS = ['#b8c4e8','#d8b47e','#8a7f6a','#9aa5b8','#c9a8d8','#d89a7e','#b89a78','#e8d454','#4a7a4a','#607a8a'];
 
 const atlas = document.getElementById('atlas');
-atlas.width = 128; atlas.height = 344;
+atlas.width = 128; atlas.height = 408;
 const ctx = atlas.getContext('2d');
 
-const OW = new Image(), CH = new Image();
+const OW = new Image(), CH = new Image(), LOG = new Image();
 let loaded = 0;
-OW.onload = CH.onload = () => { if(++loaded === 2) build(); };
-OW.onerror = CH.onerror = () => { document.title = 'load-error'; };
+OW.onload = CH.onload = LOG.onload = () => { if(++loaded === 3) build(); };
+OW.onerror = CH.onerror = LOG.onerror = () => { document.title = 'load-error'; };
 OW.src = 'src/Overworld.png';
 CH.src = 'src/character.png';
+LOG.src = 'src/log.png';
 
 function at(name){ return ATLAS_DEF[name]; }
 /* copy a source rect (tile coords ×16 unless px given) into an atlas cell */
@@ -249,6 +253,48 @@ for(let i=0;i<NPC_COLORS.length;i++){
     ctx.putImageData(d,dx,dy);
   }
 }
+
+/* ---------------- creatures ---------------------------------------------- */
+// bough-fiend: the pack's walking log, two down-facing frames, 2:1 → 16x16
+put(LOG, 0, 2, 'logA', { sw:32, sh:32 });
+put(LOG, 32, 2, 'logB', { sw:32, sh:32 });
+// slime, bat, wisp: hand-authored to match the pack's palette weight
+sm('slimeA',[
+  '................','................','................','................',
+  '.....gggg.......','....glgggg......','...gglggggg.....','...geggggeg.....',
+  '...gggggggg.....','..gggddggggg....','..gggggggggg....','..dggggggggd....',
+  '...ssssssss.....','................','................','................',
+],{ g:'#5cb85c', l:'#a8e8a0', d:'#3a8a3c', e:'#16301a', s:'rgba(10,14,10,.3)' });
+sm('slimeB',[
+  '................','................','................','................',
+  '................','................','....gggggg......','...glgggggg.....',
+  '..gglggggggg....','..geggggggeg....','.ggggddgggggg...','.dgggggggggggd..',
+  '..ssssssssss....','................','................','................',
+],{ g:'#5cb85c', l:'#a8e8a0', d:'#3a8a3c', e:'#16301a', s:'rgba(10,14,10,.3)' });
+sm('batA',[
+  '................','................','................','..w........w....',
+  '.www......www...','.wwwb....bwww...','..wwbbbbbbww....','...bbebbeb......',
+  '....bbbbbb......','.....bffb.......','......bb........','................',
+  '................','................','................','................',
+],{ w:'#372a46', b:'#4a3a5a', e:'#e05a5a', f:'#8a7a9a' });
+sm('batB',[
+  '................','................','................','................',
+  '................','...b......b.....','..wbbbbbbbbw....','.wwwbebbebwww...',
+  '.www.bbbb.www...','..w...ffb..w....','.......bb.......','................',
+  '................','................','................','................',
+],{ w:'#372a46', b:'#4a3a5a', e:'#e05a5a', f:'#8a7a9a' });
+sm('wispA',[
+  '................','................','................','................',
+  '......hh........','....hhmmhh......','....hmccmh......','...hmccccmh.....',
+  '...hmccccmh.....','....hmccmh......','....hhmmhh......','......hh........',
+  '................','................','................','................',
+],{ c:'#fff8d8', m:'#ffe89a', h:'rgba(255,232,150,.35)' });
+sm('wispB',[
+  '................','................','................','................',
+  '................','......hh........','.....hmmh.......','....hmccmh......',
+  '....hmccmh......','.....hmmh.......','......hh........','................',
+  '................','................','................','................',
+],{ c:'#fff8d8', m:'#ffe89a', h:'rgba(255,232,150,.35)' });
 
 /* ---------------- small sprites ------------------------------------------ */
 // herb: the pack's white wortleaf-ish flower cluster (transparent bg)

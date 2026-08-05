@@ -75,6 +75,7 @@
 
 <div id="hud">
   <span id="gold">⛁ 0</span>
+  <span id="hp" style="color:#e06a6a">♥ 10</span>
   <span id="clock">☀ Day</span>
   <span class="spacer"></span>
   <button id="bagBtn">Bag</button>
@@ -133,6 +134,10 @@
   Shops buy them — and pay far better the further the town is from where things grow.</p>
   <p><b>Night</b> — when night falls your sight closes to a few steps. A torch helps.
   A lantern helps more. Both are for sale... somewhere.</p>
+  <p><b>Fight</b> — tap a creature beside you to strike it. A sword bites deeper; armour
+  from the Ironvale forge turns teeth. If the fog takes you, you wake at the seer's door,
+  lighter of purse. And mind: not everything that glows in the dark is your enemy —
+  think before you swing.</p>
   <p><b>The unseen</b> — some of what you do is measured, though no number will ever show it.
   A seer lives at the south edge of Brookhollow, if you want a mirror.</p>
   <button id="helpClose">Back</button>
@@ -141,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.5.0';
+const VERSION='0.6.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -225,6 +230,7 @@ const grid = Array.from({length:H}, ()=>Array(W).fill('g'));
   building(101,13,5,4, 103,16);  // Ironvale: Serra's Goods
   building(108,12,6,6, 110,17);  // chapel of the Radiant Path
   building(101,21,5,4, 103,21);  // Dag the miner's house
+  building(108,21,5,4, 110,21);  // the Forgeworks (Hetta the Smith)
   // the old shrine, deep in the wood
   grid[12][22]='S';
   // the watchtower on its knoll
@@ -259,12 +265,13 @@ const objects = []; // {x,y,type}
 const objectAt=(x,y)=>objects.find(o=>o.x===x&&o.y===y);
 
 /* ---------- game state ---------- */
-const P = { x:21, y:110, rx:21, ry:110, dir:'down' }; // player tile + render position + 4-way facing
+const mobs=[];                                  // living creatures (combat section)
+const P = { x:21, y:110, rx:21, ry:110, dir:'down', hp:10, maxHp:10 }; // player tile + render pos + facing + health
 let path = [];                                  // queued steps [{x,y}...]
 let pending = null;                             // interaction on arrival
 let stepClock = 0;
 let time = 60;                                  // steps; day=300, night=150 per cycle
-const inv = { gold:12, herb:0, mushroom:0, bread:0, torch:0, lantern:0, sword:0, medallion:0 };
+const inv = { gold:12, herb:0, mushroom:0, bread:0, torch:0, lantern:0, sword:0, leather:0, iron:0, medallion:0 };
 const F = {};                                   // story flags
 const V = { truth:0, love:0, courage:0 };       // the hidden triad
 const knownTopics = new Set();
@@ -327,6 +334,7 @@ function walkable(x,y){
   if(BLOCKING[grid[y][x]]) return false;
   const o=objectAt(x,y); if(o && o.type==='body') return false;
   if(npcs.some(n=>n.x===x&&n.y===y)) return false;
+  if(mobs.some(m=>m.x===x&&m.y===y)) return false;
   return true;
 }
 function astar(sx,sy,isGoal,hx,hy){
@@ -390,9 +398,14 @@ const SHOPS = {
     buys:[ {id:'herb', nm:'Wortleaf Herb', price:3}, {id:'mushroom', nm:'Bluecap Mushroom', price:5} ] },
   serra: { name:"Serra's Goods",
     sells:[ {id:'lantern', nm:'Brass Lantern', sub:'Sight 7 at night', price:40},
-            {id:'sword', nm:'Star-metal Sword', sub:'Hums faintly. (Ch. 2)', price:60},
+            {id:'sword', nm:'Star-metal Sword', sub:'Hums, impatiently. (Damage 3)', price:60},
             {id:'bread', nm:'Dark Rye Bread', sub:'Denser than it looks', price:3} ],
-    buys:[ {id:'herb', nm:'Wortleaf Herb', price:6}, {id:'mushroom', nm:'Bluecap Mushroom', price:12} ] }
+    buys:[ {id:'herb', nm:'Wortleaf Herb', price:6}, {id:'mushroom', nm:'Bluecap Mushroom', price:12} ] },
+  hetta: { name:"The Forgeworks",
+    sells:[ {id:'leather', nm:'Leather Jerkin', sub:'Turns a claw. (Armour 1)', price:25},
+            {id:'iron', nm:'Iron Hauberk', sub:'Turns most teeth. (Armour 2)', price:70},
+            {id:'sword', nm:'Star-metal Sword', sub:'Her own work. (Damage 3)', price:60} ],
+    buys:[] }
 };
 
 const npcs = [
@@ -511,6 +524,15 @@ const npcs = [
          b:{label:'Let it pass', text(){ F.malvoPass=true;
              return '"No doubt that\'s it," you say. His smile refills. "The Path recovers what is lost, friend. Leave it with me, if you like — I shall see it home." You do not leave it with him.'; }} }},
      slip:{label:'His slip', cond:()=>F.malvoSlip, text:()=>'"The chapel is CLOSING, friend." Two large parishioners have appeared by the door. They are also smiling. It runs in the fellowship, apparently.'}
+   }},
+
+ { id:'hetta', name:'Hetta the Smith', x:109, y:22, c:'#4a7a4a', shop:'hetta',
+   greet:()=>'"Mind the sparks. Ore comes in, edges go out — lately more edges than ploughshares, which tells you what the roads have become." She sets the hammer down, but not far. "Buy, or talk. Both is also fine."',
+   topics:{
+     name:{label:'Name', text:()=>'"Hetta. Third hammer of that name. The forge was my mother\'s, and her mother\'s before that. The Path has offered to buy it twice."'},
+     job:{label:'Job', text:()=>'"Iron, and star-metal when Dag\'s luck holds — I forged the blade Serra sells. Free advice with every visit: a blade wants a jerkin under it. Dead heroes are poor repeat customers."'},
+     radiantpath:{label:'The Radiant Path', cond:()=>knownTopics.has('radiantpath'), text:()=>'"They offered for the forge twice, smiling both times. I named a price that wasn\'t money, and the smiling stopped." She spits into the coals, accurately. She and Dag must practise together.'},
+     murder:{label:'The murder', cond:()=>knownTopics.has('murder'), text:()=>'"A boy dead in Brookhollow, and half this town in silver suns poured at the chapel\'s own bench. I sell steel to honest hands and sleep fine. Lately I look longer at the hands, though."'}
    }}
 ];
 
@@ -573,7 +595,7 @@ function saveGame(){
   if(!started) return;
   try{
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      v:2, x:P.x, y:P.y, dir:P.dir, time, inv, F, V,
+      v:2, x:P.x, y:P.y, dir:P.dir, hp:P.hp, time, inv, F, V,
       topics:[...knownTopics], doors:[...openDoors], seen:[...explored],
       left:objects.filter(o=>o.type!=='body').map(o=>o.x+','+o.y)
     }));
@@ -589,6 +611,7 @@ function loadGame(){
     return false;
   }
   P.x=s.x; P.y=s.y; P.rx=s.x; P.ry=s.y; P.dir=s.dir||'down';
+  P.hp=Math.max(1, s.hp!==undefined ? s.hp : P.maxHp);
   time=s.time|0;
   Object.assign(inv,s.inv); Object.assign(F,s.F); Object.assign(V,s.V);
   for(const t of s.topics) knownTopics.add(t);
@@ -610,6 +633,7 @@ let activeNpc=null, shopTab='buy', activeShop=null;
 
 function updHud(){
   $('gold').textContent = '⛁ ' + inv.gold;
+  $('hp').textContent = '♥ ' + P.hp;
   $('clock').textContent = isNight() ? '☾ Night' : '☀ Day';
 }
 
@@ -672,7 +696,7 @@ function renderShop(){
   if(shopTab==='buy'){
     for(const it of activeShop.sells){
       const row=document.createElement('div'); row.className='row';
-      const owned = inv[it.id]>0 && (it.id==='torch'||it.id==='lantern'||it.id==='sword');
+      const owned = inv[it.id]>0 && ['torch','lantern','sword','leather','iron'].includes(it.id);
       row.innerHTML = '<div class="nm">'+it.nm+'<div class="sub">'+(it.sub||'')+'</div></div>';
       const b=document.createElement('button');
       b.textContent = owned ? 'Owned' : it.price+' ⛁';
@@ -680,7 +704,9 @@ function renderShop(){
       b.onclick=()=>{ inv.gold-=it.price; inv[it.id]=(inv[it.id]||0)+1; updHud(); renderShop();
         if(it.id==='torch') say('You buy the torch. Night will be four steps wide now instead of two.');
         else if(it.id==='lantern') say('The brass lantern is heavy and warm. Night just became a wide room.');
-        else if(it.id==='sword') say('The star-metal blade hums faintly against your palm. It is waiting for Chapter Two.');
+        else if(it.id==='sword') say('The star-metal blade hums against your palm. It is no longer waiting.');
+        else if(it.id==='leather') say('The jerkin settles over your shoulders like a second, braver skin.');
+        else if(it.id==='iron') say('The hauberk is heavy the way an argument-winning fact is heavy.');
         else say('Bought: '+it.nm+'.');
         computeFOV(); };
       row.appendChild(b); box.appendChild(row);
@@ -713,7 +739,9 @@ function openBag(){
     ['bread','Bread','Tap to eat'],
     ['torch','Pitch Torch','Lit by itself when night falls'],
     ['lantern','Brass Lantern','Lit by itself when night falls'],
-    ['sword','Star-metal Sword','Humming, patiently'],
+    ['sword','Star-metal Sword','No longer patient. (Damage 3)'],
+    ['leather','Leather Jerkin','Worn. Turns a claw. (Armour 1)'],
+    ['iron','Iron Hauberk','Worn. Turns most teeth. (Armour 2)'],
     ['medallion','Silver Medallion','A sunburst. Cold to the touch.']
   ];
   let any=false;
@@ -723,7 +751,8 @@ function openBag(){
     row.innerHTML='<div class="nm">'+nm+' × '+inv[id]+'<div class="sub">'+sub+'</div></div>';
     if(id==='bread'){
       const b=document.createElement('button'); b.textContent='Eat';
-      b.onclick=()=>{ inv.bread--; say('Warm through, even cold. (One day, hunger will matter. Today it is only comfort.)'); openBag(); };
+      b.onclick=()=>{ inv.bread--; P.hp=Math.min(P.maxHp,P.hp+3); updHud();
+        say('Warm through, even cold. (+3 to body and to morale.)'); openBag(); };
       row.appendChild(b);
     }
     box.appendChild(row);
@@ -781,13 +810,16 @@ const ATLAS_DEF = (()=>{
   const cell = ()=>{ const x=(i%8)*16, y=80+((i/8)|0)*24; i++; return [x,y,16,24]; };
   for(const f of FR) d['player'+f] = cell();
   d.tree2 = cell(); d.tower = cell(); d.altar = cell();
-  for(let n=0;n<8;n++) for(const f of FR) d['npc'+n+f] = cell();
+  for(let n=0;n<10;n++) for(const f of FR) d['npc'+n+f] = cell();
   d.cave = [80,32,16,16];
+  /* creatures: 2 frames each, in their own 16px row */
+  const MB = ['slime','bat','wisp','log'];
+  MB.forEach((m,j)=>{ d[m+'A']=[j*32,392,16,16]; d[m+'B']=[j*32+16,392,16,16]; });
   return d;
 })();
 /*ATLAS_DEF_END*/
-const NPC_COLORS=['#b8c4e8','#d8b47e','#8a7f6a','#9aa5b8','#c9a8d8','#d89a7e','#b89a78','#e8d454'];
-const ATLAS_W=128, ATLAS_H=344;
+const NPC_COLORS=['#b8c4e8','#d8b47e','#8a7f6a','#9aa5b8','#c9a8d8','#d89a7e','#b89a78','#e8d454','#4a7a4a','#607a8a'];
+const ATLAS_W=128, ATLAS_H=408;
 
 let atlasReady=false, atlasCv=null;
 const atlasImg=new Image();
@@ -924,6 +956,118 @@ function npcTick(){
 }
 setInterval(npcTick, 700);
 
+/* ===================================================================
+   COMBAT — creatures great and small, good and evil
+   =================================================================== */
+const weaponDmg = ()=> inv.sword ? 3 : 1;
+const armorVal  = ()=> inv.iron ? 2 : (inv.leather ? 1 : 0);
+const MOB_TYPES = {
+  slime:{ nm:'marsh slime',  hp:3, dmg:1, evil:true,  spr:'slime' },
+  bat:  { nm:'dusk bat',     hp:2, dmg:1, evil:true,  spr:'bat' },
+  log:  { nm:'bough-fiend',  hp:8, dmg:2, evil:true,  spr:'log' },
+  wisp: { nm:'pale wisp',    hp:1, dmg:0, evil:false, spr:'wisp' }
+};
+let hurtAt=-1e9;
+const isTownArea=(x,y)=> (x>=12&&x<=30&&y>=95&&y<=111)||(x>=98&&x<=116&&y>=10&&y<=26);
+
+function spawnMobs(){
+  const cap = isNight() ? 8 : 6;
+  if(!started || mobs.length>=cap) return;
+  for(let tries=0;tries<10;tries++){
+    const ang=Math.random()*6.283, d=9+Math.random()*12;
+    const x=Math.round(P.x+Math.cos(ang)*d), y=Math.round(P.y+Math.sin(ang)*d);
+    if(x<3||y<3||x>=W-3||y>=H-3) continue;
+    if(isTownArea(x,y) || !walkable(x,y)) continue;
+    if(visible.has(x+','+y)) continue;              // never in plain sight
+    const roll=Math.random();
+    let type;
+    if(roll<0.12) type='wisp';
+    else if(isNight() && roll<0.5) type='bat';
+    else {
+      const nearTrees=[[1,0],[-1,0],[0,1],[0,-1]].some(([ax,ay])=>{
+        const row=grid[y+ay]; return row && row[x+ax]==='t'; });
+      type = (nearTrees && roll<0.4) ? 'log' : 'slime';
+    }
+    mobs.push({ type, hp:MOB_TYPES[type].hp, x, y, rx:x, ry:y, dir:'down' });
+    break;
+  }
+  for(let i=mobs.length-1;i>=0;i--){
+    const m=mobs[i];
+    if(Math.abs(m.x-P.x)+Math.abs(m.y-P.y)>34) mobs.splice(i,1);
+  }
+}
+setInterval(spawnMobs, 2500);
+
+function mobCanStep(m,x,y){
+  if(!walkable(x,y)) return false;
+  if(x===P.x && y===P.y) return false;
+  if(isTownArea(x,y)) return false;                 // beasts shy from hearth-smoke
+  return true;
+}
+function mobTick(){
+  if(!started || anySheetOpen()) return;
+  for(const m of mobs){
+    const t=MOB_TYPES[m.type];
+    const dx=P.x-m.x, dy=P.y-m.y, dist=Math.abs(dx)+Math.abs(dy);
+    if(t.evil && dist===1){
+      m.dir = Math.abs(dx)>Math.abs(dy) ? (dx>0?'right':'left') : (dy>0?'down':'up');
+      const dmg=Math.max(0, t.dmg + (isNight()&&m.type==='bat'?1:0) - armorVal());
+      if(dmg>0){
+        P.hp-=dmg; hurtAt=performance.now(); updHud();
+        say('The '+t.nm+' strikes — '+dmg+' harm.');
+        if(P.hp<=0){ playerDown(); return; }
+      } else say('The '+t.nm+' snaps at you; your armour turns it.');
+      continue;
+    }
+    let step=null;
+    if(t.evil && dist<=6 && Math.random()<0.85){
+      const opts=[];
+      if(dx!==0) opts.push([Math.sign(dx),0, dx>0?'right':'left']);
+      if(dy!==0) opts.push([0,Math.sign(dy), dy>0?'down':'up']);
+      if(opts.length===2 && Math.abs(dy)>Math.abs(dx)) opts.reverse();
+      for(const o of opts){ if(mobCanStep(m, m.x+o[0], m.y+o[1])){ step=o; break; } }
+    } else if(Math.random()<0.3){
+      const o=[[1,0,'right'],[-1,0,'left'],[0,1,'down'],[0,-1,'up']][Math.random()*4|0];
+      if(mobCanStep(m, m.x+o[0], m.y+o[1])) step=o;
+    }
+    if(step){ m.dir=step[2]; m.x+=step[0]; m.y+=step[1]; }
+  }
+}
+setInterval(mobTick, 500);
+
+function attackMob(m){
+  const t=MOB_TYPES[m.type];
+  const dx=m.x-P.x, dy=m.y-P.y;
+  P.dir = Math.abs(dx)>Math.abs(dy) ? (dx>0?'right':'left') : (dy>0?'down':'up');
+  if(!t.evil){
+    mobs.splice(mobs.indexOf(m),1);
+    virtue('love',-2);
+    say('Your blow passes through the '+t.nm+' like breath through frost. It comes apart, softly, and the night is one light poorer.');
+    return;
+  }
+  m.hp-=weaponDmg();
+  if(m.hp<=0){
+    mobs.splice(mobs.indexOf(m),1);
+    const g = m.type==='log' ? 6 : 2+(Math.random()*3|0);
+    inv.gold+=g; updHud();
+    if(!F.firstBlood){ F.firstBlood=true; virtue('courage',1); }
+    say('The '+t.nm+' comes apart. Among the leavings: '+g+' gold.');
+  } else {
+    say(inv.sword ? 'The star-metal bites the '+t.nm+'. It does not approve.'
+                  : 'You strike the '+t.nm+' bare-handed. Effective, but it has opinions.');
+  }
+}
+function playerDown(){
+  path=[]; pending=null;
+  const lost=Math.ceil(inv.gold*0.25);
+  inv.gold-=lost;
+  P.hp=P.maxHp;
+  P.x=26; P.y=111; P.rx=26; P.ry=111; P.dir='down';
+  mobs.length=0;
+  computeFOV(); updHud(); saveGame();
+  say('<b>The fog takes you.</b> You wake on the seer\'s doorstep, lighter by '+lost+' gold. "The water said you\'d be back," Yseult remarks through the door. "It did not say face-first."');
+}
+
 function draw(now){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.fillStyle='#07080f'; ctx.fillRect(0,0,vw,vh);
@@ -977,6 +1121,12 @@ function draw(now){
     drawSprite(personFrame(npcCell(n),n.dir,moving),
       Math.round(n.rx*ts-camX), Math.round(n.ry*ts-camY), n.dir==='right');
   }
+  for(const m of mobs){
+    if(!visible.has(m.x+','+m.y)) continue;
+    const sx=m.rx*ts-camX, sy=m.ry*ts-camY;
+    if(sx<-ts||sy<-ts||sx>vw||sy>vh) continue;
+    drawSprite(MOB_TYPES[m.type].spr+(Math.floor(now/300)%2?'B':'A'), Math.round(sx), Math.round(sy));
+  }
   const walking = path.length>0 || Math.abs(P.x-P.rx)+Math.abs(P.y-P.ry)>0.02;
   drawSprite(personFrame('player',P.dir,walking),
     Math.round(P.rx*ts-camX), Math.round(P.ry*ts-camY), P.dir==='right');
@@ -986,7 +1136,14 @@ function draw(now){
   ctx.drawImage(fogCv,0,0,W,H,-camX,-camY,W*ts,H*ts);
   ctx.imageSmoothingEnabled=false;
 
-  // 6. light-source glow at night, with a live flicker
+  // 6. hurt flash
+  const hurtAge = now-hurtAt;
+  if(hurtAge<350){
+    ctx.fillStyle='rgba(190,30,30,'+(0.28*(1-hurtAge/350)).toFixed(3)+')';
+    ctx.fillRect(0,0,vw,vh);
+  }
+
+  // 7. light-source glow at night, with a live flicker
   if(night && (inv.torch||inv.lantern)){
     const gx=P.rx*ts+ts/2-camX, gy=P.ry*ts+ts/2-camY;
     const fl = inv.lantern ? 1 : 1 + 0.05*Math.sin(now/90) + 0.04*Math.sin(now/47+2);
@@ -1021,6 +1178,14 @@ cv.addEventListener('pointerdown', e=>{
   const npc=npcs.find(n=>n.x===tx&&n.y===ty);
   if(npc && visible.has(k)){
     if(!tryTalk(npc)){ pending={type:'npc',npc}; routeTo(tx,ty,true); }
+    return;
+  }
+  // a creature?
+  const mob=mobs.find(m=>m.x===tx&&m.y===ty);
+  if(mob && visible.has(k)){
+    const near = Math.abs(tx-P.x)<=1 && Math.abs(ty-P.y)<=1;
+    if(near) attackMob(mob);
+    else { pending={type:'mob',mob}; routeTo(tx,ty,true); }
     return;
   }
   // the body?
@@ -1060,6 +1225,7 @@ function step(){
     inv[o.type]++;
     say(o.type==='herb' ? 'You gather a sprig of wortleaf. ('+inv.herb+')' : 'A bluecap mushroom — the deep wood\'s small treasure. ('+inv.mushroom+')');
   }
+  if(P.hp<P.maxHp && time%8===0){ P.hp++; updHud(); }   // the road mends you, slowly
   // landmark triggers fire when you stand on or beside them
   {
     const seen=new Set();
@@ -1087,6 +1253,10 @@ function step(){
       // the target may have wandered off mid-walk — follow them
       if(!tryTalk(pd.npc)){ pending=pd; routeTo(pd.npc.x,pd.npc.y,true); }
     }
+    else if(pd.type==='mob' && mobs.includes(pd.mob)){
+      if(Math.abs(P.x-pd.mob.x)<=1 && Math.abs(P.y-pd.mob.y)<=1) attackMob(pd.mob);
+      else { pending=pd; routeTo(pd.mob.x,pd.mob.y,true); }
+    }
     else if(pd.type==='body' && Math.abs(P.x-15)<=1&&Math.abs(P.y-106)<=1) examineBody();
   }
 }
@@ -1103,6 +1273,11 @@ function loop(t){
     n.rx+=(n.x-n.rx)*0.2; n.ry+=(n.y-n.ry)*0.2;
     if(Math.abs(n.x-n.rx)<0.01) n.rx=n.x;
     if(Math.abs(n.y-n.ry)<0.01) n.ry=n.y;
+  }
+  for(const m of mobs){
+    m.rx+=(m.x-m.rx)*0.25; m.ry+=(m.y-m.ry)*0.25;
+    if(Math.abs(m.x-m.rx)<0.01) m.rx=m.x;
+    if(Math.abs(m.y-m.ry)<0.01) m.ry=m.y;
   }
   draw(t);
 }

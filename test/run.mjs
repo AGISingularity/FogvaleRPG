@@ -336,6 +336,10 @@ try {
   // -- the ledger: locked away by day, damning at deep night ----------------
   const ledger = await page.evaluate(() => {
     mobs.length = 0;
+    // at deep night Malvo sleeps in the corner; the test must not catch him
+    // mid-wander on the bench tile (a real flake the watchdog caught)
+    const mv = npcs.find(n => n.id === 'malvo');
+    mv.x = 112; mv.y = 13; mv.rx = 112; mv.ry = 13;
     time = 60;                                   // by day: nothing to find
     P.x = 110; P.y = 16; P.rx = 110; P.ry = 16; computeFOV();
     path = [{ x: 109, y: 16 }]; step();

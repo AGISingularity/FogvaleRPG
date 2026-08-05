@@ -147,13 +147,24 @@
   think before you swing.</p>
   <p><b>The unseen</b> — some of what you do is measured, though no number will ever show it.
   A seer lives at the south edge of Brookhollow, if you want a mirror.</p>
+  <p><b>The rune</b> — your whole tale, written small. Copy it somewhere safe, or
+  into Fogvale on another device. Speak a rune below and your tale resumes here.</p>
+  <textarea id="runeOut" readonly style="width:100%;max-width:480px;height:56px;background:#14162a;color:#9fb0d8;border:1px solid #3a3f5c;border-radius:10px;font-size:11px;padding:8px;font-family:monospace"></textarea>
+  <div style="margin:8px 0">
+    <button id="runeCopy" style="font-size:14px;padding:8px 18px">Copy my rune</button>
+  </div>
+  <input id="runeIn" placeholder="Speak a rune\u2026" style="width:100%;max-width:480px;background:#14162a;color:#e8e2d0;border:1px solid #3a3f5c;border-radius:10px;font-size:13px;padding:10px;font-family:monospace">
+  <div style="margin:8px 0 0 0">
+    <button id="runeGo" style="font-size:14px;padding:8px 18px">Resume that tale</button>
+  </div>
+  <div class="note" id="runeMsg"></div>
   <button id="helpClose">Back</button>
   <div class="note" id="helpVer"></div>
 </div>
 
 <script>
 'use strict';
-const VERSION='0.27.0';
+const VERSION='0.28.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -873,15 +884,34 @@ function chapterEnd(){
 /* ---------- autosave: localStorage, per-browser -------------------------- */
 const SAVE_KEY='fogvale_ch1';
 let started=false;                               // true once the intro is dismissed
+function buildSave(){
+  return {
+    v:2, x:P.x, y:P.y, dir:P.dir, hp:P.hp, maxHp:P.maxHp, time, inv, F, V,
+    topics:[...knownTopics], doors:[...openDoors], seen:[...explored],
+    left:objects.filter(o=>o.type!=='body').map(o=>o.x+','+o.y)
+  };
+}
+let restoring=false;                             // a spoken rune silences the old tale
 function saveGame(){
-  if(!started) return;
+  if(!started || restoring) return;
   try{
-    localStorage.setItem(SAVE_KEY, JSON.stringify({
-      v:2, x:P.x, y:P.y, dir:P.dir, hp:P.hp, maxHp:P.maxHp, time, inv, F, V,
-      topics:[...knownTopics], doors:[...openDoors], seen:[...explored],
-      left:objects.filter(o=>o.type!=='body').map(o=>o.x+','+o.y)
-    }));
+    localStorage.setItem(SAVE_KEY, JSON.stringify(buildSave()));
   }catch(e){ /* storage may be unavailable (private mode) — play on */ }
+}
+/* the rune of remembrance: the whole tale, written small */
+function exportRune(){
+  return 'FOG' + btoa(unescape(encodeURIComponent(JSON.stringify(buildSave()))));
+}
+function importRune(str){
+  try{
+    const t=(str||'').trim();
+    if(!t.startsWith('FOG')) return false;
+    const s=JSON.parse(decodeURIComponent(escape(atob(t.slice(3)))));
+    if(s.v!==2 || typeof s.x!=='number' || !s.inv) return false;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+    restoring=true;
+    return true;
+  }catch(e){ return false; }
 }
 function loadGame(){
   let s=null;
@@ -1085,7 +1115,22 @@ function openBag(){
 }
 $('bagBtn').onclick=openBag;
 $('bagClose').onclick=()=>{$('bag').style.display='none';};
-$('helpBtn').onclick=()=>{$('help').style.display='block';};
+$('helpBtn').onclick=()=>{
+  $('help').style.display='block';
+  try{ $('runeOut').value = started ? exportRune() : ''; }catch(e){}
+  $('runeMsg').textContent='';
+};
+$('runeCopy').onclick=()=>{
+  $('runeOut').select();
+  try{ navigator.clipboard ? navigator.clipboard.writeText($('runeOut').value) : document.execCommand('copy'); }catch(e){}
+  $('runeMsg').textContent='Copied. Write it somewhere the fog cannot reach.';
+};
+$('runeGo').onclick=()=>{
+  if(importRune($('runeIn').value)){
+    $('runeMsg').textContent='The vale remembers. Waking that tale\u2026';
+    setTimeout(()=>location.reload(), 700);
+  } else $('runeMsg').textContent='The rune does not answer. Check it was copied whole.';
+};
 $('helpClose').onclick=()=>{$('help').style.display='none';};
 $('endClose').onclick=()=>{$('endcard').style.display='none';};
 $('beginBtn').onclick=()=>{ $('intro').style.display='none'; started=true; saveGame();

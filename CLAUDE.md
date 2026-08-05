@@ -149,8 +149,13 @@ it also profiles frame time under 4× CPU throttle.
   updates land, cache-first assets, old-cache cleanup, update notice via say()),
   OG tags. Release checklist: bump VERSION in index.html AND the two version
   strings in sw.js — test/run.mjs fails if they drift.
-- REMAINING: custom domain (optional), cloud saves (Supabase/Workers KV,
-  anonymous rune-word codes first).
+- v0.28.0: the rune of remembrance — save export/import codes (FOG-prefixed
+  base64 of buildSave(); importRune validates, writes storage, and latches
+  `restoring` so the unload autosave cannot clobber the imported tale — that
+  race was a real bug caught by the round-trip test). Cross-device saves with
+  zero backend.
+- REMAINING: custom domain (optional), true cloud sync (needs a user-provisioned
+  backend — Supabase/Workers KV).
 - It is already a website; scale for players means: keep GitHub Pages as free global
   hosting, add a proper domain later if desired, add PWA manifest + service worker so
   it installs to home screens and plays offline, add Open Graph/social preview tags,

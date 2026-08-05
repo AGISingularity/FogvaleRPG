@@ -128,6 +128,11 @@ a service worker, and an in-game notice when a newer telling exists.
 - **The draught** — the seer brews bluecaps into a sturdier heart: ten caps for
   +3 utmost health, fifteen for three more, and never a third cup. The under-dark
   grows them thickest; the fighting system finally has a body that toughens.
+- **The rune of remembrance** — your whole tale written small: a copyable code
+  on the How to Play screen. Paste it into Fogvale on any device and the tale
+  resumes whole — cross-device saves with no account and no server, exactly as
+  the roadmap promised ('write down this rune-word to restore your tale
+  anywhere').
 - **Autosave** — progress persists in localStorage (key `fogvale_ch1`, version 1),
   written on tab-hide and every 4 seconds; restoring skips the intro. Per-browser.
 - **Chapter One story** — a murdered stable boy, a silver sunburst medallion, and the

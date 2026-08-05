@@ -653,6 +653,28 @@ try {
   ok(finale.withheld, 'finale: the seal keeps its counsel from the unanswered');
   ok(finale.passed && finale.card, 'finale: the watch passes, Chapter Three closes');
 
+  // -- the rune: a whole tale written small, spoken elsewhere ---------------
+  const rune = await page.evaluate(() => {
+    inv.gold = 444; P.x = 60; P.y = 60; saveGame();
+    const word = exportRune();
+    const prefixed = word.startsWith('FOG') && word.length > 100;
+    localStorage.clear();
+    inv.gold = 1;
+    const refused = !importRune('FOGnonsense') && !importRune('not a rune at all');
+    const spoken = importRune(word);
+    return { prefixed, refused, spoken };
+  });
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForTimeout(600);
+  rune.restored = await page.evaluate(() => inv.gold === 444 && P.x === 60 && P.y === 60);
+  await page.evaluate(() => {
+    localStorage.clear();
+    P.x = 21; P.y = 110; P.rx = 21; P.ry = 110; inv.gold = 12; computeFOV();
+  });
+  ok(rune.prefixed, 'rune: written small, marked FOG');
+  ok(rune.refused, 'rune: nonsense is not remembered');
+  ok(rune.spoken && rune.restored, 'rune: spoken elsewhere, the tale resumes whole');
+
   // -- the vale installs: manifest, worker, and a lantern that works offline
   const { readFileSync: rf } = await import('node:fs');
   const idxSrc = rf(join(ROOT, 'index.html'), 'utf8');

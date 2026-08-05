@@ -620,6 +620,39 @@ try {
   ok(boy.colKnows, 'joren: Col grips your arm with both hands');
   ok(boy.gone, 'joren: gone by daylight');
 
+  // -- the watch passes: homecoming first, then the Gate takes your measure -
+  const finale = await page.evaluate(() => {
+    // the boy waits (told the truth in the last test)
+    time = 360; jorenTick();
+    const waiting = JOREN.greet().includes('You came back');
+    JOREN.topics.home.choice.a.text();
+    const home = !!F.jorenHome && joren === null;
+    const colText = npcs.find(n => n.id === 'col').topics.joren.text();
+    const grateful = !!F.colThanked && colText.includes('every door I ever own is yours');
+    const malvoCold = npcs.find(n => n.id === 'malvo').topics.joren.text().includes('Some crops reseed');
+    // unworthy first: the seal keeps its counsel
+    const loveReal = V.love; V.love = -1;
+    P.x = 5; P.y = 17; P.rx = 5; P.ry = 17; computeFOV();
+    path = [{ x: 5, y: 16 }]; step();
+    const withheld = !F.watchPassed;
+    V.love = Math.max(1, loveReal);
+    P.x = 5; P.y = 17; path = [{ x: 5, y: 16 }]; step();
+    const passed = !!F.watchPassed && !!F.ch3Ended;
+    return { waiting, home, grateful, malvoCold, withheld, passed };
+  });
+  await page.waitForTimeout(3800);
+  finale.card = await page.evaluate(() => {
+    const shown = document.getElementById('endcard').style.display === 'block'
+      && document.getElementById('endTxt').innerHTML.includes('rolls over in its sleep');
+    document.getElementById('endcard').style.display = 'none';
+    time = 60; P.x = 21; P.y = 110; P.rx = 21; P.ry = 110; computeFOV();
+    return shown;
+  });
+  ok(finale.waiting && finale.home, 'finale: the boy walks home in one shadow');
+  ok(finale.grateful && finale.malvoCold, 'finale: every door of Col\'s is yours; some crops reseed');
+  ok(finale.withheld, 'finale: the seal keeps its counsel from the unanswered');
+  ok(finale.passed && finale.card, 'finale: the watch passes, Chapter Three closes');
+
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));
 } finally {

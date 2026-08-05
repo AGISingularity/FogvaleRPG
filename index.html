@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.25.0';
+const VERSION='0.26.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -531,6 +531,9 @@ const npcs = [
        F.gardenerNamed=true; learn('joren'); virtue('love',1);
        return '"A small trowel. Kept sharp, kept clean." He goes very still. "Barley-handled? Notch in the tang, about here?" You had not said so. His face says he did not need you to. "That trowel was MINE, stranger. I put it in Joren\u2019s hand the day he could walk, and taught him what my father taught me: keep your tools clean, keep your rows straight." His voice does not break. It does something worse \u2014 it goes flat. "They took my boy for \u2018the work\u2019. And the work was this."'; }},
      joren:{label:'Joren', cond:()=>knownTopics.has('joren'), text(){ F.jorenQuest=true;
+       if(F.jorenHome){
+         if(!F.colThanked){ F.colThanked=true; virtue('love',3); }
+         return '"He sleeps against the wall, where the wind can\u2019t reach, and he wakes up ANGRY about porridge, like a boy, like a BOY, stranger." Col\u2019s eyes do not leave Joren for a moment, as if looking away were a wager he refuses. "You gave me back the only crop I ever prayed over. There is no coin for it. There is only: every door I ever own is yours."'; }
        if(F.toldJoren)
          return '"You SPOKE to him." Col grips your arm with both hands, and they are steadier than they have been all season. "Then he knows. Whatever roots they\u2019ve grown into my boy \u2014 he knows his Da never stopped asking." He looks north-east, toward the ridge, the chapel, all of it. "Nine years old, and the Path\u2019s whole crooked weight on him. Hurry, stranger."';
        return '"He is nine, stranger. Nine, and he could coax green out of a gravel pit, and I was PROUD of that." Col looks at his open hands. "I do not want the trowel back. I do not want proof, or justice, or the Path\u2019s smiling apology. Bring him back. HIM. Everything else the vale can keep."'; }},
@@ -628,6 +631,8 @@ const npcs = [
          b:{label:'Let it pass', text(){ F.malvoPass=true;
              return '"No doubt that\'s it," you say. His smile refills. "The Path recovers what is lost, friend. Leave it with me, if you like — I shall see it home." You do not leave it with him.'; }} }},
      joren:{label:'Joren', cond:()=>knownTopics.has('joren'), text(){ F.malvoThreatened=true;
+       if(F.jorenHome)
+         return '"...The fellowship does not forget withdrawals, friend." He is looking at the ledger-shaped absence on the bench when he says it, and his voice is a vault door closing. "Enjoy the boy\u2019s laughter. Some crops reseed."';
        return '"...You have been busy, friend." There is no smile at all now, and the room is suddenly the temperature of the chapel\u2019s silver. "The boy is beloved of the fellowship. He eats. He learns. He MATTERS \u2014 which is more than the barley ever offered him." A pause, measured to the drop. "Do not make the fellowship choose between its gardener and a stranger."'; }},
      gardener:{label:'The Gardener', cond:()=>knownTopics.has('gardener'), text(){ F.askedMalvoGardener=true;
        return '"...The chapel keeps no garden, friend." His voice is perfectly level. Every candle in the room leans, very slightly, toward the door. "Whoever has been walking the deep wood should stop. The wood is not OURS to forgive trespass in."'; }},
@@ -693,6 +698,16 @@ function visitShrine(){
 }
 
 function gateStone(){
+  if(F.foundGate && F.jorenHome && !F.watchPassed){
+    if(V.truth>0 && V.love>0 && V.courage>0){
+      F.watchPassed=true;
+      say('<b>The circles warm under no hand at all.</b> Not opening \u2014 the Gate does not open for its friends, that is the entire point of it \u2014 but <i>answering</i>. Truth, weighed. Love, weighed. Courage, weighed. Every unwitnessed choice you ever fed the fog comes back at once, and the seal reads the total the way Yseult reads water. Moss lifts from a last line, cut small and deep: <b>THE WATCH PASSES.</b> The Vigil chose its stone. The Gate has chosen its keeper.');
+      if(!F.ch3Ended){ F.ch3Ended=true; setTimeout(chapter3End, 3400); }
+    } else {
+      say('The circles take your measure, and keep their counsel. Something in you is not yet answered. <i>(The seal reads what the water reads.)</i>');
+    }
+    return;
+  }
   if(F.foundGate){ say('The Hollow Gate holds. The drill-scars have not multiplied \u2014 today.'); return; }
   F.foundGate=true; learn('gate');
   virtue('courage',2); virtue('truth',1);
@@ -702,10 +717,16 @@ function gateStone(){
 /* ---------- Joren, in the rows, in the small hours ----------------------- */
 let joren=null;
 const JOREN = { name:'Joren', shop:null,
-  greet:()=>'The small figure does not run. He finishes tying off a lath frame first, the way a boy finishes a chore before looking up. "You\u2019re not supposed to be here. The rows are fellowship ground." He is nine, and hoe-thin, and entirely unafraid \u2014 which is somehow the worst thing in the vale.',
+  greet(){ if(F.toldJoren) return '"You came back." He has not tied a single knot tonight. The frames stand half-strung and he does not look at them once, which in this boy is a shout. "I kept thinking about the wall. Where the wind can\u2019t reach." He swallows the recitation before it starts. "Is it far?"';
+    return 'The small figure does not run. He finishes tying off a lath frame first, the way a boy finishes a chore before looking up. "You\u2019re not supposed to be here. The rows are fellowship ground." He is nine, and hoe-thin, and entirely unafraid \u2014 which is somehow the worst thing in the vale.'; },
   topics:{
     rows:{label:'The rows', cond:()=>true, text:()=>'"I make them grow straight. Brother Malvo says nobody else in the whole fellowship can do what I do." The pride is plain, and terrible. "The wood listens to me. It always has. Da said it was a gift."'},
     door:{label:'The door', cond:()=>knownTopics.has('gate'), text:()=>'"When the rows are ready, the door will be glad, and everyone will see the work mattered." He says it like a lesson learned by heart. He does not know what the door is for. Neither, you realize with a chill, does he think to ask.'},
+    home:{label:'"Walk with me."', cond:()=>F.toldJoren && !F.jorenHome,
+      choice:{ prompt:'He looks once at the rows \u2014 straight, grey-sapped, obedient \u2014 and once at you. "If I go... they just grow crooked, don\u2019t they? Like they always wanted." It is the most nine-year-old thing he has ever said.',
+        a:{label:'"They grow free. Come home."', text(){ F.jorenHome=true; joren=null; virtue('love',2); virtue('courage',1); saveGame();
+            return 'He does not take your hand \u2014 nine is nine \u2014 but he walks so close your shadows are one shadow, the whole way out of the deep wood, over the bridge, past the sleeping inn, to the stable wall where the wind cannot reach. What happens there between father and son is not yours to narrate. You look at the sky and let it happen. <i>(The Gate remains. And you are different weather than you were.)</i>'; }},
+        b:{label:'"Not tonight."', text:()=>'"...All right." He picks the lath back up, but he ties the knot loose \u2014 the first loose knot of his life. He is practising.'} }},
     father:{label:'His father', cond:()=>!F.toldJoren,
       choice:{ prompt:'"...Da begged. That\u2019s what Brother Malvo says. Begging is for the unworthy." The recitation wobbles, once, on the word Da. "He never came for me." He ties the next knot far too tight.',
         a:{label:'"He never stopped asking."', text(){ F.toldJoren=true; virtue('truth',1); virtue('love',2);
@@ -820,6 +841,15 @@ function chapter2End(){
     '<p><b>The Path is not digging for silver. Silver is what it spends on the way down.</b></p>' +
     '<p><i>Chapter Three: The Gardener</i> \u2014 who taught the wood to stand up, what sleeps beneath the vale, and what three circles are worth when somebody starts counting.</p>' +
     '<p style="color:#8f96b8;font-size:13px">The vale stays open \u2014 wander, trade, fight, listen. And thank you for walking Chapter Two.</p>';
+  document.getElementById('endcard').style.display='block';
+}
+
+function chapter3End(){
+  document.getElementById('endTxt').innerHTML =
+    '<p>The mint is found, the ledger read, the runners counted, the nursery named. A boy sleeps against a stable wall, waking angry about porridge, like a boy.</p>' +
+    '<p><b>And the Hollow Gate keeps \u2014 because the vale, patient as moss, grew itself a keeper.</b> Not from Vigil-stock. From choices no one saw and nothing rewarded, weighed in the dark, found true.</p>' +
+    '<p><i>The Path still smiles in Ironvale. The small hours still have footsteps. And somewhere under all of it, something that was promised an open door rolls over in its sleep.</i></p>' +
+    '<p style="color:#8f96b8;font-size:13px">The vale keeps its own now. Thank you for walking all three chapters.</p>';
   document.getElementById('endcard').style.display='block';
 }
 
@@ -1558,6 +1588,12 @@ function draw(now){
       ctx.arc(sx+ts/2, sy+ts/2, ts*(0.3+0.5*hitAge/180), 0, 7);
       ctx.stroke();
     }
+  }
+  if(F.jorenHome && visible.has('17,109')){
+    const s=ts/16, r=ATLAS_DEF[Math.floor(now/900)%2 ? 'runnerD1' : 'runnerD2'], k=0.78;
+    const w=r[2]*s*k, h=r[3]*s*k;
+    ctx.drawImage(atlasCv, r[0]*s, r[1]*s, r[2]*s, r[3]*s,
+      Math.round(17*ts-camX+(ts-w)/2), Math.round(109*ts-camY+16*s-h), w, h);
   }
   if(joren && visible.has(joren.x+','+joren.y)){
     const s=ts/16, r=ATLAS_DEF[Math.floor(now/700)%2 ? 'runnerD1' : 'runnerD2'], k=0.78;

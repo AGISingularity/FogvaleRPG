@@ -136,8 +136,13 @@ it also profiles frame time under 4× CPU throttle.
   Joren appears at the grove during deepNight once F.jorenQuest (small-scale
   runner frames, tending animation); pride/door/father topics; the father
   choice sets F.toldJoren and reshapes Col's dialogue ('Hurry, stranger').
-  Final thread: the homecoming + the Gate's answer — the seal responds to
-  meaning, i.e. the hidden virtues; F.jorenHome reserved for the finale.
+  v0.26.0 closed the chapter: the
+  homecoming (JOREN.topics.home, F.jorenHome, figure at 17,109, Col's +3 Love
+  gratitude, Malvo's 'some crops reseed'), and the Gate's answer — gated on
+  F.jorenHome AND all three virtues positive, F.watchPassed, chapter3End card.
+  CHAPTER THREE IS COMPLETE. The hidden triad finally acted in the open,
+  without ever showing a number. Chapter Four is unwritten ('something promised
+  an open door rolls over in its sleep').
 
 ### 3. Ship it to many players ("web-scale")
 - It is already a website; scale for players means: keep GitHub Pages as free global

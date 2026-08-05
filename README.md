@@ -40,6 +40,13 @@ server required. Open it in any mobile or desktop browser.
   bread for the hungry dead, a pelt for their warmth — paid silently in Love;
   the wax at the Path's altar reads once, in Truth: two sets of knee-prints,
   and the small set dug deeper.
+- **The watch passes** — walk Joren home ('he does not take your hand — nine is
+  nine — but he walks so close your shadows are one shadow') and a small figure
+  stays by the stable wall, waking angry about porridge, like a boy. Then stand
+  before the Hollow Gate: the circles weigh every unwitnessed choice you ever
+  fed the fog — Truth, Love, Courage — and if all three stand in the light, the
+  seal answers: THE WATCH PASSES. The vale grew itself a keeper. Chapter Three
+  closes; below, something promised an open door rolls over in its sleep.
 - **The boy in the rows** — once Col has asked, go to the nursery in the deep
   of night and Joren is there among his saplings, tying lath frames: nine,
   hoe-thin, proud of the only work that ever mattered, and entirely unafraid.

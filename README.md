@@ -62,7 +62,10 @@ server required. Open it in any mobile or desktop browser.
   stair-stone leads back to daylight — and each cache is kept by a Hollow
   Warden — ashen bough-fiends that guard rather than hunt, fall hard, and stay
   dead. The first leaves a knot of heartwood the seer would rather not touch;
-  the second proves the point: the caches were tended, not abandoned.
+  the second proves the point: the caches were tended, not abandoned. And below
+  the outcrop a further stair descends to the under-dark — a second level where
+  even the lantern gutters to five paces, the chests run richer, and bluecaps
+  grow thickest.
 - **Steel and teeth** — a fighting system: tap an adjacent creature to strike; the
   weapon ladder runs fists (1) → Tobin's hunting knife (2) → the star-metal sword (3), and the Forgeworks in Ironvale sells
   leather and iron armour that absorb hits. Creatures great and small roam the wilds

@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.19.0';
+const VERSION='0.20.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -260,6 +260,9 @@ const grid = Array.from({length:H}, ()=>Array(W).fill('g'));
   }
   cavern(3,116,30,125, [[5,118,11,124],[12,121,19,121],[20,117,28,124]], [5,121]);
   cavern(100,116,124,125, [[102,118,108,124],[109,121,115,121],[116,117,122,124]], [102,121]);
+  // the under-dark: a deeper level below the outcrop, along the north edge
+  cavern(43,2,69,9, [[45,3,52,8],[53,5,60,5],[61,3,67,8]], [46,5]);
+  grid[123][121]='D';
 })();
 
 /* ---------- gatherables ---------- */
@@ -286,12 +289,19 @@ const objects = []; // {x,y,type}
     const x=3+Math.floor(r()*(W-6)), y=116+Math.floor(r()*10);
     if(grid[y] && grid[y][x]==='v'){ objects.push({x,y,type:'mushroom'}); placed++; }
   }
+  placed=0; guard=0;
+  while(placed<4 && guard++<4000){
+    const x=44+Math.floor(r()*25), y=3+Math.floor(r()*6);
+    if(grid[y] && grid[y][x]==='v'){ objects.push({x,y,type:'mushroom'}); placed++; }
+  }
   // chests in the dark
   objects.push({x:10,y:123,type:'chest',gold:15});
   objects.push({x:27,y:118,type:'chest',gold:30});
   objects.push({x:27,y:123,type:'chest',gold:10,item:'satchel'});
   objects.push({x:104,y:123,type:'chest',gold:20});
   objects.push({x:121,y:118,type:'chest',gold:45});
+  objects.push({x:50,y:7,type:'chest',gold:25});
+  objects.push({x:65,y:4,type:'chest',gold:80});
 })();
 const objectAt=(x,y)=>objects.find(o=>o.x===x&&o.y===y);
 
@@ -313,13 +323,16 @@ const explored = new Set();
 const isNight = ()=> (time % 450) >= 300;
 const CAVES = {
   ridge:   { outside:[34,67],  inside:[6,121],   rect:[3,116,30,125] },
-  outcrop: { outside:[91,40],  inside:[103,121], rect:[100,116,124,125] }
+  outcrop: { outside:[91,40],  inside:[103,121], rect:[100,116,124,125] },
+  deep:    { outside:[120,122], inside:[47,5],   rect:[43,2,69,9] }
 };
+const inDeep = ()=> P.x>=43&&P.x<=69&&P.y>=2&&P.y<=9;
 function inCave(){
   return Object.values(CAVES).some(c=>
     P.x>=c.rect[0]&&P.x<=c.rect[2]&&P.y>=c.rect[1]&&P.y<=c.rect[3]);
 }
 function sightRadius(){
+  if(inDeep()) return inv.lantern ? 5 : inv.torch ? 3 : 2;   // even the lantern gutters
   if(inCave()) return inv.lantern ? 7 : inv.torch ? 4 : 2;   // always dark below
   if(!isNight()) return 9;
   if(inv.lantern) return 7;
@@ -1007,7 +1020,7 @@ const ATLAS_DEF = (()=>{
   /* cave furnishings */
   d.cavefloor=[96,32,16,16]; d.chest=[112,32,16,16]; d.exitrune=[0,408,16,16];
   d.wardenA=[16,408,16,16]; d.wardenB=[32,408,16,16]; d.ledger=[48,408,16,16]; d.cache=[64,408,16,16];
-  d.wolfA=[80,408,16,16]; d.wolfB=[96,408,16,16];
+  d.wolfA=[80,408,16,16]; d.wolfB=[96,408,16,16]; d.downrune=[112,408,16,16];
   /* midnight runners: walk frames only — they never stand still */
   ['D1','D2','L1','L2','U1','U2'].forEach((f,j)=>{ d['runner'+f]=[j*16,424,16,24]; });
   return d;
@@ -1067,6 +1080,7 @@ function tileCells(x,y){
     case 'C': return ['mtn'+((x*5+y*11)%2),'cave'];
     case 'v': return ['cavefloor'];
     case 'X': return ['cavefloor','exitrune'];
+    case 'D': return ['cavefloor','downrune'];
   }
   return [g];
 }
@@ -1591,6 +1605,13 @@ function step(){
       virtue('courage',2); virtue('truth',1);
       say('<b>The Ledger of Worth.</b> Thin, black, sunburst-stamped — and inside, the whole vale in columns: names, tithes, and a number against every soul. <i>Col, farm-holder: 3, seized. Serra, provisioner: 6, pending. Dag, miner: 5, watched.</i> And near the end, in fresher ink: <i>"P., stable — carried 11, asked questions. Reassessed."</i> They metered what must never be metered — and Piet\'s number came up. <i>(Maren must hear of this.)</i>');
     }
+  }
+  if(grid[P.y][P.x]==='D'){
+    path=[]; pending=null;
+    P.x=CAVES.deep.inside[0]; P.y=CAVES.deep.inside[1]; P.rx=P.x; P.ry=P.y;
+    computeFOV(); saveGame();
+    say('The stair winds down into air that has never known morning. Even your light hangs closer, like a dog that does not trust the room.');
+    return;
   }
   if(grid[P.y][P.x]==='X'){ exitCave(); return; }
   if(P.hp<P.maxHp && time%8===0){ P.hp++; updHud(); }   // the road mends you, slowly

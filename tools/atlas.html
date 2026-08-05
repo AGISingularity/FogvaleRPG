@@ -51,7 +51,7 @@ const ATLAS_DEF = (()=>{
   /* cave furnishings */
   d.cavefloor=[96,32,16,16]; d.chest=[112,32,16,16]; d.exitrune=[0,408,16,16];
   d.wardenA=[16,408,16,16]; d.wardenB=[32,408,16,16]; d.ledger=[48,408,16,16]; d.cache=[64,408,16,16];
-  d.wolfA=[80,408,16,16]; d.wolfB=[96,408,16,16];
+  d.wolfA=[80,408,16,16]; d.wolfB=[96,408,16,16]; d.downrune=[112,408,16,16];
   /* midnight runners: walk frames only — they never stand still */
   ['D1','D2','L1','L2','U1','U2'].forEach((f,j)=>{ d['runner'+f]=[j*16,424,16,24]; });
   return d;
@@ -367,6 +367,14 @@ sm('wolfB',[
   '....gggggggggg..','....gg.ggg.gg...','...g....gg...g..','..g.....g.....g.',
   '....ssssssss....','................','................','................',
 ],{ w:'#6a6675', g:'#524e5c', d:'#2e2a36', s:'rgba(10,14,10,.3)' });
+
+/* the down-stair: like the way out, but darker at heart */
+sm('downrune',[
+  '................','................','..pppppppppppp..','..p..........p..',
+  '..p.qqqqqqqq.p..','..p.q......q.p..','..p.q.rrrr.q.p..','..p.q.roor.q.p..',
+  '..p.q.roor.q.p..','..p.q.rrrr.q.p..','..p.q......q.p..','..p.qqqqqqqq.p..',
+  '..p..........p..','..pppppppppppp..','................','................',
+],{ p:'#3e3a4e', q:'#565068', r:'#736d88', o:'#141020' });
 
 /* ---------------- cave furnishings ---------------------------------------- */
 // cavern floor: dark stone, speckled

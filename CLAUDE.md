@@ -77,6 +77,9 @@ it also profiles frame time under 4× CPU throttle.
   route (chapel → bridge → ridge cave) in dark-recolored hero frames; close
   sighting sets F.sawRunner (+Courage once) and unlocks Bren's counting-them
   dialogue. Chapter Two's runners are now a thing you can witness.
+- v0.20.0: the under-dark — second dungeon level below the outcrop cave ('D'
+  stair at 121,123 → pocket at [43,2,69,9]; inDeep() dims light to 5/3/2; two
+  richer chests + 4 bluecaps; CAVES.deep drives spawns and the way back).
 - v0.19.0: mercy — evil creatures (not wardens) flee at ≤1/3 hp, sliding along
   obstacles and escaping by distance or endurance; a first escape pays Love once
   (F.showedMercy). The fighting system now has a moral verb besides 'strike'.

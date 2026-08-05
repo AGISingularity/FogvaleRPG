@@ -182,7 +182,7 @@ try {
     return out;
   });
   cave.x = caveOut.x; cave.y = caveOut.y;
-  ok(cave.chests === 5, 'caves: five chests wait below', String(cave.chests));
+  ok(cave.chests === 7, 'caves: seven chests wait below', String(cave.chests));
   ok(cave.tile === 'v', 'caves: entering lands on cavern floor');
   ok(cave.sight <= 4, 'caves: dark below even by day', 'sight ' + cave.sight);
   ok(cave.x === 34 && cave.y === 67, 'caves: the stair-stone leads back out',
@@ -200,7 +200,7 @@ try {
   ok(rest.day && rest.advanced, 'inn: you wake with the morning light');
   const shrooms = await page.evaluate(() =>
     objects.filter(o => o.type === 'mushroom' && grid[o.y][o.x] === 'v').length);
-  ok(shrooms === 8, 'caves: eight bluecaps grow below', String(shrooms));
+  ok(shrooms === 12, 'caves: a dozen bluecaps grow below', String(shrooms));
 
   // -- the Hollow Wardens: one per cache, independent, permanently slain ----
   const warden = await page.evaluate(() => {
@@ -459,6 +459,24 @@ try {
   ok(mercy.fled, 'mercy: the beaten wolf breaks and runs');
   ok(mercy.gained, 'mercy: it puts ground between you');
   ok(mercy.escaped && mercy.loved, 'mercy: letting it live is quietly noticed');
+
+  // -- the under-dark: a stair down, a dimmer light, a way back up ----------
+  const deep = await page.evaluate(() => {
+    mobs.length = 0;
+    inv.lantern = 1;
+    P.x = 120; P.y = 123; P.rx = 120; P.ry = 123; computeFOV();
+    path = [{ x: 121, y: 123 }]; step();         // onto the down-stair
+    const below = inDeep(), tile = grid[P.y][P.x], sight = sightRadius();
+    P.x = 47; P.y = 5; P.rx = 47; P.ry = 5;
+    path = [{ x: 46, y: 5 }]; step();            // onto the way out
+    const back = P.x === 120 && P.y === 122 && !inDeep();
+    inv.lantern = 0;
+    P.x = 21; P.y = 110; P.rx = 21; P.ry = 110; computeFOV();
+    return { below, tile, sight, back };
+  });
+  ok(deep.below && deep.tile === 'v', 'under-dark: the stair descends to cavern floor');
+  ok(deep.sight === 5, 'under-dark: even the lantern gutters', 'sight ' + deep.sight);
+  ok(deep.back, 'under-dark: the pale stone leads back to the outcrop');
 
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));

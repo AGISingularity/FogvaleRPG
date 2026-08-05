@@ -34,6 +34,12 @@ server required. Open it in any mobile or desktop browser.
   fresh entry that explains a murder. Maren, Yseult, and Col each have words for
   what you found. The old triad asks what you are; the ledger prices what you're
   worth.
+- **What the runners carry** — in the ridge cave's back room, tarred crates wait
+  for someone who knows enough to pry: silver blanks, medallions before the
+  sunburst finds them, eleven to a satchel. Serra assays the lie (half tin under
+  a bright skin), Dag names his own ore, and Maren learns the worst of it — Piet
+  ran the Path's satchels himself, eleven times, and was killed for asking what
+  he carried the twelfth.
 - **The midnight runners** — in the deep of night, hooded couriers really do cross
   the vale, chapel to ridge cave, over Orla's bridge — never stopping, never
   speaking. Stake out the route with a light and you'll see one pass; Bren has

@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.14.0';
+const VERSION='0.15.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -275,6 +275,7 @@ const objects = []; // {x,y,type}
   }
   objects.push({x:15,y:106,type:'body'}); // Piet, in the stable
   objects.push({x:109,y:16,type:'ledger'}); // the Ledger of Worth, out only at deep night
+  objects.push({x:24,y:119,type:'cache'});  // the runners' cache, tarred shut
   // bluecaps grow in the dark too — the caves pay twice
   placed=0; guard=0;
   while(placed<8 && guard++<4000){
@@ -297,7 +298,7 @@ let path = [];                                  // queued steps [{x,y}...]
 let pending = null;                             // interaction on arrival
 let stepClock = 0;
 let time = 60;                                  // steps; day=300, night=150 per cycle
-const inv = { gold:12, herb:0, mushroom:0, bread:0, torch:0, lantern:0, sword:0, knife:0, leather:0, iron:0, medallion:0, satchel:0, heartwood:0 };
+const inv = { gold:12, herb:0, mushroom:0, bread:0, torch:0, lantern:0, sword:0, knife:0, leather:0, iron:0, medallion:0, satchel:0, heartwood:0, blank:0 };
 const F = {};                                   // story flags
 const V = { truth:0, love:0, courage:0 };       // the hidden triad
 const knownTopics = new Set();
@@ -414,7 +415,7 @@ const TOPIC_LABEL = {
   ironvale:'Ironvale', radiantpath:'the Radiant Path', malvo:'Brother Malvo',
   stranger:'the robed stranger', shrine:'the old shrine', codex:'the Codex',
   found:'what I found', slip:"Malvo's slip", coin:'his plea', reading:'a reading',
-  bluecaps:'bluecaps', satchel:'the satchel', ledger:'the ledger'
+  bluecaps:'bluecaps', satchel:'the satchel', ledger:'the ledger', blanks:'the silver blanks'
 };
 function learn(...keys){
   for(const k of keys){
@@ -465,6 +466,7 @@ const npcs = [
              return '"Silver... and cold, even by the fire." She presses it back into your hand quickly, as if it bit her. "Keep it hidden. And keep it moving — show it to those who trade in silver. Someone poured this, and pouring leaves records."'; }},
          b:{label:'"Nothing. Nothing yet."', text(){ F.liedMaren=true; virtue('truth',-2);
              return '"Nothing." She looks at you a moment longer than she needs to. "Well. Perhaps the frost keeps secrets better than people do."'; }} }},
+     blanks:{label:'The silver blanks', cond:()=>knownTopics.has('blanks'), text:()=>'"Piet\u2019s errands. \u2018Carried eleven.\u2019" She sets the blank down as if it burns. "He ran THEIR satchels, stranger. My stable boy carried this slug-silver under the ridge eleven times \u2014 and the twelfth time he asked what it was. For asking, they reassessed him." The word has not grown kinder in her mouth. "Bring me the man who poured this. The vale will do the weighing."'},
      ledger:{label:'The ledger', cond:()=>knownTopics.has('ledger'), text:()=>'"A number. Against every name in my village." Maren is very still, the way deep water is still. "Piet carried eleven — eleven WHAT, stranger? Loads? Letters? And when he asked, they reassessed him." She folds the word away like a blade. "Chapter and verse, they will answer for that book. Bring me anything more you find, and tell no one else you saw it."'},
      slip:{label:"Malvo's slip", cond:()=>F.malvoSlip,
        text(){ setTimeout(chapterEnd, 2600);
@@ -541,6 +543,7 @@ const npcs = [
      job:{label:'Job', text(){ learn('bluecaps');
        return '"Goods and coin. The lantern\'s my best stock — brass, burns steady, turns night into a wide room. Dear, yes. So is walking blind."'; }},
      bluecaps:{label:'Bluecaps', cond:()=>knownTopics.has('bluecaps'), text:()=>'"They grow only in the deep wood past Brookhollow, which is why they\'re worth twelve here and five there. Distance is the oldest alchemy — it turns mushrooms into silver."'},
+     blanks:{label:'The silver blanks', cond:()=>knownTopics.has('blanks'), text:()=>'"Give it here \u2014 I know chapel silver when I\u2014" She stops. Weighs it twice. "Thin. Half tin under a bright skin. Their medallions, their charity, their WAGES \u2014 poured from this. The Path pays its faithful in silver that is mostly lie, stranger, and the faithful pay it forward at full weight."'},
      medallion:{label:'The medallion', cond:()=>F.hasMedallion, text(){ learn('radiantpath','malvo');
        return 'She glances at it, then at her own door. "Radiant Path work. The sunburst — every sworn member wears one, poured right here in Ironvale at the chapel\'s own bench." Quieter: "Half this town wears it now. They pay in silver that shines a little too bright. If you\'re asking questions about that medallion, ask Brother Malvo at the chapel — and stranger? Ask them near the open door."'; }},
      radiantpath:{label:'The Radiant Path', cond:()=>knownTopics.has('radiantpath'), text:()=>'"Came two winters back with bread and blankets, and now they hold the mortgage on the smithy. Nobody remembers agreeing to that, exactly. It happened the way fog comes in."'},
@@ -552,6 +555,7 @@ const npcs = [
    topics:{
      name:{label:'Name', text:()=>'"Dag. I dig. My father dug. Somewhere down there he\'s digging still, far as anyone knows."'},
      job:{label:'Job', text:()=>'"Iron out of the ridge. Star-metal when we\'re lucky — Serra sells the blades. Lately the Path buys the ore before it\'s even weighed. Cash down. Nobody asks where a chapel gets cash, and I notice nobody asks."'},
+     blanks:{label:'The silver blanks', cond:()=>knownTopics.has('blanks'), text:()=>'"That\u2019s my ore. I\u2019d know it smelted, sworn, or sainted." He turns the blank once and hands it back like a dead bird. "They buy honest rock and pour crooked coin \u2014 underground, where no assay reaches. You hide a mint for one reason, stranger. You hide a mint when the coin is the lie."'},
      satchel:{label:'The satchel', cond:()=>F.foundSatchel, text:()=>'"That\'s runner\'s kit — Path issue, see the sun on the flap? And the straps are CUT, not unbuckled. Somebody unloaded it in a hurry, in the dark, underground." He hands it back like it\'s hot. "What\'s worth carrying through a cave, stranger? Ore doesn\'t need to hide."'},
      radiantpath:{label:'The Radiant Path', cond:()=>knownTopics.has('radiantpath'), text:()=>'"Joined? Half the town. LEFT? Nobody. You ever know a club nobody leaves?" He lets that sit. "Aye. Me neither."'},
      murder:{label:'The murder', cond:()=>knownTopics.has('murder'), text:()=>'"A boy dead in Brookhollow, you say." He looks at the chapel a long moment. "Runners. They\'ve had runners on the ridge road for a month. Young ones, carrying satchels by night. I mind my business, stranger. Lately that\'s harder work than the mine."'}
@@ -591,6 +595,7 @@ const npcs = [
      rumors:{label:'News of the road', cond:()=>true, text(){ learn('shrine');
        return '"What I hear, in no particular order: the guard in Brookhollow tells anyone who\'ll listen about an old shrine in the deep wood. There\'s a watchtower on the ridge no watchman has climbed in thirty years — the view is said to be worth the stairs. And south-east past every road there\'s a kneeling stone older than kneeling." She refills your cup. "The news is free. Believing it costs shoe-leather."'; }},
      murder:{label:'The murder', cond:()=>knownTopics.has('murder'), text:()=>'"The stable boy. Aye, the road carried that news fast — faster than a road should, if you take my meaning. Someone told Ironvale before Brookhollow had finished weeping."'},
+     blanks:{label:'The silver blanks', cond:()=>knownTopics.has('blanks'), text:()=>'"That\u2019s my ore. I\u2019d know it smelted, sworn, or sainted." He turns the blank once and hands it back like a dead bird. "They buy honest rock and pour crooked coin \u2014 underground, where no assay reaches. You hide a mint for one reason, stranger. You hide a mint when the coin is the lie."'},
      satchel:{label:'The satchel', cond:()=>F.foundSatchel, text:()=>'"So THAT\'s what they carry. I\'ll tell you this for nothing: they cross my bridge at black midnight, never once stopping in for so much as tea. Heavy bags, light footsteps, and always toward the ridge, never from it." She polishes a clean cup, hard. "Rude, I call it. Among other things."'}
    }},
 
@@ -869,7 +874,8 @@ function openBag(){
     ['iron','Iron Hauberk','Worn. Turns most teeth. (Armour 2)'],
     ['medallion','Silver Medallion','A sunburst. Cold to the touch.'],
     ['satchel','Courier\'s Satchel','Sunburst-stamped. Straps cut, not unbuckled.'],
-    ['heartwood','Pale Heartwood','Warm as a held hand. It remembers.']
+    ['heartwood','Pale Heartwood','Warm as a held hand. It remembers.'],
+    ['blank','Silver Blank','Unstamped. Bright skin, thin heart.']
   ];
   let any=false;
   for(const [id,nm,sub] of rows){
@@ -944,7 +950,7 @@ const ATLAS_DEF = (()=>{
   MB.forEach((m,j)=>{ d[m+'A']=[j*32,392,16,16]; d[m+'B']=[j*32+16,392,16,16]; });
   /* cave furnishings */
   d.cavefloor=[96,32,16,16]; d.chest=[112,32,16,16]; d.exitrune=[0,408,16,16];
-  d.wardenA=[16,408,16,16]; d.wardenB=[32,408,16,16]; d.ledger=[48,408,16,16];
+  d.wardenA=[16,408,16,16]; d.wardenB=[32,408,16,16]; d.ledger=[48,408,16,16]; d.cache=[64,408,16,16];
   /* midnight runners: walk frames only — they never stand still */
   ['D1','D2','L1','L2','U1','U2'].forEach((f,j)=>{ d['runner'+f]=[j*16,424,16,24]; });
   return d;
@@ -1068,7 +1074,7 @@ function drawSprite(name,sx,sy,flip){
     ctx.restore();
   } else ctx.drawImage(atlasCv,r[0]*s,r[1]*s,w,h,sx,dy,w,h);
 }
-const OBJ_CELL={ herb:'herb', mushroom:'mushroom', body:'body', chest:'chest', ledger:'ledger' };
+const OBJ_CELL={ herb:'herb', mushroom:'mushroom', body:'body', chest:'chest', ledger:'ledger', cache:'cache' };
 const npcCell = n => 'npc'+Math.max(0,NPC_COLORS.indexOf(n.c));
 
 /* ---------- NPC wandering: a few steps around their post ----------------- */
@@ -1207,7 +1213,7 @@ function mobTick(){
     } else if(m.type==='wisp'){
       let best=null, bd=13;
       for(const o of objects){
-        if(o.type==='body'||o.type==='ledger') continue;
+        if(o.type==='body'||o.type==='ledger'||o.type==='cache') continue;
         const d=Math.abs(o.x-m.x)+Math.abs(o.y-m.y);
         if(d<bd){ bd=d; best=o; }
       }
@@ -1468,6 +1474,18 @@ function step(){
       inv.satchel=1; F.foundSatchel=true; learn('satchel');
       say('A chest shut fast with rust. Inside: '+o.gold+' gold — and a courier\'s satchel stamped with a sunburst, its straps <b>cut</b>, not unbuckled. <i>(Dag knows every kit that crosses the ridge.)</i>');
     } else say('A chest shut fast with rust. It gives up '+o.gold+' gold and an offended creak.');
+  }
+  {
+    const ca=objectAt(P.x,P.y);
+    if(ca && ca.type==='cache'){
+      if(!F.readLedger && !F.sawRunner)
+        say('Stacked crates, tarred shut and patient. Prying them open would be theft \u2014 and you would not yet know what you were looking at.');
+      else if(!F.openedCache){
+        F.openedCache=true; inv.blank=1;
+        learn('blanks'); virtue('truth',1);
+        say('<b>You pry a crate.</b> Inside, packed in wool: discs of silver, unstamped \u2014 medallions before the sunburst finds them \u2014 and tally slips in a neat chapel hand. <i>Eleven the ninth. Eleven the twelfth.</i> Eleven to a satchel. You pocket one blank, cold as the medallion ever was. <i>(Serra knows silver. Dag knows ore. Maren knew Piet.)</i>');
+      } else say('The pried crate stares back. The others keep their tar.');
+    }
   }
   {
     const lg=objectAt(P.x,P.y);

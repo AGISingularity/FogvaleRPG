@@ -93,7 +93,10 @@ it also profiles frame time under 4× CPU throttle.
   night so dusk visitors can stay; Malvo sleeps at [112,13] with a nightGreet; the
   ledger object appears/reads only at deepNight, granting Courage+Truth and the
   'ledger' topic; Maren/Yseult/Col reactions; Piet's entry states the motive).
-  Remaining: the runners' satchels payoff, why the Vigil stands where it stands.
+  v0.15.0 landed the satchel payoff: the cache object in ridge-cave room B pries
+  open once F.readLedger||F.sawRunner, yielding the Silver Blank + 'blanks' topic
+  (Serra assay / Dag ore / Maren: Piet-was-a-runner). Remaining thread: why the
+  Vigil stands where it stands.
 - Combat — SHIPPED v0.6.0: HP + regen + bread heals, weapon/armour stats (auto-worn,
   no equip UI), Forgeworks armoury + Hetta the Smith (10th NPC), four creatures
   (slime/bat/bough-fiend/wisp) with spawn/chase AI that avoids towns, wisp = good

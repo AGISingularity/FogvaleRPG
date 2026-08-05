@@ -351,6 +351,27 @@ try {
   ok(ledger.nightRead, 'ledger: read in the small hours, word learned');
   ok(ledger.marenHasTopic, 'ledger: Maren will hear of it');
 
+  // -- the cache: tarred shut until you know better, then it talks ----------
+  const cache = await page.evaluate(() => {
+    mobs.length = 0;
+    const wasRead = F.readLedger; F.readLedger = false; F.sawRunner = false;
+    P.x = 25; P.y = 119; P.rx = 25; P.ry = 119; computeFOV();
+    path = [{ x: 24, y: 119 }]; step();
+    const tarred = !F.openedCache && inv.blank === 0;
+    F.readLedger = true;
+    P.x = 25; P.y = 119; P.rx = 25; P.ry = 119;
+    path = [{ x: 24, y: 119 }]; step();
+    const pried = F.openedCache && inv.blank === 1 && knownTopics.has('blanks');
+    const maren = !!npcs.find(n => n.id === 'maren').topics.blanks.cond();
+    const serra = !!npcs.find(n => n.id === 'serra').topics.blanks.cond();
+    F.readLedger = wasRead;
+    P.x = 21; P.y = 110; P.rx = 21; P.ry = 110; computeFOV();
+    return { tarred, pried, maren, serra };
+  });
+  ok(cache.tarred, 'cache: tarred shut until you know what you are looking at');
+  ok(cache.pried, 'cache: pried once wise — a blank in the pocket, a word learned');
+  ok(cache.maren && cache.serra, 'cache: Maren and Serra have words for it');
+
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));
 } finally {

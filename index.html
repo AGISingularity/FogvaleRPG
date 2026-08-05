@@ -134,7 +134,7 @@
   Shops buy them — and pay far better the further the town is from where things grow.</p>
   <p><b>Night</b> — when night falls your sight closes to a few steps. A torch helps.
   A lantern helps more. Both are for sale... somewhere.</p>
-  <p><b>Fight</b> — tap a creature beside you to strike it. A sword bites deeper; armour
+  <p><b>Fight</b> — tap a creature beside you to strike it. Wounded beasts may break and run; what you do then is between you and the fog. A sword bites deeper; armour
   from the Ironvale forge turns teeth. If the fog takes you, you wake at the seer's door,
   lighter of purse. And mind: not everything that glows in the dark is your enemy —
   think before you swing.</p>
@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.18.0';
+const VERSION='0.19.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -1251,7 +1251,7 @@ function mobTick(){
   for(const m of mobs){
     const t=MOB_TYPES[m.type];
     const dx=P.x-m.x, dy=P.y-m.y, dist=Math.abs(dx)+Math.abs(dy);
-    if(t.evil && dist===1){
+    if(t.evil && dist===1 && !m.fleeing){
       m.dir = Math.abs(dx)>Math.abs(dy) ? (dx>0?'right':'left') : (dy>0?'down':'up');
       const dmg=Math.max(0, t.dmg + (isNight()&&m.type==='bat'?1:0) - armorVal());
       if(dmg>0){
@@ -1263,6 +1263,27 @@ function mobTick(){
     }
     if(m.type==='warden' && dist>3) continue;   // it guards; it does not hunt
     let step=null;
+    if(m.fleeing){
+      m.fleeTicks=(m.fleeTicks||0)+1;
+      if(dist>14 || m.fleeTicks>18){
+        mobs.splice(mobs.indexOf(m),1);
+        if(!F.showedMercy){
+          F.showedMercy=true; virtue('love',1);
+          say('It limps into the dark, and lives. Something in you is glad of it \u2014 quietly, the way the vale prefers.');
+        }
+        continue;
+      }
+      const opts=[];
+      if(dx!==0) opts.push([-Math.sign(dx),0, dx>0?'left':'right']);
+      if(dy!==0) opts.push([0,-Math.sign(dy), dy>0?'up':'down']);
+      if(opts.length===2 && Math.abs(dy)>Math.abs(dx)) opts.reverse();
+      // a cornered animal slides along whatever blocks it
+      if(dx!==0) opts.push([0,1,'down'],[0,-1,'up']);
+      else opts.push([1,0,'right'],[-1,0,'left']);
+      for(const o of opts){ if(mobCanStep(m, m.x+o[0], m.y+o[1])){ step=o; break; } }
+      if(step){ m.dir=step[2]; m.x+=step[0]; m.y+=step[1]; }
+      continue;
+    }
     const range = m.angry ? 10 : 6;
     if(t.evil && dist<=range && (m.angry || Math.random()<0.85)){
       const opts=[];
@@ -1315,7 +1336,11 @@ function attackMob(m){
   }
   m.hp-=weaponDmg();
   m.hitAt=performance.now();
-  if(m.type==='wolf')
+  if(m.hp>0 && m.type!=='warden' && !m.fleeing && m.hp <= MOB_TYPES[m.type].hp/3){
+    m.fleeing=true; m.angry=false;
+    say('The '+t.nm+' breaks and runs, trailing hurt.');
+  }
+  if(m.type==='wolf' && !m.fleeing)
     for(const o of mobs)
       if(o!==m && o.type==='wolf' && Math.abs(o.x-m.x)+Math.abs(o.y-m.y)<=8) o.angry=true;
   m.rx=m.x+(m.x-P.x)*0.35; m.ry=m.y+(m.y-P.y)*0.35;   // knocked back a breath

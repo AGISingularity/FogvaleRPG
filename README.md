@@ -69,7 +69,9 @@ server required. Open it in any mobile or desktop browser.
   (marsh slimes, dusk bats, bough-fiends near the woods) and shy away from towns;
   night breeds more — including vale wolves, who hunt in loose packs after dark:
   wound one and its packmates join the chase. A felled wolf yields its pelt,
-  worth 4 gold at Tobin's and 8 in iron country. Not all are evil — pale wisps drift toward hidden things
+  worth 4 gold at Tobin's and 8 in iron country. And badly wounded beasts break
+  and run — hunt them down for the loot, or let them limp into the dark and be
+  quietly noticed for it. What you do then is between you and the fog. Not all are evil — pale wisps drift toward hidden things
   (herbs, bluecaps, buried chests) and go out upon them like a marker; striking
   one is silently, permanently noticed by the hidden virtues. Shops trade by
   day and bar the counter at night — the inn is the only midnight business. Falling in battle

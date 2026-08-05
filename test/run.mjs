@@ -437,6 +437,29 @@ try {
   ok(altars.onceOnly, 'altars: the bowl asks only once');
   ok(altars.waxed && altars.waxOnce, 'altars: the wax reads once, in Truth');
 
+  // -- mercy: the beaten run, and letting them go is noticed ----------------
+  const mercy = await page.evaluate(() => {
+    mobs.length = 0;
+    P.x = 40; P.y = 86; P.rx = 40; P.ry = 86; computeFOV();   // open wilds — town ground forbids beasts
+    mobs.push({ type:'wolf', hp:2, x:P.x+1, y:P.y, rx:P.x+1, ry:P.y, dir:'left' });
+    const w = mobs[0];
+    attackMob(w);                                // fists: 1 damage → 1hp = flee threshold
+    const fled = w.fleeing === true;
+    const d0 = Math.abs(w.x-P.x)+Math.abs(w.y-P.y);
+    for (let i = 0; i < 6; i++) mobTick();
+    const dNow = mobs.includes(w) ? Math.abs(w.x-P.x)+Math.abs(w.y-P.y) : 99;
+    const love0 = V.love, hadMercy = F.showedMercy;
+    for (let i = 0; i < 30 && mobs.includes(w); i++) mobTick();
+    const escaped = !mobs.includes(w);
+    const loved = F.showedMercy && (hadMercy || V.love === love0 + 1);
+    mobs.length = 0;
+    P.x = 21; P.y = 110; P.rx = 21; P.ry = 110; computeFOV();
+    return { fled, gained: dNow > d0, escaped, loved };
+  });
+  ok(mercy.fled, 'mercy: the beaten wolf breaks and runs');
+  ok(mercy.gained, 'mercy: it puts ground between you');
+  ok(mercy.escaped && mercy.loved, 'mercy: letting it live is quietly noticed');
+
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));
 } finally {

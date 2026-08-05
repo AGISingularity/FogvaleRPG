@@ -59,6 +59,7 @@ try {
     targets.push({ name: 'the watchtower', x: 76, y: 56 });
     targets.push({ name: 'the kneeling altar', x: 108, y: 109 });
     targets.push({ name: 'the weeping altar', x: 10, y: 78 });
+    targets.push({ name: "the gardener's row", x: 12, y: 26 });
     targets.push({ name: 'the ridge cave', x: 34, y: 65 });
     targets.push({ name: 'the outcrop cave', x: 91, y: 38 });
     return targets.map(t => {
@@ -528,6 +529,27 @@ try {
   ok(story.medallion, 'critical path: the medallion leaves the stable');
   ok(story.slipped, 'critical path: Malvo says the thing he was never told');
   ok(story.ended, 'critical path: Chapter One ends where it always did');
+
+  // -- the gardener's row: only trees, until you know better ----------------
+  const grove = await page.evaluate(() => {
+    const was = F.vigilRevealed;
+    F.vigilRevealed = false;
+    const before = GARDENERS_ROW.greet();
+    const mundane = before.includes('only trees') && !GARDENERS_ROW.topics.trowel.cond();
+    F.vigilRevealed = true;
+    const after = GARDENERS_ROW.greet();
+    const nursery = after.includes('nursery');
+    GARDENERS_ROW.topics.trowel.text();
+    const hooked = knownTopics.has('gardener');
+    const yseult = !!npcs.find(n => n.id === 'yseult').topics.gardener.cond();
+    const malvoText = npcs.find(n => n.id === 'malvo').topics.gardener.text();
+    const malvo = !!F.askedMalvoGardener && malvoText.includes('no garden');
+    F.vigilRevealed = was;
+    return { mundane, nursery, hooked, yseult, malvo };
+  });
+  ok(grove.mundane, "grove: before the Vigil, only trees. Probably.");
+  ok(grove.nursery && grove.hooked, 'grove: after the Vigil, a nursery — and a small handprint');
+  ok(grove.yseult && grove.malvo, 'grove: the seer is afraid; the chapel keeps no garden');
 
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));

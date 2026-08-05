@@ -54,6 +54,7 @@ const ATLAS_DEF = (()=>{
   d.wolfA=[80,408,16,16]; d.wolfB=[96,408,16,16]; d.downrune=[112,408,16,16];
   /* midnight runners: walk frames only — they never stand still */
   ['D1','D2','L1','L2','U1','U2'].forEach((f,j)=>{ d['runner'+f]=[j*16,424,16,24]; });
+  d.grove=[96,424,16,16];
   return d;
 })();
 /*ATLAS_DEF_END*/
@@ -375,6 +376,14 @@ sm('downrune',[
   '..p.q.roor.q.p..','..p.q.rrrr.q.p..','..p.q......q.p..','..p.qqqqqqqq.p..',
   '..p..........p..','..pppppppppppp..','................','................',
 ],{ p:'#3e3a4e', q:'#565068', r:'#736d88', o:'#141020' });
+
+/* the gardener's row: staked saplings, trained on frames, sap gone grey */
+sm('grove',[
+  '................','..b...b...b.....','..gb..gb..gb....','..bg..bg..bg....',
+  '..gg..gg..gg....','..tb..tb..tb....','..t...t...t.....','..t...t...t.....',
+  '.ppp.ppp.ppp....','................','....X...........','...XX...........',
+  '..sXXs..........','................','................','................',
+],{ b:'#7a8a6a', g:'#5a6a4c', t:'#4a3a26', p:'#3a3020', X:'#8a8474', s:'rgba(10,14,10,.3)' });
 
 /* ---------------- cave furnishings ---------------------------------------- */
 // cavern floor: dark stone, speckled

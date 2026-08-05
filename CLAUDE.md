@@ -121,6 +121,13 @@ it also profiles frame time under 4× CPU throttle.
   creature whose killing costs hidden Love, death = respawn at the seer's with 25%
   gold loss. Dungeons behind the cave mouths are the remaining piece.
 
+### 2.5 Chapter Three: The Gardener — OPENED (v0.22.0)
+- The Gardener's Row ('G' at 12,26, spur off the shrine trail): pseudo-dialogue
+  whose meaning gates on F.vigilRevealed; the trowel teaches 'gardener'; Yseult
+  is afraid of the water; asking Malvo sets F.askedMalvoGardener ("the chapel
+  keeps no garden"). Next threads: who the small hand belongs to, the harvested
+  Warden that "walked or was carried away", and eventually the sealed door.
+
 ### 3. Ship it to many players ("web-scale")
 - It is already a website; scale for players means: keep GitHub Pages as free global
   hosting, add a proper domain later if desired, add PWA manifest + service worker so

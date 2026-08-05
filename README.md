@@ -40,6 +40,12 @@ server required. Open it in any mobile or desktop browser.
   bread for the hungry dead, a pelt for their warmth — paid silently in Love;
   the wax at the Path's altar reads once, in Truth: two sets of knee-prints,
   and the small set dug deeper.
+- **The Gardener's Row** — Chapter Three opens. Deep in the wood, a too-orderly
+  stand of saplings was always strange; after the Vigil speaks, you see it plain:
+  a nursery, where Wardens are trained on frames and harvested at the stump.
+  Half-buried beside it, the hook the next chapter hangs on — a trowel kept
+  sharp and clean, whose dried handprint is smaller than the trowel. The seer,
+  for the first time, is afraid of her water. The chapel keeps no garden.
 - **Why the Vigil stands** — bring the heartwood and a silver blank to the old
   shrine and the stone answers: kin knows kin. The Wardens were grown from the
   Vigil's own grove; the three circles are a seal — LET NOTHING ELSE PASS BELOW —

@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.21.0';
+const VERSION='0.22.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -160,7 +160,7 @@ function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a
 /* ---------- world constants ---------- */
 const W=128, H=128;
 const OPAQUE = { t:1, m:1, '#':1, T:1, C:1 };   // '+' handled via door state
-const BLOCKING = { t:1, m:1, w:1, '#':1, T:1, A:1, C:1 }; // tiles you cannot walk
+const BLOCKING = { t:1, m:1, w:1, '#':1, T:1, A:1, C:1, G:1 }; // tiles you cannot walk
 
 /* ---------- map generation (seeded, same world every run) ----------
    v0.5: the vale grew. Brookhollow sits far south-west, Ironvale far
@@ -221,6 +221,10 @@ const grid = Array.from({length:H}, ()=>Array(W).fill('g'));
   for(let y=107;y<=112;y++)for(let x=105;x<=111;x++) if(grid[y][x]==='t') grid[y][x]='g';
   // the weeping altar's hollow, west bank, far from any road
   for(let y=75;y<=81;y++)for(let x=7;x<=13;x++) if(grid[y][x]==='t') grid[y][x]='g';
+  // the gardener's row: a too-orderly clearing in the deep wood,
+  // with a faint spur from the shrine trail so the wood can't seal it
+  for(let y=24;y<=28;y++)for(let x=10;x<=14;x++) if(grid[y][x]==='t') grid[y][x]='g';
+  for(let x=14;x<=22;x++) if(grid[26][x]==='t') grid[26][x]='g';
   // buildings: perimeter walls, wood floor, one door
   function building(bx,by,w,h,dx,dy){
     for(let y=by;y<by+h;y++)for(let x=bx;x<bx+w;x++)
@@ -244,6 +248,8 @@ const grid = Array.from({length:H}, ()=>Array(W).fill('g'));
   grid[109][108]='A';
   // the weeping altar, farther still
   grid[78][10]='A';
+  // the gardener's row
+  grid[26][12]='G';
   // cave mouths: one in the ridge's south face, one in the outcrop —
   // each with a cleared approach so the wood can't seal them in
   grid[65][34]='C';
@@ -432,7 +438,7 @@ const TOPIC_LABEL = {
   ironvale:'Ironvale', radiantpath:'the Radiant Path', malvo:'Brother Malvo',
   stranger:'the robed stranger', shrine:'the old shrine', codex:'the Codex',
   found:'what I found', slip:"Malvo's slip", coin:'his plea', reading:'a reading',
-  bluecaps:'bluecaps', satchel:'the satchel', ledger:'the ledger', blanks:'the silver blanks', vigil:'the Vigil'
+  bluecaps:'bluecaps', satchel:'the satchel', ledger:'the ledger', blanks:'the silver blanks', vigil:'the Vigil', gardener:'the Gardener'
 };
 function learn(...keys){
   for(const k of keys){
@@ -546,6 +552,7 @@ const npcs = [
        const c = V.courage>0 ? 'You have gone where fear told you not to.' : 'Courage waits for you in a dark place. It is patient.';
        return 'She stirs the bowl once. "Three things move in the water.\n\n' + t + '\n' + l + '\n' + c + '\n\nNo number measures these, stranger. But doors you cannot see are already deciding whether to open for you."'; }},
      ledger:{label:'The ledger', cond:()=>knownTopics.has('ledger'), text:()=>'"So it has pages now." She does not ask what you risked to read it. "Understand what you saw, stranger: the old triad asks what you ARE. Their ledger prices what you\'re WORTH. Between those two words is every grave the Path has ever dug — and the water says it has dug more than one."'},
+     gardener:{label:'The Gardener', cond:()=>knownTopics.has('gardener'), text:()=>'"A nursery. Rows. FRAMES." She is quiet for longer than you have ever seen her quiet. "They grew the guards from Vigil-stock like beans, stranger \u2014 and the hand that tends them is small." She looks at the covered water bowl and does not uncover it. "I have read many things in that water. This is the first time I have been afraid to."'},
      vigil:{label:'The Vigil', cond:()=>knownTopics.has('vigil'), text:()=>'"So the stone finally spoke, and you were worth speaking to." She covers the water bowl, gently, as if letting it sleep. "A watch-stone. Older than the vale\u2019s name. The old folk set three circles over the deep ways and swore nothing crooked would pass below \u2014 and now a smiling charity mints lies a mile from its feet and grows guardians from its grove." She looks at you, and for once there is nothing cryptic in it. "The Path has a gardener, stranger. Chapter Three will want a name."'},
      heartwood:{label:'The heartwood', cond:()=>inv.heartwood>0, text:()=>'"Give it here— oh." She sets it down quickly, then picks it back up slowly. "Heartwood, from a thing that should never have had a heart. The caves did not grow that guardian on their own, stranger. Something taught the wood to stand up, and set it over a chest like a dog over a bone. Keep it close. Wood remembers — and this piece remembers being given orders."'},
      draught:{label:'A brewing', cond:()=>!F.draught2, text(){
@@ -604,6 +611,8 @@ const npcs = [
              return 'You hold his gaze and say nothing — the oldest trap there is. The silence stretches. His smile tightens by one turn. "Friend. Whatever became of that stable boy is no concern of the fellowship\'s—" He stops. You never said anything about a stable boy. Malvo folds his hands. "The chapel is closing for evening prayer," he says, and his voice has no warmth in it at all now. You should tell Elder Maren what he just said.'; }},
          b:{label:'Let it pass', text(){ F.malvoPass=true;
              return '"No doubt that\'s it," you say. His smile refills. "The Path recovers what is lost, friend. Leave it with me, if you like — I shall see it home." You do not leave it with him.'; }} }},
+     gardener:{label:'The Gardener', cond:()=>knownTopics.has('gardener'), text(){ F.askedMalvoGardener=true;
+       return '"...The chapel keeps no garden, friend." His voice is perfectly level. Every candle in the room leans, very slightly, toward the door. "Whoever has been walking the deep wood should stop. The wood is not OURS to forgive trespass in."'; }},
      slip:{label:'His slip', cond:()=>F.malvoSlip, text:()=>'"The chapel is CLOSING, friend." Two large parishioners have appeared by the door. They are also smiling. It runs in the fellowship, apparently.'}
    }},
 
@@ -685,7 +694,25 @@ const KNEELING_ALTAR = { name:'The Kneeling Altar', shop:null,
       return 'You read the ground the way Yseult reads water. Two sets of knee-prints, side by side: one large, one small. The large set shifts, restless. <b>The small set dug deeper.</b> Whoever kneels beside Malvo prays harder than he does \u2014 and stays longer. <i>(A name for Chapter Three.)</i>'; }},
     pray:{label:'Kneel', cond:()=>true, text:()=>'You kneel where they kneel. The grass is patient. The wax says nothing to you \u2014 which is, itself, an answer.'}
   }};
+const GARDENERS_ROW = { name:'The Gardener\u2019s Row', shop:null,
+  greet(){
+    return F.vigilRevealed
+      ? 'Now you see it for what it is. Five saplings staked and trained on frames \u2014 grown STRAIGHT, the way nothing in a wild wood grows \u2014 and their sap runs grey. This is a nursery. This is where the Wardens were raised.'
+      : 'Saplings, in a row. Odd, in a wild wood \u2014 but the vale is full of odd, and these are only trees. Probably.';
+  },
+  topics:{
+    row:{label:'The row', cond:()=>F.vigilRevealed, text(){
+      if(!F.sawGrove){ F.sawGrove=true; virtue('courage',1); }
+      return 'Each sapling is lashed to a frame of cut lath, trained like a vine \u2014 or drilled like a soldier. The frames are man-made. The knots are patient, practised, small.'; }},
+    stump:{label:'The stump', cond:()=>F.vigilRevealed, text(){
+      if(!F.sawStump){ F.sawStump=true; virtue('truth',1); }
+      return 'One stump, fresh-cut, warden-broad. The rings inside run grey to the heart. Whatever stood here was harvested \u2014 recently \u2014 and walked, or was carried, away.'; }},
+    trowel:{label:'The trowel', cond:()=>F.vigilRevealed, text(){
+      learn('gardener');
+      return 'Half-buried by the stump: a garden trowel, kept sharp, kept clean. <b>The trowel is small. The handprint dried into its grip is smaller.</b> <i>(The seer should hear this. Perhaps the chapel should not.)</i>'; }}
+  }};
 function openAltar(x,y){
+  if(grid[y][x]==='G'){ openDlg(GARDENERS_ROW); return; }
   openDlg(Math.abs(x-10)<=1 && Math.abs(y-78)<=1 ? WEEPING_ALTAR : KNEELING_ALTAR);
 }
 
@@ -1034,6 +1061,7 @@ const ATLAS_DEF = (()=>{
   d.wolfA=[80,408,16,16]; d.wolfB=[96,408,16,16]; d.downrune=[112,408,16,16];
   /* midnight runners: walk frames only — they never stand still */
   ['D1','D2','L1','L2','U1','U2'].forEach((f,j)=>{ d['runner'+f]=[j*16,424,16,24]; });
+  d.grove=[96,424,16,16];
   return d;
 })();
 /*ATLAS_DEF_END*/
@@ -1092,6 +1120,7 @@ function tileCells(x,y){
     case 'v': return ['cavefloor'];
     case 'X': return ['cavefloor','exitrune'];
     case 'D': return ['cavefloor','downrune'];
+    case 'G': return [g,'grove'];
   }
   return [g];
 }
@@ -1547,8 +1576,8 @@ cv.addEventListener('pointerdown', e=>{
     else { pending={type:'mob',mob}; routeTo(tx,ty,true); }
     return;
   }
-  // an altar?
-  if(grid[ty][tx]==='A' && explored.has(k)){
+  // an altar, or the row?
+  if((grid[ty][tx]==='A'||grid[ty][tx]==='G') && explored.has(k)){
     if(Math.abs(tx-P.x)<=1 && Math.abs(ty-P.y)<=1) openAltar(tx,ty);
     else { pending={type:'altar',x:tx,y:ty}; routeTo(tx,ty,true); }
     return;

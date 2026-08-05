@@ -77,6 +77,8 @@ it also profiles frame time under 4× CPU throttle.
   route (chapel → bridge → ridge cave) in dark-recolored hero frames; close
   sighting sets F.sawRunner (+Courage once) and unlocks Bren's counting-them
   dialogue. Chapter Two's runners are now a thing you can witness.
+- v0.21.0: the draught — Yseult brews bluecaps into max HP (10 caps → +3, then
+  15 → +3, hard cap at 16; maxHp persisted in saves). Bluecap sink + progression.
 - v0.20.0: the under-dark — second dungeon level below the outcrop cave ('D'
   stair at 121,123 → pocket at [43,2,69,9]; inDeep() dims light to 5/3/2; two
   richer chests + 4 bluecaps; CAVES.deep drives spawns and the way back).

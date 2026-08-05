@@ -478,6 +478,31 @@ try {
   ok(deep.sight === 5, 'under-dark: even the lantern gutters', 'sight ' + deep.sight);
   ok(deep.back, 'under-dark: the pale stone leads back to the outcrop');
 
+  // -- the draught: bluecaps become a sturdier heart, twice, never thrice ---
+  const draught = await page.evaluate(() => {
+    const y = npcs.find(n => n.id === 'yseult');
+    inv.mushroom = 9;
+    const refuse = y.topics.draught.text();
+    const refused = P.maxHp === 10 && refuse.includes('You carry 9');
+    inv.mushroom = 10;
+    y.topics.draught.text();
+    const first = P.maxHp === 13 && P.hp === 13 && inv.mushroom === 0;
+    inv.mushroom = 15;
+    y.topics.draught.text();
+    const second = P.maxHp === 16 && inv.mushroom === 0;
+    const noThird = !y.topics.draught.cond();
+    saveGame();
+    return { refused, first, second, noThird };
+  });
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForTimeout(600);
+  draught.persisted = await page.evaluate(() => P.maxHp === 16);
+  await page.evaluate(() => localStorage.clear());
+  ok(draught.refused, 'draught: nine bluecaps do not a brewing make');
+  ok(draught.first && draught.second, 'draught: two brewings, +3 utmost health each');
+  ok(draught.noThird, 'draught: the third cup is refused');
+  ok(draught.persisted, 'draught: the sturdier heart survives a reload');
+
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));
 } finally {

@@ -92,6 +92,9 @@ server required. Open it in any mobile or desktop browser.
 - **Hidden virtue triad** — Truth, Love, and Courage are silently scored by your choices
   (lying to the Elder, giving to the beggar, pressing Brother Malvo, walking to the
   shrine at night). No meter is ever shown; a seer will read the water for you.
+- **The draught** — the seer brews bluecaps into a sturdier heart: ten caps for
+  +3 utmost health, fifteen for three more, and never a third cup. The under-dark
+  grows them thickest; the fighting system finally has a body that toughens.
 - **Autosave** — progress persists in localStorage (key `fogvale_ch1`, version 1),
   written on tab-hide and every 4 seconds; restoring skips the intro. Per-browser.
 - **Chapter One story** — a murdered stable boy, a silver sunburst medallion, and the

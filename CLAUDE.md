@@ -77,6 +77,10 @@ it also profiles frame time under 4× CPU throttle.
   route (chapel → bridge → ridge cave) in dark-recolored hero frames; close
   sighting sets F.sawRunner (+Courage once) and unlocks Bren's counting-them
   dialogue. Chapter Two's runners are now a thing you can witness.
+- v0.18.0: the Weeping Altar (10,78) — altars are now tappable pseudo-NPC
+  dialogues (openAltar routes to WEEPING_ALTAR/KNEELING_ALTAR); bread/pelt
+  offerings pay Love once each; kneeling-altar wax study pays Truth and plants
+  the Chapter Three clue (the second, deeper knee-print).
 - v0.17.0: vale wolves (night-only spawns, pack aggro within 8 on wounding,
   extended chase range when angry) and the pelt economy (drops sell at Tobin's 4 /
   Serra's 8 — first creature-to-economy loop).

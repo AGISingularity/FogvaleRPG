@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.17.0';
+const VERSION='0.18.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -219,6 +219,8 @@ const grid = Array.from({length:H}, ()=>Array(W).fill('g'));
   for(let y=95;y<=101;y++)for(let x=54;x<=64;x++) if(grid[y][x]==='t') grid[y][x]='g';
   // altar clearing
   for(let y=107;y<=112;y++)for(let x=105;x<=111;x++) if(grid[y][x]==='t') grid[y][x]='g';
+  // the weeping altar's hollow, west bank, far from any road
+  for(let y=75;y<=81;y++)for(let x=7;x<=13;x++) if(grid[y][x]==='t') grid[y][x]='g';
   // buildings: perimeter walls, wood floor, one door
   function building(bx,by,w,h,dx,dy){
     for(let y=by;y<by+h;y++)for(let x=bx;x<bx+w;x++)
@@ -240,6 +242,8 @@ const grid = Array.from({length:H}, ()=>Array(W).fill('g'));
   grid[56][76]='T';
   // the kneeling altar, far from every road
   grid[109][108]='A';
+  // the weeping altar, farther still
+  grid[78][10]='A';
   // cave mouths: one in the ridge's south face, one in the outcrop —
   // each with a cleared approach so the wood can't seal them in
   grid[65][34]='C';
@@ -638,6 +642,30 @@ function visitShrine(){
       ' Moss fills the grooves like the stone is keeping its own counsel. <i>(The seer might know these marks.)</i>');
 }
 
+/* ---------- the altars speak (pseudo-people for the dialogue sheet) ------ */
+const WEEPING_ALTAR = { name:'The Weeping Altar', shop:null,
+  greet:()=>'A low stone, dished by ten thousand vanished offerings, damp though it has not rained. Whatever grief wore this bowl is older than the Path, older than the Vigil\u2019s letters. The hollow is quiet the way a listener is quiet.',
+  topics:{
+    bread:{label:'Offer bread', cond:()=>inv.bread>0 && !F.fedWeeping, text(){
+      inv.bread--; F.fedWeeping=true; virtue('love',2);
+      return 'You leave the loaf in the worn bowl. When you look back \u2014 and you do look back \u2014 it is gone, and the woods feel less like a held breath.'; }},
+    pelt:{label:'Offer a pelt', cond:()=>inv.pelt>0 && !F.warmedWeeping, text(){
+      inv.pelt--; F.warmedWeeping=true; virtue('love',1);
+      return 'You fold the pelt over the stone\u2019s shoulder like a cloak. It is a foolish, warm-hearted gesture, and the hollow approves of exactly that kind.'; }},
+    study:{label:'Study the stone', cond:()=>true, text:()=>'No sunburst. No circles either. Just the bowl, and the damp, and grass that grows greener here than anywhere in the vale. Some places are holy the way wells are deep \u2014 by use.'}
+  }};
+const KNEELING_ALTAR = { name:'The Kneeling Altar', shop:null,
+  greet:()=>'The Path\u2019s far altar, ringed by flattened grass. The candle wax is fresh again. Someone was here between your visits \u2014 someone is always here between your visits.',
+  topics:{
+    wax:{label:'Study the wax', cond:()=>!F.studiedWax, text(){
+      F.studiedWax=true; virtue('truth',1);
+      return 'You read the ground the way Yseult reads water. Two sets of knee-prints, side by side: one large, one small. The large set shifts, restless. <b>The small set dug deeper.</b> Whoever kneels beside Malvo prays harder than he does \u2014 and stays longer. <i>(A name for Chapter Three.)</i>'; }},
+    pray:{label:'Kneel', cond:()=>true, text:()=>'You kneel where they kneel. The grass is patient. The wax says nothing to you \u2014 which is, itself, an answer.'}
+  }};
+function openAltar(x,y){
+  openDlg(Math.abs(x-10)<=1 && Math.abs(y-78)<=1 ? WEEPING_ALTAR : KNEELING_ALTAR);
+}
+
 /* ---------- far places ---------- */
 function climbTower(){
   if(F.climbedTower){ say('The vale lies quiet below the watchtower.'); return; }
@@ -651,9 +679,17 @@ function climbTower(){
   say('You climb the old watchtower, stair by complaining stair. The vale unfolds below — the road, the river, the gap in the ridge — and what you saw from up there, you will remember.');
 }
 function visitAltar(){
-  if(F.sawAltar){ say('The kneeling stone keeps its own counsel.'); return; }
+  const weeping = Math.abs(P.x-10)<=2 && Math.abs(P.y-78)<=2;
+  if(weeping){
+    if(!F.sawWeeping){
+      F.sawWeeping=true; virtue('love',1);
+      say('A second altar, where no trail leads and no wax burns \u2014 a dished stone, damp without rain. <i>(Tap it, and listen.)</i>');
+    }
+    return;
+  }
+  if(F.sawAltar) return;
   F.sawAltar=true; virtue(isNight()?'courage':'truth',1);
-  say('A low stone altar, far from every road, ringed by grass someone\'s knees have flattened. The candle wax on it is fresh. <i>(The seer might know whose knees.)</i>');
+  say('A low stone altar, far from every road, ringed by grass someone\'s knees have flattened. The candle wax on it is fresh. <i>(Tap it, and look closer.)</i>');
 }
 function caveMouth(){
   if(!inv.sword || !(inv.torch||inv.lantern)){
@@ -1461,6 +1497,12 @@ cv.addEventListener('pointerdown', e=>{
     else { pending={type:'mob',mob}; routeTo(tx,ty,true); }
     return;
   }
+  // an altar?
+  if(grid[ty][tx]==='A' && explored.has(k)){
+    if(Math.abs(tx-P.x)<=1 && Math.abs(ty-P.y)<=1) openAltar(tx,ty);
+    else { pending={type:'altar',x:tx,y:ty}; routeTo(tx,ty,true); }
+    return;
+  }
   // the body?
   const o=objectAt(tx,ty);
   if(o && o.type==='body' && visible.has(k)){
@@ -1558,6 +1600,7 @@ function step(){
       if(Math.abs(P.x-pd.mob.x)<=1 && Math.abs(P.y-pd.mob.y)<=1) attackMob(pd.mob);
       else { pending=pd; routeTo(pd.mob.x,pd.mob.y,true); }
     }
+    else if(pd.type==='altar' && Math.abs(P.x-pd.x)<=1 && Math.abs(P.y-pd.y)<=1) openAltar(pd.x,pd.y);
     else if(pd.type==='body' && Math.abs(P.x-15)<=1&&Math.abs(P.y-106)<=1) examineBody();
   }
 }

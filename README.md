@@ -34,6 +34,12 @@ server required. Open it in any mobile or desktop browser.
   fresh entry that explains a murder. Maren, Yseult, and Col each have words for
   what you found. The old triad asks what you are; the ledger prices what you're
   worth.
+- **The twin altars** — the Path's kneeling altar in the south-east wilds and,
+  farther still, the Weeping Altar on the trackless west bank: a dished stone,
+  damp without rain. Tap either and it speaks. The old altar takes offerings —
+  bread for the hungry dead, a pelt for their warmth — paid silently in Love;
+  the wax at the Path's altar reads once, in Truth: two sets of knee-prints,
+  and the small set dug deeper.
 - **Why the Vigil stands** — bring the heartwood and a silver blank to the old
   shrine and the stone answers: kin knows kin. The Wardens were grown from the
   Vigil's own grove; the three circles are a seal — LET NOTHING ELSE PASS BELOW —

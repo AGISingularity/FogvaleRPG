@@ -58,6 +58,7 @@ try {
     targets.push({ name: 'the old shrine', x: 22, y: 12 });
     targets.push({ name: 'the watchtower', x: 76, y: 56 });
     targets.push({ name: 'the kneeling altar', x: 108, y: 109 });
+    targets.push({ name: 'the weeping altar', x: 10, y: 78 });
     targets.push({ name: 'the ridge cave', x: 34, y: 65 });
     targets.push({ name: 'the outcrop cave', x: 91, y: 38 });
     return targets.map(t => {
@@ -418,6 +419,23 @@ try {
   ok(wolves.packAngry, 'wolves: wounding one rouses the pack');
   ok(wolves.pelts === 1, 'wolves: a felled wolf yields its pelt', String(wolves.pelts));
   ok(wolves.tobinBuys && wolves.serraBuys, 'wolves: pelts sell for 4 near, 8 far');
+
+  // -- twin altars: offerings paid in Love, the wax read in Truth -----------
+  const altars = await page.evaluate(() => {
+    inv.bread = 2;
+    const love0 = V.love, truth0 = V.truth;
+    WEEPING_ALTAR.topics.bread.text();
+    const fed = inv.bread === 1 && V.love === love0 + 2 && !!F.fedWeeping;
+    const onceOnly = !WEEPING_ALTAR.topics.bread.cond();
+    KNEELING_ALTAR.topics.wax.text();
+    const waxed = !!F.studiedWax && V.truth === truth0 + 1;
+    const waxOnce = !KNEELING_ALTAR.topics.wax.cond();
+    inv.bread = 0;
+    return { fed, onceOnly, waxed, waxOnce };
+  });
+  ok(altars.fed, 'altars: bread laid, Love paid');
+  ok(altars.onceOnly, 'altars: the bowl asks only once');
+  ok(altars.waxed && altars.waxOnce, 'altars: the wax reads once, in Truth');
 
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));

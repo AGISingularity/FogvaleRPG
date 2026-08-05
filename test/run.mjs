@@ -503,6 +503,32 @@ try {
   ok(draught.noThird, 'draught: the third cup is refused');
   ok(draught.persisted, 'draught: the sturdier heart survives a reload');
 
+  // -- the critical path: Chapter One's whole quest, end to end -------------
+  const story = await page.evaluate(() => {
+    const by = id => npcs.find(n => n.id === id);
+    by('maren').greet();                          // the letter's author, the word 'murder'
+    by('maren').topics.murder.text();             // piet, the stable, permission to look
+    P.x = 16; P.y = 106; examineBody();           // the medallion in the straw
+    const medallion = !!F.hasMedallion && knownTopics.has('medallion');
+    by('tobin').topics.medallion.text();          // 'Ironvale, I'd say'
+    by('serra').topics.medallion.text();          // the chapel bench, Brother Malvo
+    by('malvo').topics.medallion.choice.a.text(); // press him — the slip
+    const slipped = !!F.malvoSlip && knownTopics.has('slip');
+    by('maren').topics.slip.text();               // 'the Path was here for it'
+    return { medallion, slipped };
+  });
+  await page.waitForTimeout(3200);                // the end card takes its beat
+  story.ended = await page.evaluate(() => {
+    const shown = document.getElementById('endcard').style.display === 'block'
+      && document.getElementById('endTxt').innerHTML.includes('The Ledger of Worth');
+    document.getElementById('endcard').style.display = 'none';
+    P.x = 21; P.y = 110; P.rx = 21; P.ry = 110; computeFOV();
+    return shown;
+  });
+  ok(story.medallion, 'critical path: the medallion leaves the stable');
+  ok(story.slipped, 'critical path: Malvo says the thing he was never told');
+  ok(story.ended, 'critical path: Chapter One ends where it always did');
+
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));
 } finally {

@@ -76,9 +76,11 @@ it also profiles frame time under 4× CPU throttle.
 - Settlements: the Bridge Rest waystation shipped v0.8.0 (Orla, 11th NPC: paid bed =
   full heal + advance to morning; rumor dialogue seeds the far places; satchel
   corroboration). Room for more hamlets later if wanted.
-- NPC schedules (Ultima VII's soul): homes at night, work by day, doors that lock.
-  (Idle wandering near posts + 4-direction frames for everyone shipped in v0.4.0 —
-  schedules can build on npcTick and the per-NPC direction cells.)
+- NPC schedules — v1 SHIPPED v0.11.0: the three outdoor NPCs (col/bren/dag) A*
+  commute to night spots at dusk and back at dawn (n.night vs n.dx0/dy0, wander
+  re-anchors to the current target, doors open on NPC passage); the chapel door
+  (110,17) is impassable from outside at night. Remaining: schedules for
+  shopkeepers (shops closing), more locked doors.
 - Chapter Two content: the chapel ledger, the runners' satchels, why the Vigil stands
   where it stands.
 - Combat — SHIPPED v0.6.0: HP + regen + bread heals, weapon/armour stats (auto-worn,

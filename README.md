@@ -46,7 +46,11 @@ server required. Open it in any mobile or desktop browser.
 - **A living village** — every character has full 4-direction walk animation
   (player and NPCs alike); NPCs idle-wander near their posts, keep to their own
   ground (indoor folk stay indoors), turn to face you in conversation, and if
-  your tap-target strolls off you follow them automatically.
+  your tap-target strolls off you follow them automatically. And the vale keeps
+  hours: at dusk Col beds down in the stable's lee, Dag walks home and shuts his
+  door, and Bren walks the road to the Bridge Rest — real A* commutes, doors
+  creaking open as they pass — while Malvo's chapel bars itself from the outside
+  until morning.
 - **Keyword dialogue web** — NPCs speak in topics. Words learned from one mouth can be
   asked of any other; the story is gated by *what you know to ask*, not by levels.
 - **Hidden virtue triad** — Truth, Love, and Courage are silently scored by your choices

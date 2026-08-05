@@ -245,6 +245,37 @@ try {
   ok(knife.dmg === 2, 'knife: honest steel does 2', String(knife.dmg));
   ok(knife.dead, 'knife: two cuts finish a slime');
 
+  // -- schedules: dusk sends folk home, dawn sends them back ----------------
+  const sched = await page.evaluate(() => {
+    mobs.length = 0;
+    time = 320;                                  // nightfall
+    for (let i = 0; i < 90; i++) npcTick();
+    const gap = (id, spot) => {
+      const n = npcs.find(n => n.id === id);
+      return Math.abs(n.x - spot[0]) + Math.abs(n.y - spot[1]);
+    };
+    const night = {
+      col: gap('col', npcs.find(n=>n.id==='col').night),
+      bren: gap('bren', npcs.find(n=>n.id==='bren').night),
+      dag: gap('dag', npcs.find(n=>n.id==='dag').night),
+    };
+    const chapelLocked = !astar(P.x, P.y,
+      (x, y) => Math.abs(x-110)<=1 && Math.abs(y-14)<=1, 110, 14);
+    time = 60;                                   // morning
+    for (let i = 0; i < 90; i++) npcTick();
+    const day = {
+      bren: gap('bren', [npcs.find(n=>n.id==='bren').dx0, npcs.find(n=>n.id==='bren').dy0]),
+      dag: gap('dag', [npcs.find(n=>n.id==='dag').dx0, npcs.find(n=>n.id==='dag').dy0]),
+    };
+    computeFOV();
+    return { night, day, chapelLocked };
+  });
+  ok(sched.night.col <= 2 && sched.night.bren <= 2 && sched.night.dag <= 2,
+    'schedules: at dusk, folk head for their beds', JSON.stringify(sched.night));
+  ok(sched.day.bren <= 2 && sched.day.dag <= 2,
+    'schedules: at dawn, back to their posts', JSON.stringify(sched.day));
+  ok(sched.chapelLocked, 'schedules: the chapel bars its door at night');
+
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));
 } finally {

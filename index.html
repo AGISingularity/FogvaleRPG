@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.10.0';
+const VERSION='0.11.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -366,6 +366,9 @@ function computeFOV(){
 function walkable(x,y){
   if(x<0||y<0||x>=W||y>=H) return false;
   if(BLOCKING[grid[y][x]]) return false;
+  if(x===110 && y===17 && grid[y][x]==='+' && isNight()
+     && !(P.x>=109&&P.x<=112&&P.y>=13&&P.y<=16))   // barred, unless you're already inside
+    return false;
   const o=objectAt(x,y); if(o && o.type==='body') return false;
   if(npcs.some(n=>n.x===x&&n.y===y)) return false;
   if(mobs.some(m=>m.x===x&&m.y===y)) return false;
@@ -477,7 +480,7 @@ const npcs = [
      ironvale:{label:'Ironvale', cond:()=>knownTopics.has('ironvale'), text:()=>'"Follow the road east, then north through the gap in the ridge. Half a day\'s walk. Mind the night — the road is safe enough, but the dark off its edges is very large."'}
    }},
 
- { id:'col', name:'Col the Beggar', x:20, y:103, c:'#8a7f6a', shop:null,
+ { id:'col', name:'Col the Beggar', x:20, y:103, night:[16,109], c:'#8a7f6a', shop:null,
    greet:()=>'"Spare a coin, traveler? Five would feed me a week. I\'d not ask, only... the Path judged me unworthy, and the unworthy don\'t eat much." He tries to smile. It doesn\'t take.',
    topics:{
      name:{label:'Name', text:()=>'"Col. There was a farm once, with my name on the gate. There\'s a sunburst on that gate now."'},
@@ -494,7 +497,7 @@ const npcs = [
        return '"I sleep where the walls cut the wind, so I see the nights whole. Before dawn, the day they found the boy — a figure in robes, down along the river. Standing in the water\'s edge, in winter, still as a post. I didn\'t call out. You wouldn\'t have either."'; }}
    }},
 
- { id:'bren', name:'Bren the Guard', x:31, y:101, c:'#9aa5b8', shop:null,
+ { id:'bren', name:'Bren the Guard', x:31, y:101, night:[60,100], c:'#9aa5b8', shop:null,
    greet:()=>'"Road\'s watched by day — by me, which is to say, barely. Keep to it after dark all the same."',
    topics:{
      name:{label:'Name', text:()=>'"Bren. Guard, ditch-digger, and in autumn the man who climbs for apples. Small village."'},
@@ -537,7 +540,7 @@ const npcs = [
      malvo:{label:'Brother Malvo', cond:()=>knownTopics.has('malvo'), text:()=>'"Keeps the chapel. Smiles like oil on water. Buy nothing he\'s selling — especially the free things."'}
    }},
 
- { id:'dag', name:'Dag the Miner', x:105, y:20, c:'#b89a78', shop:null,
+ { id:'dag', name:'Dag the Miner', x:105, y:20, night:[103,23], c:'#b89a78', shop:null,
    greet:()=>'"Mind yourself. Ridge road\'s honest, but this town\'s gone strange since the sunbursts came." He spits, accurately.',
    topics:{
      name:{label:'Name', text:()=>'"Dag. I dig. My father dug. Somewhere down there he\'s digging still, far as anyone knows."'},
@@ -1024,17 +1027,39 @@ const OBJ_CELL={ herb:'herb', mushroom:'mushroom', body:'body', chest:'chest' };
 const npcCell = n => 'npc'+Math.max(0,NPC_COLORS.indexOf(n.c));
 
 /* ---------- NPC wandering: a few steps around their post ----------------- */
-for(const n of npcs){ n.hx=n.x; n.hy=n.y; n.rx=n.x; n.ry=n.y; n.dir='down'; }
+for(const n of npcs){ n.hx=n.x; n.hy=n.y; n.dx0=n.x; n.dy0=n.y; n.rx=n.x; n.ry=n.y; n.dir='down'; }
 function npcTick(){
   for(const n of npcs){
-    if(n===activeNpc || Math.random()<0.6) continue;  // unhurried folk
+    if(n===activeNpc) continue;
+    // schedules: at night the commuters head for their night spots,
+    // at dawn back to their day posts; wander re-anchors to the target
+    const target = (isNight() && n.night) ? n.night : [n.dx0, n.dy0];
+    n.hx=target[0]; n.hy=target[1];
+    if(Math.abs(n.x-target[0])+Math.abs(n.y-target[1]) > 2){
+      if(!n.commute || !n.commute.length)
+        n.commute = astar(n.x, n.y, (x,y)=>x===target[0]&&y===target[1], target[0], target[1]) || [];
+      const nxt=n.commute[0];
+      if(nxt && walkable(nxt.x,nxt.y) && !(nxt.x===P.x&&nxt.y===P.y)){
+        n.commute.shift();
+        if(nxt.x!==n.x) n.dir = nxt.x>n.x?'right':'left';
+        else if(nxt.y!==n.y) n.dir = nxt.y>n.y?'down':'up';
+        n.x=nxt.x; n.y=nxt.y;
+        if(grid[n.y][n.x]==='+' && !openDoors.has(n.x+','+n.y)){
+          openDoors.add(n.x+','+n.y); patchTerrainTile(n.x,n.y);
+          if(visible.has(n.x+','+n.y)) say('A door opens somewhere, with a complaint of hinges.');
+        }
+      } else n.commute=null;      // blocked — try a fresh path next tick
+      continue;
+    }
+    n.commute=null;
+    if(Math.random()<0.6) continue;               // unhurried folk
     const dirs=[[1,0,'right'],[-1,0,'left'],[0,1,'down'],[0,-1,'up']];
     const [ax,ay,dr]=dirs[Math.random()*4|0];
     const nx=n.x+ax, ny=n.y+ay;
     if(Math.abs(nx-n.hx)>2 || Math.abs(ny-n.hy)>2) continue;   // stay near the post
     if(nx===P.x && ny===P.y) continue;
     if(!walkable(nx,ny)) continue;
-    // indoor folk keep to their floor; outdoor folk never wander inside
+    // folk keep to the ground their post stands on
     const c=grid[ny][nx], home=grid[n.hy][n.hx];
     if(home==='f' ? c!=='f' : (c==='f'||c==='+')) continue;
     n.dir=dr; n.x=nx; n.y=ny;
@@ -1335,7 +1360,7 @@ cv.addEventListener('pointerdown', e=>{
   if(!explored.has(k)){ say('You cannot see that far. The fog keeps its secrets until you walk them.'); return; }
   if(!walkable(tx,ty)){
     const c=grid[ty][tx];
-    say(c==='w' ? 'The river is fast and winter-cold.' : c==='m' ? 'The mountains wall the vale like a held breath.' : c==='t' ? 'The trees grow too close there.' : 'You cannot walk there.');
+    say(c==='w' ? 'The river is fast and winter-cold.' : c==='m' ? 'The mountains wall the vale like a held breath.' : c==='t' ? 'The trees grow too close there.' : c==='+' ? 'The chapel door is barred from within. Evening prayer — or something less public.' : 'You cannot walk there.');
     return;
   }
   pending=null;

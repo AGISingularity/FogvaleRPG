@@ -70,6 +70,9 @@ it also profiles frame time under 4× CPU throttle.
   (unique, guards the deep chest, 1.45x render, permanent kill via F.wardenSlain),
   heartwood drop with a Yseult reading that seeds "someone grew the guardian";
   also fixed chests crashing the renderer when in live sight (missing OBJ_CELL).
+- v0.10.0: hunting knife at Tobin's (damage 2, early-game rung) and a second
+  Warden at the ridge cave's satchel cache (per-post slain flags, legacy
+  F.wardenSlain migrates; second kill's line lands the 'caches were tended' beat).
 - Settlements: the Bridge Rest waystation shipped v0.8.0 (Orla, 11th NPC: paid bed =
   full heal + advance to morning; rumor dialogue seeds the far places; satchel
   corroboration). Room for more hamlets later if wanted.

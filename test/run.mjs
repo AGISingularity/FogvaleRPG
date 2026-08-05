@@ -201,24 +201,49 @@ try {
     objects.filter(o => o.type === 'mushroom' && grid[o.y][o.x] === 'v').length);
   ok(shrooms === 8, 'caves: eight bluecaps grow below', String(shrooms));
 
-  // -- the Hollow Warden: guards, falls in five sword blows, stays dead -----
+  // -- the Hollow Wardens: one per cache, independent, permanently slain ----
   const warden = await page.evaluate(() => {
     placeWarden();                               // reachability cleared mobs
-    const w = mobs.find(m => m.type === 'warden');
-    const there = !!w && grid[w.y][w.x] === 'v';
+    const both = mobs.filter(m => m.type === 'warden');
+    const posts = both.map(m => m.post).sort().join(',');
+    const onFloor = both.every(m => grid[m.y][m.x] === 'v');
     inv.sword = 1;
+    const ridge = both.find(m => m.post === 'ridge');
     let hits = 0;
-    while (mobs.includes(w) && hits < 10) { attackMob(w); hits++; }
-    const out = { there, hits, heartwood: inv.heartwood, slain: !!F.wardenSlain };
+    while (mobs.includes(ridge) && hits < 10) { attackMob(ridge); hits++; }
+    const outcropAlive = mobs.some(m => m.type === 'warden' && m.post === 'outcrop');
+    const outcrop = mobs.find(m => m.post === 'outcrop');
+    while (mobs.includes(outcrop)) attackMob(outcrop);
     placeWarden();                               // must NOT respawn once slain
-    out.stayedDead = !mobs.some(m => m.type === 'warden');
+    const out = {
+      posts, onFloor, hits, heartwood: inv.heartwood, outcropAlive,
+      bothSlain: !!F.wardenSlain_ridge && !!F.wardenSlain_outcrop,
+      stayedDead: !mobs.some(m => m.type === 'warden'),
+    };
     inv.sword = 0;
     return out;
   });
-  ok(warden.there, 'warden: the Hollow Warden keeps the deep chest');
-  ok(warden.hits === 5, 'warden: five sword blows fell it', String(warden.hits));
-  ok(warden.heartwood === 1 && warden.slain, 'warden: heartwood taken, fall remembered');
-  ok(warden.stayedDead, 'warden: the dead do not re-post');
+  ok(warden.posts === 'outcrop,ridge', 'wardens: one per cache', warden.posts);
+  ok(warden.onFloor, 'wardens: both stand on cavern floor');
+  ok(warden.hits === 5, 'wardens: five sword blows fell one', String(warden.hits));
+  ok(warden.outcropAlive, 'wardens: slaying one leaves the other at its post');
+  ok(warden.heartwood === 1 && warden.bothSlain, 'wardens: one heartwood, both falls remembered');
+  ok(warden.stayedDead, 'wardens: the dead do not re-post');
+
+  // -- the knife: the missing rung between fists and star-metal -------------
+  const knife = await page.evaluate(() => {
+    inv.knife = 1; inv.sword = 0;
+    const dmg = weaponDmg();
+    mobs.length = 0;
+    mobs.push({ type:'slime', hp:3, x:P.x+1, y:P.y, rx:P.x+1, ry:P.y, dir:'left' });
+    const m = mobs[0];
+    attackMob(m); attackMob(m);
+    const dead = !mobs.includes(m);
+    inv.knife = 0; mobs.length = 0;
+    return { dmg, dead };
+  });
+  ok(knife.dmg === 2, 'knife: honest steel does 2', String(knife.dmg));
+  ok(knife.dead, 'knife: two cuts finish a slime');
 
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));

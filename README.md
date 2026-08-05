@@ -32,11 +32,12 @@ server required. Open it in any mobile or desktop browser.
   into walled cavern complexes: permanently dark whatever the hour, sight cut to your
   torch or lantern's reach, bats in the black, rusted chests of gold, and a Path
   courier's satchel with cut straps that Dag can read like a confession. A pale
-  stair-stone leads back to daylight — and the deepest chest is kept by the Hollow
-  Warden, an ashen bough-fiend that guards rather than hunts, falls hard, stays
-  dead, and leaves behind a knot of heartwood the seer would rather not touch.
+  stair-stone leads back to daylight — and each cache is kept by a Hollow
+  Warden — ashen bough-fiends that guard rather than hunt, fall hard, and stay
+  dead. The first leaves a knot of heartwood the seer would rather not touch;
+  the second proves the point: the caches were tended, not abandoned.
 - **Steel and teeth** — a fighting system: tap an adjacent creature to strike; the
-  star-metal sword (damage 3) beats fists (1), and the Forgeworks in Ironvale sells
+  weapon ladder runs fists (1) → Tobin's hunting knife (2) → the star-metal sword (3), and the Forgeworks in Ironvale sells
   leather and iron armour that absorb hits. Creatures great and small roam the wilds
   (marsh slimes, dusk bats, bough-fiends near the woods) and shy away from towns;
   night breeds more. Not all are evil — pale wisps drift harmlessly, and striking

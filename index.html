@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.9.0';
+const VERSION='0.10.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -296,7 +296,7 @@ let path = [];                                  // queued steps [{x,y}...]
 let pending = null;                             // interaction on arrival
 let stepClock = 0;
 let time = 60;                                  // steps; day=300, night=150 per cycle
-const inv = { gold:12, herb:0, mushroom:0, bread:0, torch:0, lantern:0, sword:0, leather:0, iron:0, medallion:0, satchel:0, heartwood:0 };
+const inv = { gold:12, herb:0, mushroom:0, bread:0, torch:0, lantern:0, sword:0, knife:0, leather:0, iron:0, medallion:0, satchel:0, heartwood:0 };
 const F = {};                                   // story flags
 const V = { truth:0, love:0, courage:0 };       // the hidden triad
 const knownTopics = new Set();
@@ -428,6 +428,7 @@ function virtue(kind,amt){ V[kind]+=amt; }
 const SHOPS = {
   tobin: { name:"Tobin's Provisions",
     sells:[ {id:'torch', nm:'Pitch Torch', sub:'Sight 4 at night', price:8},
+            {id:'knife', nm:'Hunting Knife', sub:'Honest steel. (Damage 2)', price:12},
             {id:'bread', nm:'Brown Bread', sub:'Warm. Comforting.', price:2} ],
     buys:[ {id:'herb', nm:'Wortleaf Herb', price:3}, {id:'mushroom', nm:'Bluecap Mushroom', price:5} ] },
   serra: { name:"Serra's Goods",
@@ -772,7 +773,7 @@ function renderShop(){
   if(shopTab==='buy'){
     for(const it of activeShop.sells){
       const row=document.createElement('div'); row.className='row';
-      const owned = inv[it.id]>0 && ['torch','lantern','sword','leather','iron'].includes(it.id);
+      const owned = inv[it.id]>0 && ['torch','lantern','sword','knife','leather','iron'].includes(it.id);
       row.innerHTML = '<div class="nm">'+it.nm+'<div class="sub">'+(it.sub||'')+'</div></div>';
       const b=document.createElement('button');
       b.textContent = owned ? 'Owned' : it.price+' ⛁';
@@ -781,6 +782,7 @@ function renderShop(){
         if(it.id==='torch') say('You buy the torch. Night will be four steps wide now instead of two.');
         else if(it.id==='lantern') say('The brass lantern is heavy and warm. Night just became a wide room.');
         else if(it.id==='sword') say('The star-metal blade hums against your palm. It is no longer waiting.');
+        else if(it.id==='knife') say('The knife rides your belt like it grew there. The vale feels one size smaller.');
         else if(it.id==='leather') say('The jerkin settles over your shoulders like a second, braver skin.');
         else if(it.id==='iron') say('The hauberk is heavy the way an argument-winning fact is heavy.');
         else say('Bought: '+it.nm+'.');
@@ -816,6 +818,7 @@ function openBag(){
     ['torch','Pitch Torch','Lit by itself when night falls'],
     ['lantern','Brass Lantern','Lit by itself when night falls'],
     ['sword','Star-metal Sword','No longer patient. (Damage 3)'],
+    ['knife','Hunting Knife','Honest steel. (Damage 2)'],
     ['leather','Leather Jerkin','Worn. Turns a claw. (Armour 1)'],
     ['iron','Iron Hauberk','Worn. Turns most teeth. (Armour 2)'],
     ['medallion','Silver Medallion','A sunburst. Cold to the touch.'],
@@ -1042,7 +1045,7 @@ setInterval(npcTick, 700);
 /* ===================================================================
    COMBAT — creatures great and small, good and evil
    =================================================================== */
-const weaponDmg = ()=> inv.sword ? 3 : 1;
+const weaponDmg = ()=> inv.sword ? 3 : inv.knife ? 2 : 1;
 const armorVal  = ()=> inv.iron ? 2 : (inv.leather ? 1 : 0);
 const MOB_TYPES = {
   slime:{ nm:'marsh slime',  hp:3, dmg:1, evil:true,  spr:'slime' },
@@ -1051,9 +1054,15 @@ const MOB_TYPES = {
   wisp: { nm:'pale wisp',    hp:1, dmg:0, evil:false, spr:'wisp' },
   warden:{nm:'the Hollow Warden', hp:15, dmg:3, evil:true, spr:'warden', big:true }
 };
+const WARDEN_POSTS = { ridge:[26,122], outcrop:[120,119] };
 function placeWarden(){
-  if(F.wardenSlain || mobs.some(m=>m.type==='warden')) return;
-  mobs.push({ type:'warden', hp:MOB_TYPES.warden.hp, x:120, y:119, rx:120, ry:119, dir:'left' });
+  for(const post in WARDEN_POSTS){
+    if(F['wardenSlain_'+post]) continue;
+    if(post==='outcrop' && F.wardenSlain) continue;   // legacy flag from v0.9.0 saves
+    if(mobs.some(m=>m.type==='warden' && m.post===post)) continue;
+    const [x,y]=WARDEN_POSTS[post];
+    mobs.push({ type:'warden', post, hp:MOB_TYPES.warden.hp, x, y, rx:x, ry:y, dir:'left' });
+  }
 }
 let hurtAt=-1e9;
 const isTownArea=(x,y)=> (x>=12&&x<=30&&y>=95&&y<=111)||(x>=98&&x<=116&&y>=10&&y<=26)
@@ -1150,9 +1159,15 @@ function attackMob(m){
   if(m.hp<=0){
     mobs.splice(mobs.indexOf(m),1);
     if(m.type==='warden'){
-      F.wardenSlain=true; inv.heartwood=1; inv.gold+=30; updHud();
+      F['wardenSlain_'+(m.post||'outcrop')]=true;
+      inv.gold+=30; updHud();
       virtue('courage',2);
-      say('<b>The Hollow Warden splits along its grain and goes still.</b> In the wreck of it: 30 gold that was never spent, and a knot of pale heartwood, warm as a held hand. <i>(The seer reads stranger things than water.)</i>');
+      if(!inv.heartwood){
+        inv.heartwood=1;
+        say('<b>The Hollow Warden splits along its grain and goes still.</b> In the wreck of it: 30 gold that was never spent, and a knot of pale heartwood, warm as a held hand. <i>(The seer reads stranger things than water.)</i>');
+      } else {
+        say('<b>The second Warden splits and stills.</b> Thirty more unspent gold — and inside, the same pale grain as the first. Grown from one hand, then. These caches were never abandoned, stranger. They were <b>tended</b>.');
+      }
       return;
     }
     const g = m.type==='log' ? 6 : 2+(Math.random()*3|0);

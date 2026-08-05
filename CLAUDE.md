@@ -132,8 +132,12 @@ it also profiles frame time under 4× CPU throttle.
   Joren, Col's nine-year-old son (planted in Col's v0.6.0 'took my son to
   Ironvale' line). Col's trowel-recognition (F.gardenerNamed, learn 'joren'),
   the plea (F.jorenQuest), Maren/Yseult reactions, Malvo's first open threat
-  (F.malvoThreatened). Final threads: meeting Joren (deep-night at the grove?),
-  and the Gate's answer — the seal responds to meaning, i.e. the virtues.
+  (F.malvoThreatened). v0.25.0 shipped the meeting:
+  Joren appears at the grove during deepNight once F.jorenQuest (small-scale
+  runner frames, tending animation); pride/door/father topics; the father
+  choice sets F.toldJoren and reshapes Col's dialogue ('Hurry, stranger').
+  Final thread: the homecoming + the Gate's answer — the seal responds to
+  meaning, i.e. the hidden virtues; F.jorenHome reserved for the finale.
 
 ### 3. Ship it to many players ("web-scale")
 - It is already a website; scale for players means: keep GitHub Pages as free global

@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.24.0';
+const VERSION='0.25.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -531,6 +531,8 @@ const npcs = [
        F.gardenerNamed=true; learn('joren'); virtue('love',1);
        return '"A small trowel. Kept sharp, kept clean." He goes very still. "Barley-handled? Notch in the tang, about here?" You had not said so. His face says he did not need you to. "That trowel was MINE, stranger. I put it in Joren\u2019s hand the day he could walk, and taught him what my father taught me: keep your tools clean, keep your rows straight." His voice does not break. It does something worse \u2014 it goes flat. "They took my boy for \u2018the work\u2019. And the work was this."'; }},
      joren:{label:'Joren', cond:()=>knownTopics.has('joren'), text(){ F.jorenQuest=true;
+       if(F.toldJoren)
+         return '"You SPOKE to him." Col grips your arm with both hands, and they are steadier than they have been all season. "Then he knows. Whatever roots they\u2019ve grown into my boy \u2014 he knows his Da never stopped asking." He looks north-east, toward the ridge, the chapel, all of it. "Nine years old, and the Path\u2019s whole crooked weight on him. Hurry, stranger."';
        return '"He is nine, stranger. Nine, and he could coax green out of a gravel pit, and I was PROUD of that." Col looks at his open hands. "I do not want the trowel back. I do not want proof, or justice, or the Path\u2019s smiling apology. Bring him back. HIM. Everything else the vale can keep."'; }},
      radiantpath:{label:'The Radiant Path', cond:()=>knownTopics.has('radiantpath'), text:()=>'"They preach three lights — unity, trust, worthiness. Sounded like scripture till I noticed every light pointed at my purse. Judge them yourself in Ironvale. Judge them twice."'},
      murder:{label:'The murder', cond:()=>knownTopics.has('murder'), text(){ learn('stranger');
@@ -696,6 +698,26 @@ function gateStone(){
   virtue('courage',2); virtue('truth',1);
   say('<b>A door in the mountain\u2019s root</b>, older than the Vigil\u2019s letters: three circles carved a hand deep, and the stone around them worn smooth by \u2014 what? Reverence? Weather? Waiting? And then you see the rest: <i>fresh drill-scars</i>, a dozen of them, skittering off the seal like matches struck on glass. Someone is trying to open this. Someone is failing. <i>(For now.)</i>');
 }
+
+/* ---------- Joren, in the rows, in the small hours ----------------------- */
+let joren=null;
+const JOREN = { name:'Joren', shop:null,
+  greet:()=>'The small figure does not run. He finishes tying off a lath frame first, the way a boy finishes a chore before looking up. "You\u2019re not supposed to be here. The rows are fellowship ground." He is nine, and hoe-thin, and entirely unafraid \u2014 which is somehow the worst thing in the vale.',
+  topics:{
+    rows:{label:'The rows', cond:()=>true, text:()=>'"I make them grow straight. Brother Malvo says nobody else in the whole fellowship can do what I do." The pride is plain, and terrible. "The wood listens to me. It always has. Da said it was a gift."'},
+    door:{label:'The door', cond:()=>knownTopics.has('gate'), text:()=>'"When the rows are ready, the door will be glad, and everyone will see the work mattered." He says it like a lesson learned by heart. He does not know what the door is for. Neither, you realize with a chill, does he think to ask.'},
+    father:{label:'His father', cond:()=>!F.toldJoren,
+      choice:{ prompt:'"...Da begged. That\u2019s what Brother Malvo says. Begging is for the unworthy." The recitation wobbles, once, on the word Da. "He never came for me." He ties the next knot far too tight.',
+        a:{label:'"He never stopped asking."', text(){ F.toldJoren=true; virtue('truth',1); virtue('love',2);
+            return 'You tell him the truth, all of it: the stable wall where the walls cut the wind, the five gold that feeds a week, the man who wants no trowel and no justice \u2014 only him. Joren stands very still among his straight rows. "...He asks for me first?" The knot in his hands slowly comes undone. "The rows need me. Don\u2019t they?" For the first time, it is a question.'; }},
+        b:{label:'Say nothing yet', text:()=>'Some truths need daylight. You leave the word unsaid \u2014 for now \u2014 and the boy goes back to his rows, tying his knots too tight.'} }}
+  }};
+function jorenTick(){
+  const due = deepNight() && F.jorenQuest && !F.jorenHome;
+  if(due && !joren) joren={ x:11, y:27, rx:11, ry:27, dir:'down' };
+  else if(!due) joren=null;
+}
+setInterval(jorenTick, 1000);
 
 /* ---------- the altars speak (pseudo-people for the dialogue sheet) ------ */
 const WEEPING_ALTAR = { name:'The Weeping Altar', shop:null,
@@ -1537,6 +1559,12 @@ function draw(now){
       ctx.stroke();
     }
   }
+  if(joren && visible.has(joren.x+','+joren.y)){
+    const s=ts/16, r=ATLAS_DEF[Math.floor(now/700)%2 ? 'runnerD1' : 'runnerD2'], k=0.78;
+    const w=r[2]*s*k, h=r[3]*s*k;
+    ctx.drawImage(atlasCv, r[0]*s, r[1]*s, r[2]*s, r[3]*s,
+      Math.round(joren.x*ts-camX+(ts-w)/2), Math.round(joren.y*ts-camY+16*s-h), w, h);
+  }
   if(runner && visible.has(runner.x+','+runner.y)){
     runner.rx+=(runner.x-runner.rx)*0.3; runner.ry+=(runner.y-runner.ry)*0.3;
     const dch = runner.dir==='up' ? 'U' : (runner.dir==='left'||runner.dir==='right') ? 'L' : 'D';
@@ -1602,6 +1630,12 @@ cv.addEventListener('pointerdown', e=>{
     const near = Math.abs(tx-P.x)<=1 && Math.abs(ty-P.y)<=1;
     if(near) attackMob(mob);
     else { pending={type:'mob',mob}; routeTo(tx,ty,true); }
+    return;
+  }
+  // the boy in the rows?
+  if(joren && tx===joren.x && ty===joren.y && visible.has(k)){
+    if(Math.abs(tx-P.x)<=1 && Math.abs(ty-P.y)<=1) openDlg(JOREN);
+    else { pending={type:'joren'}; routeTo(tx,ty,true); }
     return;
   }
   // an altar, or the row?
@@ -1715,6 +1749,7 @@ function step(){
       if(Math.abs(P.x-pd.mob.x)<=1 && Math.abs(P.y-pd.mob.y)<=1) attackMob(pd.mob);
       else { pending=pd; routeTo(pd.mob.x,pd.mob.y,true); }
     }
+    else if(pd.type==='joren' && joren && Math.abs(P.x-joren.x)<=1 && Math.abs(P.y-joren.y)<=1) openDlg(JOREN);
     else if(pd.type==='altar' && Math.abs(P.x-pd.x)<=1 && Math.abs(P.y-pd.y)<=1) openAltar(pd.x,pd.y);
     else if(pd.type==='body' && Math.abs(P.x-15)<=1&&Math.abs(P.y-106)<=1) examineBody();
   }

@@ -40,6 +40,12 @@ server required. Open it in any mobile or desktop browser.
   bread for the hungry dead, a pelt for their warmth — paid silently in Love;
   the wax at the Path's altar reads once, in Truth: two sets of knee-prints,
   and the small set dug deeper.
+- **The boy in the rows** — once Col has asked, go to the nursery in the deep
+  of night and Joren is there among his saplings, tying lath frames: nine,
+  hoe-thin, proud of the only work that ever mattered, and entirely unafraid.
+  Ask about his father and the recitation wobbles on the word Da — then choose
+  whether to tell him the truth. Told, the knot in his hands slowly comes
+  undone: 'The rows need me. Don't they?' For the first time, it is a question.
 - **The small hand has a name** — describe the trowel to Col and he knows it
   before you finish: barley-handled, notch in the tang, his own — put in his
   son's hand the day the boy could walk. The Gardener is Joren, nine years old,

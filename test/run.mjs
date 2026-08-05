@@ -599,6 +599,27 @@ try {
   ok(joren.maren && joren.yseult, 'joren: the Elder weighs the entry; the seer names the crime');
   ok(joren.threatened, 'joren: Malvo stops smiling');
 
+  // -- the boy in the rows: found at deep night, told the truth -------------
+  const boy = await page.evaluate(() => {
+    // F.jorenQuest is set by the naming test
+    time = 360; jorenTick();
+    const present = !!joren && joren.x === 11 && joren.y === 27;
+    const doorTopic = JOREN.topics.door.cond();          // 'gate' is known
+    const told = JOREN.topics.father.choice.a.text();
+    const truth = !!F.toldJoren && told.includes('He asks for me first');
+    const onceOnly = !JOREN.topics.father.cond();
+    const colAfter = npcs.find(n => n.id === 'col').topics.joren.text();
+    const colKnows = colAfter.includes('You SPOKE to him');
+    time = 60; jorenTick();
+    const gone = joren === null;
+    computeFOV();
+    return { present, doorTopic, truth, onceOnly, colKnows, gone };
+  });
+  ok(boy.present, 'joren: in the rows, in the small hours');
+  ok(boy.doorTopic && boy.truth && boy.onceOnly, 'joren: the truth is told once, and lands');
+  ok(boy.colKnows, 'joren: Col grips your arm with both hands');
+  ok(boy.gone, 'joren: gone by daylight');
+
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));
 } finally {

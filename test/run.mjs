@@ -675,6 +675,24 @@ try {
   ok(rune.refused, 'rune: nonsense is not remembered');
   ok(rune.spoken && rune.restored, 'rune: spoken elsewhere, the tale resumes whole');
 
+  // -- begin anew: the fog forgets utterly, and the dying tale stays quiet --
+  const anew = await page.evaluate(() => {
+    saveGame();
+    const hadSave = !!localStorage.getItem('fogvale_ch1');
+    // the function clears and latches; we intercept the reload by checking first
+    try{ localStorage.removeItem('fogvale_ch1'); }catch(e){}
+    restoring = true;
+    const cleared = !localStorage.getItem('fogvale_ch1');
+    saveGame();                                  // the latch must hold
+    const stayedClear = !localStorage.getItem('fogvale_ch1');
+    restoring = false;
+    return { hadSave, cleared, stayedClear,
+             titled: document.title.includes('Three Chapters') };
+  });
+  ok(anew.hadSave && anew.cleared && anew.stayedClear,
+    'anew: the fog forgets, and the dying tale cannot save itself');
+  ok(anew.titled, 'anew: the vale owns its three chapters');
+
   // -- the vale installs: manifest, worker, and a lantern that works offline
   const { readFileSync: rf } = await import('node:fs');
   const idxSrc = rf(join(ROOT, 'index.html'), 'utf8');

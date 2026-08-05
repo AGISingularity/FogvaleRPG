@@ -5,7 +5,8 @@
 Fogvale is a phone-first, browser-based RPG inspired by *Ultima VII: The Black Gate*
 (world simulation, keyword dialogue, a friendly-faced cult) and the virtue system of
 *Ultima IV/V* (Truth, Love, Courage — the three Principles behind the eight virtues and
-the Codex). Chapter One ("The Stable Door") is complete and live on GitHub Pages at
+the Codex). All three chapters (The Stable Door, The Ledger of Worth, The Gardener) are
+complete and live on GitHub Pages at
 https://agisingularity.github.io/FogvaleRPG/ — deployed from `main`, root folder.
 Every push to `main` redeploys automatically.
 
@@ -149,6 +150,9 @@ it also profiles frame time under 4× CPU throttle.
   updates land, cache-first assets, old-cache cleanup, update notice via say()),
   OG tags. Release checklist: bump VERSION in index.html AND the two version
   strings in sw.js — test/run.mjs fails if they drift.
+- v0.29.0: begin-anew (two-tap wipe on the Help screen, reusing the restoring
+  latch so the unload autosave can't resurrect the wiped tale) and presentation
+  updated from 'Chapter One' to the three-chapter game.
 - v0.28.0: the rune of remembrance — save export/import codes (FOG-prefixed
   base64 of buildSave(); importRune validates, writes storage, and latches
   `restoring` so the unload autosave cannot clobber the imported tale — that

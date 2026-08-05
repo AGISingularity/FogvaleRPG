@@ -1,4 +1,4 @@
-# Fogvale — Chapter One: The Stable Door
+# Fogvale — Three Chapters, One Vale
 
 A phone-first, browser-based RPG inspired by *Ultima VII: The Black Gate* (and the
 virtue system of *Ultima IV/V*). The game is **`index.html`** plus one pixel-art
@@ -128,6 +128,9 @@ a service worker, and an in-game notice when a newer telling exists.
 - **The draught** — the seer brews bluecaps into a sturdier heart: ten caps for
   +3 utmost health, fifteen for three more, and never a third cup. The under-dark
   grows them thickest; the fighting system finally has a body that toughens.
+- **Begin anew** — a two-tap forget-everything on the How to Play screen, for
+  finished tales and for players curious what the seal says to a different heart.
+  The rune is the only way back.
 - **The rune of remembrance** — your whole tale written small: a copyable code
   on the How to Play screen. Paste it into Fogvale on any device and the tale
   resumes whole — cross-device saves with no account and no server, exactly as

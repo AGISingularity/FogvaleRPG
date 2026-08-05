@@ -11,7 +11,7 @@
 <meta property="og:description" content="A phone-first fog-of-war RPG: keyword dialogue, a hidden virtue triad, and a friendly-faced cult. Three chapters, one vale.">
 <meta property="og:image" content="https://agisingularity.github.io/FogvaleRPG/assets/icon-512.png">
 <meta property="og:type" content="website">
-<title>Fogvale — Chapter One: The Stable Door</title>
+<title>Fogvale — Three Chapters, One Vale</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#07080f;
@@ -120,7 +120,7 @@
   as your own two eyes allow — no further. Tap the land to walk it. Tap people to speak.
   What you learn from one mouth, you may ask of another.</p>
   <button id="beginBtn">Enter the Vale</button>
-  <div class="note">Your tale is remembered on this device · clearing browser data clears the vale's memory of you</div>
+  <div class="note">Three chapters, one vale · your tale is remembered on this device</div>
   <div class="note" id="verNote"></div>
 </div>
 
@@ -158,13 +158,16 @@
     <button id="runeGo" style="font-size:14px;padding:8px 18px">Resume that tale</button>
   </div>
   <div class="note" id="runeMsg"></div>
+  <p><b>Begin anew</b> — the fog forgets you utterly: every step, every word,
+  every unwitnessed choice. The rune above is the only way back.</p>
+  <button id="anewBtn" style="font-size:14px;padding:8px 18px;background:#3a2334;border-color:#6d4a63">Begin anew</button>
   <button id="helpClose">Back</button>
   <div class="note" id="helpVer"></div>
 </div>
 
 <script>
 'use strict';
-const VERSION='0.28.0';
+const VERSION='0.29.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -898,6 +901,11 @@ function saveGame(){
     localStorage.setItem(SAVE_KEY, JSON.stringify(buildSave()));
   }catch(e){ /* storage may be unavailable (private mode) — play on */ }
 }
+function beginAnew(){
+  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+  restoring=true;                                // the dying tale must not save itself
+  location.reload();
+}
 /* the rune of remembrance: the whole tale, written small */
 function exportRune(){
   return 'FOG' + btoa(unescape(encodeURIComponent(JSON.stringify(buildSave()))));
@@ -1124,6 +1132,16 @@ $('runeCopy').onclick=()=>{
   $('runeOut').select();
   try{ navigator.clipboard ? navigator.clipboard.writeText($('runeOut').value) : document.execCommand('copy'); }catch(e){}
   $('runeMsg').textContent='Copied. Write it somewhere the fog cannot reach.';
+};
+let anewArmed=false;
+$('anewBtn').onclick=()=>{
+  if(!anewArmed){
+    anewArmed=true;
+    $('anewBtn').textContent='Tap again, and the fog forgets';
+    setTimeout(()=>{ anewArmed=false; $('anewBtn').textContent='Begin anew'; }, 4000);
+    return;
+  }
+  beginAnew();
 };
 $('runeGo').onclick=()=>{
   if(importRune($('runeIn').value)){

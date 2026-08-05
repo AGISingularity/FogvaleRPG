@@ -653,6 +653,35 @@ try {
   ok(finale.withheld, 'finale: the seal keeps its counsel from the unanswered');
   ok(finale.passed && finale.card, 'finale: the watch passes, Chapter Three closes');
 
+  // -- the vale installs: manifest, worker, and a lantern that works offline
+  const { readFileSync: rf } = await import('node:fs');
+  const idxSrc = rf(join(ROOT, 'index.html'), 'utf8');
+  const swSrc = rf(join(ROOT, 'sw.js'), 'utf8');
+  const gameVer = idxSrc.match(/VERSION='([\d.]+)'/)[1];
+  ok(swSrc.includes(`fogvale-${gameVer}`) && swSrc.includes(`tiles.png?v=${gameVer}`),
+    'pwa: sw.js cache version marches with the game', gameVer);
+  const mani = await page.evaluate(async () => {
+    const r = await fetch('manifest.webmanifest');
+    const j = await r.json();
+    return r.ok && j.display === 'standalone' && j.icons.length === 2;
+  });
+  ok(mani, 'pwa: the manifest stands ready');
+  const swReady = await page.evaluate(() =>
+    Promise.race([
+      navigator.serviceWorker.ready.then(r => !!r.active),
+      new Promise(res => setTimeout(() => res(false), 8000)),
+    ]));
+  ok(swReady, 'pwa: the service worker takes its post');
+  await page.reload({ waitUntil: 'load' });      // come under the worker's wing
+  await page.waitForTimeout(800);
+  await context.setOffline(true);
+  await page.reload({ waitUntil: 'load' }).catch(() => {});
+  await page.waitForTimeout(800);
+  const offline = await page.evaluate(() =>
+    typeof computeFOV === 'function' && typeof VERSION === 'string' && !!document.getElementById('hud'));
+  await context.setOffline(false);
+  ok(offline, 'pwa: the vale opens with no road to the outside');
+
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));
 } finally {

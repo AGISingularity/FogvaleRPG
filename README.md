@@ -3,7 +3,9 @@
 A phone-first, browser-based RPG inspired by *Ultima VII: The Black Gate* (and the
 virtue system of *Ultima IV/V*). The game is **`index.html`** plus one pixel-art
 spritesheet (**`assets/tiles.png`**) — no build step, no runtime dependencies, no
-server required. Open it in any mobile or desktop browser.
+server required. Open it in any mobile or desktop browser — or install it:
+it's a PWA now, with a Vigil-mark icon, home-screen install, offline play via
+a service worker, and an in-game notice when a newer telling exists.
 
 ## Systems
 

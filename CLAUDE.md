@@ -144,7 +144,13 @@ it also profiles frame time under 4× CPU throttle.
   without ever showing a number. Chapter Four is unwritten ('something promised
   an open door rolls over in its sleep').
 
-### 3. Ship it to many players ("web-scale")
+### 3. Ship it to many players ("web-scale") — STARTED (v0.27.0)
+- DONE: PWA manifest (Vigil-mark icons in assets/), sw.js (network-first shell so
+  updates land, cache-first assets, old-cache cleanup, update notice via say()),
+  OG tags. Release checklist: bump VERSION in index.html AND the two version
+  strings in sw.js — test/run.mjs fails if they drift.
+- REMAINING: custom domain (optional), cloud saves (Supabase/Workers KV,
+  anonymous rune-word codes first).
 - It is already a website; scale for players means: keep GitHub Pages as free global
   hosting, add a proper domain later if desired, add PWA manifest + service worker so
   it installs to home screens and plays offline, add Open Graph/social preview tags,

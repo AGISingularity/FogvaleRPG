@@ -40,6 +40,11 @@ server required. Open it in any mobile or desktop browser.
   bread for the hungry dead, a pelt for their warmth — paid silently in Love;
   the wax at the Path's altar reads once, in Truth: two sets of knee-prints,
   and the small set dug deeper.
+- **The Hollow Gate** — follow the drag-marks from the nursery's stump to a
+  door in the mountain's root: three circles carved a hand deep, fresh drill-scars
+  skittering off the seal like matches on glass. The harvested third Warden
+  stands sentry before it. Yseult names what the seal answers to (not iron —
+  meaning), and Dag recognizes the drills: his own, missing since winter.
 - **The Gardener's Row** — Chapter Three opens. Deep in the wood, a too-orderly
   stand of saplings was always strange; after the Vigil speaks, you see it plain:
   a nursery, where Wardens are trained on frames and harvested at the stump.

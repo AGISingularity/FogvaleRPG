@@ -551,6 +551,33 @@ try {
   ok(grove.nursery && grove.hooked, 'grove: after the Vigil, a nursery — and a small handprint');
   ok(grove.yseult && grove.malvo, 'grove: the seer is afraid; the chapel keeps no garden');
 
+  // -- the hollow gate: found by the wise, kept by the third warden ---------
+  const gate = await page.evaluate(() => {
+    mobs.length = 0;
+    // 'gardener' is known from the grove test — the third post should stand
+    placeWarden();
+    const sentry = mobs.find(m => m.type === 'warden' && m.post === 'gate');
+    const posted = !!sentry && sentry.x === 5 && sentry.y === 15;
+    // approach the door (from the cleared stand, not through the sentry)
+    P.x = 5; P.y = 17; P.rx = 5; P.ry = 17; computeFOV();
+    path = [{ x: 5, y: 16 }]; step();
+    const found = !!F.foundGate && knownTopics.has('gate');
+    const yseult = !!npcs.find(n => n.id === 'yseult').topics.gate.cond();
+    const dag = !!npcs.find(n => n.id === 'dag').topics.gate.cond();
+    inv.sword = 1;
+    while (mobs.includes(sentry)) attackMob(sentry);
+    const fell = !!F.wardenSlain_gate;
+    placeWarden();
+    const staysDown = !mobs.some(m => m.post === 'gate');
+    inv.sword = 0; mobs.length = 0;
+    P.x = 21; P.y = 110; P.rx = 21; P.ry = 110; computeFOV();
+    return { posted, found, yseult, dag, fell, staysDown };
+  });
+  ok(gate.posted, 'gate: the third Warden takes its stand once you know to look');
+  ok(gate.found, 'gate: the sealed door is found, the word learned');
+  ok(gate.yseult && gate.dag, 'gate: the seer names the seal; Dag names his drills');
+  ok(gate.fell && gate.staysDown, 'gate: the third Warden falls and stays fallen');
+
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));
 } finally {

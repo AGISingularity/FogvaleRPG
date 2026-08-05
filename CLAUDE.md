@@ -125,8 +125,11 @@ it also profiles frame time under 4× CPU throttle.
 - The Gardener's Row ('G' at 12,26, spur off the shrine trail): pseudo-dialogue
   whose meaning gates on F.vigilRevealed; the trowel teaches 'gardener'; Yseult
   is afraid of the water; asking Malvo sets F.askedMalvoGardener ("the chapel
-  keeps no garden"). Next threads: who the small hand belongs to, the harvested
-  Warden that "walked or was carried away", and eventually the sealed door.
+  keeps no garden"). v0.23.0 added the Hollow Gate ('H' at 4,16, spur off the
+  shrine trail at y16): drag-marks topic in the grove, third Warden post (gated
+  on knowing 'gardener'), gateStone discovery + 'gate' topic, Yseult (the seal
+  answers to meaning, not iron) and Dag (his missing drills). Next threads: who
+  the small hand belongs to; what it takes to open — or defend — the Gate.
 
 ### 3. Ship it to many players ("web-scale")
 - It is already a website; scale for players means: keep GitHub Pages as free global

@@ -53,8 +53,12 @@ try {
   // -- A* reachability of every key destination -----------------------------
   const reach = await page.evaluate(() => {
     const targets = npcs.map(n => ({ name: n.name, x: n.x, y: n.y }));
-    targets.push({ name: "Piet's body", x: 11, y: 56 });
-    targets.push({ name: 'the old shrine', x: 12, y: 10 });
+    targets.push({ name: "Piet's body", x: 15, y: 106 });
+    targets.push({ name: 'the old shrine', x: 22, y: 12 });
+    targets.push({ name: 'the watchtower', x: 76, y: 56 });
+    targets.push({ name: 'the kneeling altar', x: 108, y: 109 });
+    targets.push({ name: 'the ridge cave', x: 34, y: 65 });
+    targets.push({ name: 'the outcrop cave', x: 91, y: 38 });
     return targets.map(t => {
       const goal = (x, y) => Math.abs(x - t.x) <= 1 && Math.abs(y - t.y) <= 1;
       const p = astar(P.x, P.y, goal, t.x, t.y);
@@ -64,7 +68,7 @@ try {
   for (const r of reach) ok(r.reachable, `reach ${r.name}`, r.reachable ? `${r.steps} steps` : 'NO PATH');
 
   // -- day screenshot (walk a few steps into the village first) -------------
-  await page.evaluate(() => { routeTo(17, 55, false); });
+  await page.evaluate(() => { routeTo(21, 105, false); });
   await page.waitForFunction(() => path.length === 0, null, { timeout: 15000 });
   await page.waitForTimeout(300);
   await page.screenshot({ path: join(OUT, `${LABEL}-day.png`) });
@@ -78,7 +82,7 @@ try {
   // -- frame-time profile under 4x CPU throttle (mid-range phone stand-in) --
   const cdp = await context.newCDPSession(page);
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
-  await page.evaluate(() => { routeTo(44, 30, false); }); // long walk up the road
+  await page.evaluate(() => { routeTo(60, 102, false); }); // long walk east on the road
   const prof = await page.evaluate(() => new Promise(resolve => {
     const deltas = []; let prev = performance.now();
     const t0 = prev;

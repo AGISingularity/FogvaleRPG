@@ -58,9 +58,11 @@ it also profiles frame time under 4× CPU throttle.
 - Perf: whole-map terrain cache + DPR cap 2; draw() went 1.66ms → 0.07ms per frame
   at 4× CPU throttle (measured by test/run.mjs).
 
-### 2. Bigger world
-- Grow the map (chunk the world if memory/perf demands), add 2–3 more settlements, a
-  dungeon or two, and wilderness landmarks that reward looking (towers extend sight).
+### 2. Bigger world — IN PROGRESS (v0.5.0 shipped the terrain half)
+- DONE: 128×128 map (3× area), towns in opposite corners (~180 road-steps apart),
+  chunked+lazy terrain cache, watchtower that reveals the land around it, a kneeling
+  altar with seer dialogue, two cave mouths awaiting dungeons. Save format v2.
+- TODO: more settlements, actual dungeon interiors behind the cave mouths.
 - NPC schedules (Ultima VII's soul): homes at night, work by day, doors that lock.
   (Idle wandering near posts + 4-direction frames for everyone shipped in v0.4.0 —
   schedules can build on npcTick and the per-NPC direction cells.)

@@ -55,12 +55,12 @@ server required. Open it in any mobile or desktop browser.
 | Section | What it holds |
 |---|---|
 | CSS + HTML | HUD, message log, dialogue/shop/bag bottom sheets, intro & chapter-end cards |
-| Map generation | Seeded (deterministic) world: ridge, river, roads, two towns, deep wood, shrine |
+| Map generation | Seeded (deterministic) 128×128 world: ridge, river, long roads, two far-apart towns, deep wood, shrine, watchtower, altar, cave mouths |
 | Fog of war | Recursive shadowcasting (8 octants), explored-memory set, door states |
 | Pathfinding | A* (4-way) with adjacent-goal support for talking/examining |
 | Content | All NPCs, dialogue topics, choices, shops, and story flags |
 | Autosave | localStorage save/load (`fogvale_ch1` v1), tab-hide + 4s interval |
-| Rendering | Atlas baked to tile size, whole-map terrain cache (door patching), fog/night lightmap, sprites & animations, torch glow |
+| Rendering | Atlas baked to tile size, chunked terrain cache (32-tile chunks, lazily baked — a whole-map canvas would exceed iOS's 4096px limit), fog/night lightmap, sprites & animations, torch glow |
 | Game loop | Step timer, time-of-day, pickups, arrival-triggered interactions |
 
 ## Development

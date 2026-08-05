@@ -42,8 +42,9 @@ const ATLAS_DEF = (()=>{
   let i = 0;
   const cell = ()=>{ const x=(i%8)*16, y=80+((i/8)|0)*24; i++; return [x,y,16,24]; };
   for(const f of FR) d['player'+f] = cell();
-  d.tree2 = cell();
+  d.tree2 = cell(); d.tower = cell(); d.altar = cell();
   for(let n=0;n<8;n++) for(const f of FR) d['npc'+n+f] = cell();
+  d.cave = [80,32,16,16];
   return d;
 })();
 /*ATLAS_DEF_END*/
@@ -164,6 +165,13 @@ put(OW, 168, 514, 'doorO');
 
 // shrine: columned monument at (7,22) 2x2, downscaled 2:1
 put(OW, T(7), T(22), 'shrine', { sw:32, sh:32 });
+
+// watchtower: the round stone tower (48x72 crop) downscaled 3:1 → 16x24
+put(OW, 4, 340, 'tower', { sw:48, sh:72 });
+// altar: the stone statue downscaled 2:1 → 16x24
+put(OW, 116, 498, 'altar', { sw:32, sh:48 });
+// cave mouth: dark arch from the cliff-face cave entrances
+put(OW, T(17), T(4)+8, 'cave');
 
 /* ---------------- roads: autotile shapes filled with pack dirt ----------- */
 const DIRT_X = T(2), DIRT_Y = T(32);              // plain dirt fill tile

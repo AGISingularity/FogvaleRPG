@@ -24,6 +24,11 @@ server required. Open it in any mobile or desktop browser.
 - **Regional economy** — herbs and mushrooms are gathered where they grow and sell for
   roughly double in the far town. Advanced goods (lantern, star-metal sword) only exist
   in the distant shop. "Distance is the oldest alchemy."
+- **The dark below** — the two cave mouths open (once you carry a blade and a light)
+  into walled cavern complexes: permanently dark whatever the hour, sight cut to your
+  torch or lantern's reach, bats in the black, rusted chests of gold, and a Path
+  courier's satchel with cut straps that Dag can read like a confession. A pale
+  stair-stone leads back to daylight.
 - **Steel and teeth** — a fighting system: tap an adjacent creature to strike; the
   star-metal sword (damage 3) beats fists (1), and the Forgeworks in Ironvale sells
   leather and iron armour that absorb hits. Creatures great and small roam the wilds
@@ -62,7 +67,7 @@ server required. Open it in any mobile or desktop browser.
 | Section | What it holds |
 |---|---|
 | CSS + HTML | HUD, message log, dialogue/shop/bag bottom sheets, intro & chapter-end cards |
-| Map generation | Seeded (deterministic) 128×128 world: ridge, river, long roads, two far-apart towns, deep wood, shrine, watchtower, altar, cave mouths |
+| Map generation | Seeded (deterministic) 128×128 world: ridge, river, long roads, two far-apart towns, deep wood, shrine, watchtower, altar, cave mouths + walled cavern interiors |
 | Fog of war | Recursive shadowcasting (8 octants), explored-memory set, door states |
 | Pathfinding | A* (4-way) with adjacent-goal support for talking/examining |
 | Content | All NPCs, dialogue topics, choices, shops, and story flags |

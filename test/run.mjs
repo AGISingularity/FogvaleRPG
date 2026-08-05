@@ -161,6 +161,26 @@ try {
   ok(combat.hpAfter < combat.hpBefore, 'combat: adjacent slime bites back',
     combat.hpBefore+'→'+combat.hpAfter);
 
+  // -- caves: gear up, enter the dark, walk the stair-stone out -------------
+  const cave = await page.evaluate(() => {
+    mobs.length = 0;
+    inv.sword = 1; inv.torch = 1;
+    const chests = objects.filter(o => o.type === 'chest').length;
+    enterCave('ridge');
+    const tile = grid[P.y][P.x], sight = sightRadius();
+    P.x = 6; P.y = 121; P.rx = 6; P.ry = 121;    // beside the exit rune
+    path = [{ x: 5, y: 121 }]; step();           // the game's own step machinery
+    const out = { chests, tile, sight, x: P.x, y: P.y };
+    inv.sword = 0; inv.torch = 0;
+    P.x = 21; P.y = 110; P.rx = 21; P.ry = 110; computeFOV();
+    return out;
+  });
+  ok(cave.chests === 5, 'caves: five chests wait below', String(cave.chests));
+  ok(cave.tile === 'v', 'caves: entering lands on cavern floor');
+  ok(cave.sight <= 4, 'caves: dark below even by day', 'sight ' + cave.sight);
+  ok(cave.x === 34 && cave.y === 67, 'caves: the stair-stone leads back out',
+    cave.x + ',' + cave.y);
+
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));
 } finally {

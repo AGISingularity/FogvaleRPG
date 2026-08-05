@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.6.0';
+const VERSION='0.7.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -243,6 +243,16 @@ const grid = Array.from({length:H}, ()=>Array(W).fill('g'));
   for(let y=66;y<=70;y++)for(let x=33;x<=35;x++) if(grid[y][x]==='t'||grid[y][x]==='m') grid[y][x]='g';
   grid[38][91]='C';
   for(let y=39;y<=45;y++)for(let x=90;x<=92;x++) if(grid[y][x]==='t') grid[y][x]='g';
+  // the caverns themselves: walled pockets along the south edge, reached
+  // only by the cave mouths' teleports. 'v' cavern floor, 'X' way out.
+  function cavern(x0,y0,x1,y1, rooms, exit){
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++) grid[y][x]='m';
+    for(const [rx0,ry0,rx1,ry1] of rooms)
+      for(let y=ry0;y<=ry1;y++)for(let x=rx0;x<=rx1;x++) grid[y][x]='v';
+    grid[exit[1]][exit[0]]='X';
+  }
+  cavern(3,116,30,125, [[5,118,11,124],[12,121,19,121],[20,117,28,124]], [5,121]);
+  cavern(100,116,124,125, [[102,118,108,124],[109,121,115,121],[116,117,122,124]], [102,121]);
 })();
 
 /* ---------- gatherables ---------- */
@@ -261,6 +271,12 @@ const objects = []; // {x,y,type}
     if(grid[y][x]==='g'){ objects.push({x,y,type:'mushroom'}); placed++; }
   }
   objects.push({x:15,y:106,type:'body'}); // Piet, in the stable
+  // chests in the dark
+  objects.push({x:10,y:123,type:'chest',gold:15});
+  objects.push({x:27,y:118,type:'chest',gold:30});
+  objects.push({x:27,y:123,type:'chest',gold:10,item:'satchel'});
+  objects.push({x:104,y:123,type:'chest',gold:20});
+  objects.push({x:121,y:118,type:'chest',gold:45});
 })();
 const objectAt=(x,y)=>objects.find(o=>o.x===x&&o.y===y);
 
@@ -271,7 +287,7 @@ let path = [];                                  // queued steps [{x,y}...]
 let pending = null;                             // interaction on arrival
 let stepClock = 0;
 let time = 60;                                  // steps; day=300, night=150 per cycle
-const inv = { gold:12, herb:0, mushroom:0, bread:0, torch:0, lantern:0, sword:0, leather:0, iron:0, medallion:0 };
+const inv = { gold:12, herb:0, mushroom:0, bread:0, torch:0, lantern:0, sword:0, leather:0, iron:0, medallion:0, satchel:0 };
 const F = {};                                   // story flags
 const V = { truth:0, love:0, courage:0 };       // the hidden triad
 const knownTopics = new Set();
@@ -280,7 +296,16 @@ let visible = new Set();
 const explored = new Set();
 
 const isNight = ()=> (time % 450) >= 300;
+const CAVES = {
+  ridge:   { outside:[34,67],  inside:[6,121],   rect:[3,116,30,125] },
+  outcrop: { outside:[91,40],  inside:[103,121], rect:[100,116,124,125] }
+};
+function inCave(){
+  return Object.values(CAVES).some(c=>
+    P.x>=c.rect[0]&&P.x<=c.rect[2]&&P.y>=c.rect[1]&&P.y<=c.rect[3]);
+}
 function sightRadius(){
+  if(inCave()) return inv.lantern ? 7 : inv.torch ? 4 : 2;   // always dark below
   if(!isNight()) return 9;
   if(inv.lantern) return 7;
   if(inv.torch) return 4;
@@ -376,7 +401,7 @@ const TOPIC_LABEL = {
   ironvale:'Ironvale', radiantpath:'the Radiant Path', malvo:'Brother Malvo',
   stranger:'the robed stranger', shrine:'the old shrine', codex:'the Codex',
   found:'what I found', slip:"Malvo's slip", coin:'his plea', reading:'a reading',
-  bluecaps:'bluecaps'
+  bluecaps:'bluecaps', satchel:'the satchel'
 };
 function learn(...keys){
   for(const k of keys){
@@ -506,6 +531,7 @@ const npcs = [
    topics:{
      name:{label:'Name', text:()=>'"Dag. I dig. My father dug. Somewhere down there he\'s digging still, far as anyone knows."'},
      job:{label:'Job', text:()=>'"Iron out of the ridge. Star-metal when we\'re lucky — Serra sells the blades. Lately the Path buys the ore before it\'s even weighed. Cash down. Nobody asks where a chapel gets cash, and I notice nobody asks."'},
+     satchel:{label:'The satchel', cond:()=>F.foundSatchel, text:()=>'"That\'s runner\'s kit — Path issue, see the sun on the flap? And the straps are CUT, not unbuckled. Somebody unloaded it in a hurry, in the dark, underground." He hands it back like it\'s hot. "What\'s worth carrying through a cave, stranger? Ore doesn\'t need to hide."'},
      radiantpath:{label:'The Radiant Path', cond:()=>knownTopics.has('radiantpath'), text:()=>'"Joined? Half the town. LEFT? Nobody. You ever know a club nobody leaves?" He lets that sit. "Aye. Me neither."'},
      murder:{label:'The murder', cond:()=>knownTopics.has('murder'), text:()=>'"A boy dead in Brookhollow, you say." He looks at the chapel a long moment. "Runners. They\'ve had runners on the ridge road for a month. Young ones, carrying satchels by night. I mind my business, stranger. Lately that\'s harder work than the mine."'}
    }},
@@ -572,10 +598,30 @@ function visitAltar(){
   say('A low stone altar, far from every road, ringed by grass someone\'s knees have flattened. The candle wax on it is fresh. <i>(The seer might know whose knees.)</i>');
 }
 function caveMouth(){
-  if(!F.sawCave){
-    F.sawCave=true;
-    say('A cave mouth breathes cold out of the rock. Without a blade in hand and a better light, the dark below would keep you. <i>(The deep places wait for Chapter Two.)</i>');
-  } else say('The cave breathes. It can wait. Can you?');
+  if(!inv.sword || !(inv.torch||inv.lantern)){
+    say('A cave mouth breathes cold out of the rock. Without a blade in hand and a light to carry, the dark below would keep you. <i>(Steel is sold in Ironvale.)</i>');
+    return;
+  }
+  enterCave(Math.abs(P.x-34)<=1 && Math.abs(P.y-65)<=2 ? 'ridge' : 'outcrop');
+}
+function enterCave(key){
+  const c=CAVES[key];
+  path=[]; pending=null;
+  P.x=c.inside[0]; P.y=c.inside[1]; P.rx=P.x; P.ry=P.y;
+  computeFOV(); saveGame();
+  say('You duck under the stone lip. The dark takes most of your light and gives back only walls. Somewhere, water is counting the seconds. <i>(The pale stair-stone leads out.)</i>');
+}
+function exitCave(){
+  for(const key in CAVES){
+    const c=CAVES[key];
+    if(P.x>=c.rect[0]&&P.x<=c.rect[2]&&P.y>=c.rect[1]&&P.y<=c.rect[3]){
+      path=[]; pending=null;
+      P.x=c.outside[0]; P.y=c.outside[1]; P.rx=P.x; P.ry=P.y;
+      computeFOV(); saveGame();
+      say('You climb back into the raw grey daylight. It has never looked so wealthy.');
+      return;
+    }
+  }
 }
 
 /* ---------- chapter end ---------- */
@@ -742,7 +788,8 @@ function openBag(){
     ['sword','Star-metal Sword','No longer patient. (Damage 3)'],
     ['leather','Leather Jerkin','Worn. Turns a claw. (Armour 1)'],
     ['iron','Iron Hauberk','Worn. Turns most teeth. (Armour 2)'],
-    ['medallion','Silver Medallion','A sunburst. Cold to the touch.']
+    ['medallion','Silver Medallion','A sunburst. Cold to the touch.'],
+    ['satchel','Courier\'s Satchel','Sunburst-stamped. Straps cut, not unbuckled.']
   ];
   let any=false;
   for(const [id,nm,sub] of rows){
@@ -815,11 +862,13 @@ const ATLAS_DEF = (()=>{
   /* creatures: 2 frames each, in their own 16px row */
   const MB = ['slime','bat','wisp','log'];
   MB.forEach((m,j)=>{ d[m+'A']=[j*32,392,16,16]; d[m+'B']=[j*32+16,392,16,16]; });
+  /* cave furnishings */
+  d.cavefloor=[96,32,16,16]; d.chest=[112,32,16,16]; d.exitrune=[0,408,16,16];
   return d;
 })();
 /*ATLAS_DEF_END*/
 const NPC_COLORS=['#b8c4e8','#d8b47e','#8a7f6a','#9aa5b8','#c9a8d8','#d89a7e','#b89a78','#e8d454','#4a7a4a','#607a8a'];
-const ATLAS_W=128, ATLAS_H=408;
+const ATLAS_W=128, ATLAS_H=424;
 
 let atlasReady=false, atlasCv=null;
 const atlasImg=new Image();
@@ -870,6 +919,8 @@ function tileCells(x,y){
     case 'T': return [g,'tower'];
     case 'A': return [g,'altar'];
     case 'C': return ['mtn'+((x*5+y*11)%2),'cave'];
+    case 'v': return ['cavefloor'];
+    case 'X': return ['cavefloor','exitrune'];
   }
   return [g];
 }
@@ -909,7 +960,7 @@ const fogCv=document.createElement('canvas'); fogCv.width=W; fogCv.height=H;
 const fogCtx=fogCv.getContext('2d');
 const fogImg=fogCtx.createImageData(W,H);
 function updateFog(){
-  const d=fogImg.data, night=isNight(), R=sightRadius();
+  const d=fogImg.data, night=isNight()||inCave(), R=sightRadius();
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     const i=(y*W+x)*4, k=x+','+y;
     let r=7,g=8,b=15,a;
@@ -971,17 +1022,26 @@ let hurtAt=-1e9;
 const isTownArea=(x,y)=> (x>=12&&x<=30&&y>=95&&y<=111)||(x>=98&&x<=116&&y>=10&&y<=26);
 
 function spawnMobs(){
-  const cap = isNight() ? 8 : 6;
+  const below=inCave();
+  const cap = (isNight()||below) ? 8 : 6;
   if(!started || mobs.length>=cap) return;
   for(let tries=0;tries<10;tries++){
-    const ang=Math.random()*6.283, d=9+Math.random()*12;
-    const x=Math.round(P.x+Math.cos(ang)*d), y=Math.round(P.y+Math.sin(ang)*d);
+    let x,y;
+    if(below){
+      const c=Object.values(CAVES).find(c=>P.x>=c.rect[0]&&P.x<=c.rect[2]&&P.y>=c.rect[1]&&P.y<=c.rect[3]);
+      x=c.rect[0]+1+(Math.random()*(c.rect[2]-c.rect[0]-2)|0);
+      y=c.rect[1]+1+(Math.random()*(c.rect[3]-c.rect[1]-2)|0);
+    } else {
+      const ang=Math.random()*6.283, d=9+Math.random()*12;
+      x=Math.round(P.x+Math.cos(ang)*d); y=Math.round(P.y+Math.sin(ang)*d);
+    }
     if(x<3||y<3||x>=W-3||y>=H-3) continue;
     if(isTownArea(x,y) || !walkable(x,y)) continue;
     if(visible.has(x+','+y)) continue;              // never in plain sight
     const roll=Math.random();
     let type;
-    if(roll<0.12) type='wisp';
+    if(below) type = roll<0.75 ? 'bat' : 'slime';
+    else if(roll<0.12) type='wisp';
     else if(isNight() && roll<0.5) type='bat';
     else {
       const nearTrees=[[1,0],[-1,0],[0,1],[0,-1]].some(([ax,ay])=>{
@@ -1073,7 +1133,7 @@ function draw(now){
   ctx.fillStyle='#07080f'; ctx.fillRect(0,0,vw,vh);
   if(!atlasReady||!terrainChunks) return;
   const camX=Math.round(P.rx*ts+ts/2-vw/2), camY=Math.round(P.ry*ts+ts/2-vh/2);
-  const night=isNight();
+  const night=isNight()||inCave();
   ctx.imageSmoothingEnabled=false;
 
   // 1. terrain: blit the visible chunks (baked lazily on first view)
@@ -1224,7 +1284,15 @@ function step(){
     objects.splice(objects.indexOf(o),1);
     inv[o.type]++;
     say(o.type==='herb' ? 'You gather a sprig of wortleaf. ('+inv.herb+')' : 'A bluecap mushroom — the deep wood\'s small treasure. ('+inv.mushroom+')');
+  } else if(o && o.type==='chest'){
+    objects.splice(objects.indexOf(o),1);
+    inv.gold+=o.gold; updHud();
+    if(o.item==='satchel'){
+      inv.satchel=1; F.foundSatchel=true; learn('satchel');
+      say('A chest shut fast with rust. Inside: '+o.gold+' gold — and a courier\'s satchel stamped with a sunburst, its straps <b>cut</b>, not unbuckled. <i>(Dag knows every kit that crosses the ridge.)</i>');
+    } else say('A chest shut fast with rust. It gives up '+o.gold+' gold and an offended creak.');
   }
+  if(grid[P.y][P.x]==='X'){ exitCave(); return; }
   if(P.hp<P.maxHp && time%8===0){ P.hp++; updHud(); }   // the road mends you, slowly
   // landmark triggers fire when you stand on or beside them
   {

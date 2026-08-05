@@ -66,7 +66,9 @@ it also profiles frame time under 4× CPU throttle.
   walled cavern pockets at the map's south edge ('v' floor, 'X' exit rune, always
   night-dark via inCave() in sightRadius/updateFog), bat-heavy spawns, five chests,
   and the runner's-satchel story item (Dag dialogue, Chapter Two thread).
-- TODO: more settlements.
+- Settlements: the Bridge Rest waystation shipped v0.8.0 (Orla, 11th NPC: paid bed =
+  full heal + advance to morning; rumor dialogue seeds the far places; satchel
+  corroboration). Room for more hamlets later if wanted.
 - NPC schedules (Ultima VII's soul): homes at night, work by day, doors that lock.
   (Idle wandering near posts + 4-direction frames for everyone shipped in v0.4.0 —
   schedules can build on npcTick and the per-NPC direction cells.)

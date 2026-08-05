@@ -24,6 +24,10 @@ server required. Open it in any mobile or desktop browser.
 - **Regional economy** — herbs and mushrooms are gathered where they grow and sell for
   roughly double in the far town. Advanced goods (lantern, star-metal sword) only exist
   in the distant shop. "Distance is the oldest alchemy."
+- **The Bridge Rest** — a waystation on the main road east of the bridge, kept by
+  Orla the Waykeeper: five gold buys a bed that heals you whole and skips to morning,
+  her free road-news points wanderers at the shrine, watchtower, and altar, and if
+  you've found the satchel she has seen who crosses her bridge at midnight.
 - **The dark below** — the two cave mouths open (once you carry a blade and a light)
   into walled cavern complexes: permanently dark whatever the hour, sight cut to your
   torch or lantern's reach, bats in the black, rusted chests of gold, and a Path

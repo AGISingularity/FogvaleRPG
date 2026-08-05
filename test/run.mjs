@@ -181,6 +181,20 @@ try {
   ok(cave.x === 34 && cave.y === 67, 'caves: the stair-stone leads back out',
     cave.x + ',' + cave.y);
 
+  // -- the waystation: a paid bed mends you and turns the night -------------
+  const rest = await page.evaluate(() => {
+    const orla = npcs.find(n => n.id === 'orla');
+    inv.gold = 20; P.hp = 3; const t0 = time;
+    orla.topics.rest.choice.a.text();
+    return { gold: inv.gold, hp: P.hp, day: !isNight(), advanced: time > t0 };
+  });
+  ok(rest.gold === 15, 'inn: the bed costs 5 gold', String(rest.gold));
+  ok(rest.hp === 10, 'inn: sleep mends you whole');
+  ok(rest.day && rest.advanced, 'inn: you wake with the morning light');
+  const shrooms = await page.evaluate(() =>
+    objects.filter(o => o.type === 'mushroom' && grid[o.y][o.x] === 'v').length);
+  ok(shrooms === 8, 'caves: eight bluecaps grow below', String(shrooms));
+
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));
 } finally {

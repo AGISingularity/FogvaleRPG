@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.7.0';
+const VERSION='0.8.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -215,6 +215,8 @@ const grid = Array.from({length:H}, ()=>Array(W).fill('g'));
   for(let y=10;y<=26;y++)for(let x=98;x<=116;x++) if(grid[y][x]==='t') grid[y][x]='g';
   // watchtower knoll by the ridge gap
   for(let y=55;y<=58;y++)for(let x=73;x<=79;x++) if(grid[y][x]==='t'||grid[y][x]==='m') grid[y][x]='g';
+  // waystation clearing, east of the bridge on the main road
+  for(let y=95;y<=101;y++)for(let x=54;x<=64;x++) if(grid[y][x]==='t') grid[y][x]='g';
   // altar clearing
   for(let y=107;y<=112;y++)for(let x=105;x<=111;x++) if(grid[y][x]==='t') grid[y][x]='g';
   // buildings: perimeter walls, wood floor, one door
@@ -231,6 +233,7 @@ const grid = Array.from({length:H}, ()=>Array(W).fill('g'));
   building(108,12,6,6, 110,17);  // chapel of the Radiant Path
   building(101,21,5,4, 103,21);  // Dag the miner's house
   building(108,21,5,4, 110,21);  // the Forgeworks (Hetta the Smith)
+  building(56,97,6,5, 58,101);   // the Bridge Rest (Orla's waystation)
   // the old shrine, deep in the wood
   grid[12][22]='S';
   // the watchtower on its knoll
@@ -271,6 +274,12 @@ const objects = []; // {x,y,type}
     if(grid[y][x]==='g'){ objects.push({x,y,type:'mushroom'}); placed++; }
   }
   objects.push({x:15,y:106,type:'body'}); // Piet, in the stable
+  // bluecaps grow in the dark too — the caves pay twice
+  placed=0; guard=0;
+  while(placed<8 && guard++<4000){
+    const x=3+Math.floor(r()*(W-6)), y=116+Math.floor(r()*10);
+    if(grid[y] && grid[y][x]==='v'){ objects.push({x,y,type:'mushroom'}); placed++; }
+  }
   // chests in the dark
   objects.push({x:10,y:123,type:'chest',gold:15});
   objects.push({x:27,y:118,type:'chest',gold:30});
@@ -550,6 +559,26 @@ const npcs = [
          b:{label:'Let it pass', text(){ F.malvoPass=true;
              return '"No doubt that\'s it," you say. His smile refills. "The Path recovers what is lost, friend. Leave it with me, if you like — I shall see it home." You do not leave it with him.'; }} }},
      slip:{label:'His slip', cond:()=>F.malvoSlip, text:()=>'"The chapel is CLOSING, friend." Two large parishioners have appeared by the door. They are also smiling. It runs in the fellowship, apparently.'}
+   }},
+
+ { id:'orla', name:'Orla the Waykeeper', x:58, y:99, c:'#607a8a', shop:null,
+   greet:()=>'"Welcome to the Bridge Rest — last bed east of Brookhollow, first bed west of Ironvale, and the only one either way that airs the blankets." She looks you over. "You have the road-look. Sit before you fall."',
+   topics:{
+     name:{label:'Name', text:()=>'"Orla. I keep the waystation. My mother kept it before me, and the bridge has kept us both."'},
+     job:{label:'Job', text:()=>'"Beds, stew, and news — the three things a road runs on. The news is free. The bed is five gold."'},
+     rest:{label:'A bed (5 gold)', cond:()=>true,
+       choice:{ prompt:'"Five gold buys the bed by the chimney, and I wake you with the light. Taken?"',
+         a:{label:'Pay 5 gold', text(){
+             if(inv.gold<5) return '"Come back when the road\'s paid you. The chimney corner isn\'t going anywhere."';
+             inv.gold-=5; P.hp=P.maxHp;
+             time += 450 - (time%450);
+             updHud(); computeFOV(); saveGame();
+             return 'The bed is narrow, warm, and smells of cedar. You sleep like something loved, and wake with the light, whole and mended.'; }},
+         b:{label:'Not tonight', text:()=>'"Suit yourself. The chimney corner holds no grudges."'} }},
+     rumors:{label:'News of the road', cond:()=>true, text(){ learn('shrine');
+       return '"What I hear, in no particular order: the guard in Brookhollow tells anyone who\'ll listen about an old shrine in the deep wood. There\'s a watchtower on the ridge no watchman has climbed in thirty years — the view is said to be worth the stairs. And south-east past every road there\'s a kneeling stone older than kneeling." She refills your cup. "The news is free. Believing it costs shoe-leather."'; }},
+     murder:{label:'The murder', cond:()=>knownTopics.has('murder'), text:()=>'"The stable boy. Aye, the road carried that news fast — faster than a road should, if you take my meaning. Someone told Ironvale before Brookhollow had finished weeping."'},
+     satchel:{label:'The satchel', cond:()=>F.foundSatchel, text:()=>'"So THAT\'s what they carry. I\'ll tell you this for nothing: they cross my bridge at black midnight, never once stopping in for so much as tea. Heavy bags, light footsteps, and always toward the ridge, never from it." She polishes a clean cup, hard. "Rude, I call it. Among other things."'}
    }},
 
  { id:'hetta', name:'Hetta the Smith', x:109, y:22, c:'#4a7a4a', shop:'hetta',
@@ -1019,7 +1048,8 @@ const MOB_TYPES = {
   wisp: { nm:'pale wisp',    hp:1, dmg:0, evil:false, spr:'wisp' }
 };
 let hurtAt=-1e9;
-const isTownArea=(x,y)=> (x>=12&&x<=30&&y>=95&&y<=111)||(x>=98&&x<=116&&y>=10&&y<=26);
+const isTownArea=(x,y)=> (x>=12&&x<=30&&y>=95&&y<=111)||(x>=98&&x<=116&&y>=10&&y<=26)
+  ||(x>=54&&x<=64&&y>=95&&y<=103);   // the waystation keeps its hearth too
 
 function spawnMobs(){
   const below=inCave();

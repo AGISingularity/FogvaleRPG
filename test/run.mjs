@@ -168,13 +168,19 @@ try {
     const chests = objects.filter(o => o.type === 'chest').length;
     enterCave('ridge');
     const tile = grid[P.y][P.x], sight = sightRadius();
+    P.x = 9; P.y = 123; P.rx = 9; P.ry = 123; computeFOV();  // a chest in plain sight
+    return { chests, tile, sight };
+  });
+  await page.waitForTimeout(300);                // frames must render the chest
+  const caveOut = await page.evaluate(() => {
     P.x = 6; P.y = 121; P.rx = 6; P.ry = 121;    // beside the exit rune
     path = [{ x: 5, y: 121 }]; step();           // the game's own step machinery
-    const out = { chests, tile, sight, x: P.x, y: P.y };
+    const out = { x: P.x, y: P.y };
     inv.sword = 0; inv.torch = 0;
     P.x = 21; P.y = 110; P.rx = 21; P.ry = 110; computeFOV();
     return out;
   });
+  cave.x = caveOut.x; cave.y = caveOut.y;
   ok(cave.chests === 5, 'caves: five chests wait below', String(cave.chests));
   ok(cave.tile === 'v', 'caves: entering lands on cavern floor');
   ok(cave.sight <= 4, 'caves: dark below even by day', 'sight ' + cave.sight);
@@ -194,6 +200,25 @@ try {
   const shrooms = await page.evaluate(() =>
     objects.filter(o => o.type === 'mushroom' && grid[o.y][o.x] === 'v').length);
   ok(shrooms === 8, 'caves: eight bluecaps grow below', String(shrooms));
+
+  // -- the Hollow Warden: guards, falls in five sword blows, stays dead -----
+  const warden = await page.evaluate(() => {
+    placeWarden();                               // reachability cleared mobs
+    const w = mobs.find(m => m.type === 'warden');
+    const there = !!w && grid[w.y][w.x] === 'v';
+    inv.sword = 1;
+    let hits = 0;
+    while (mobs.includes(w) && hits < 10) { attackMob(w); hits++; }
+    const out = { there, hits, heartwood: inv.heartwood, slain: !!F.wardenSlain };
+    placeWarden();                               // must NOT respawn once slain
+    out.stayedDead = !mobs.some(m => m.type === 'warden');
+    inv.sword = 0;
+    return out;
+  });
+  ok(warden.there, 'warden: the Hollow Warden keeps the deep chest');
+  ok(warden.hits === 5, 'warden: five sword blows fell it', String(warden.hits));
+  ok(warden.heartwood === 1 && warden.slain, 'warden: heartwood taken, fall remembered');
+  ok(warden.stayedDead, 'warden: the dead do not re-post');
 
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));

@@ -32,7 +32,9 @@ server required. Open it in any mobile or desktop browser.
   into walled cavern complexes: permanently dark whatever the hour, sight cut to your
   torch or lantern's reach, bats in the black, rusted chests of gold, and a Path
   courier's satchel with cut straps that Dag can read like a confession. A pale
-  stair-stone leads back to daylight.
+  stair-stone leads back to daylight — and the deepest chest is kept by the Hollow
+  Warden, an ashen bough-fiend that guards rather than hunts, falls hard, stays
+  dead, and leaves behind a knot of heartwood the seer would rather not touch.
 - **Steel and teeth** — a fighting system: tap an adjacent creature to strike; the
   star-metal sword (damage 3) beats fists (1), and the Forgeworks in Ironvale sells
   leather and iron armour that absorb hits. Creatures great and small roam the wilds

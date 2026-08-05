@@ -66,6 +66,10 @@ it also profiles frame time under 4× CPU throttle.
   walled cavern pockets at the map's south edge ('v' floor, 'X' exit rune, always
   night-dark via inCave() in sightRadius/updateFog), bat-heavy spawns, five chests,
   and the runner's-satchel story item (Dag dialogue, Chapter Two thread).
+- v0.9.0: hit feedback (white ring + knockback nudge), the Hollow Warden boss
+  (unique, guards the deep chest, 1.45x render, permanent kill via F.wardenSlain),
+  heartwood drop with a Yseult reading that seeds "someone grew the guardian";
+  also fixed chests crashing the renderer when in live sight (missing OBJ_CELL).
 - Settlements: the Bridge Rest waystation shipped v0.8.0 (Orla, 11th NPC: paid bed =
   full heal + advance to morning; rumor dialogue seeds the far places; satchel
   corroboration). Room for more hamlets later if wanted.

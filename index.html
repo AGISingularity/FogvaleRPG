@@ -146,7 +146,7 @@
 
 <script>
 'use strict';
-const VERSION='0.8.0';
+const VERSION='0.9.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -296,7 +296,7 @@ let path = [];                                  // queued steps [{x,y}...]
 let pending = null;                             // interaction on arrival
 let stepClock = 0;
 let time = 60;                                  // steps; day=300, night=150 per cycle
-const inv = { gold:12, herb:0, mushroom:0, bread:0, torch:0, lantern:0, sword:0, leather:0, iron:0, medallion:0, satchel:0 };
+const inv = { gold:12, herb:0, mushroom:0, bread:0, torch:0, lantern:0, sword:0, leather:0, iron:0, medallion:0, satchel:0, heartwood:0 };
 const F = {};                                   // story flags
 const V = { truth:0, love:0, courage:0 };       // the hidden triad
 const knownTopics = new Set();
@@ -516,6 +516,7 @@ const npcs = [
        const l = V.love>0 ? 'Your hand opens more easily than it closes. Rare.' : V.love<0 ? 'You have walked past an open hand. The water saw.' : 'Love has not yet tested you.';
        const c = V.courage>0 ? 'You have gone where fear told you not to.' : 'Courage waits for you in a dark place. It is patient.';
        return 'She stirs the bowl once. "Three things move in the water.\n\n' + t + '\n' + l + '\n' + c + '\n\nNo number measures these, stranger. But doors you cannot see are already deciding whether to open for you."'; }},
+     heartwood:{label:'The heartwood', cond:()=>inv.heartwood>0, text:()=>'"Give it here— oh." She sets it down quickly, then picks it back up slowly. "Heartwood, from a thing that should never have had a heart. The caves did not grow that guardian on their own, stranger. Something taught the wood to stand up, and set it over a chest like a dog over a bone. Keep it close. Wood remembers — and this piece remembers being given orders."'},
      codex:{label:'The Codex', cond:()=>knownTopics.has('codex'), text:()=>'"Older than the vale, older than the Path\'s smiling missionaries: a buried book that weighs every soul on three beams — Truth, Love, Courage. Every honest faith is a footnote to it." She smiles thinly. "And every dishonest one is a forgery of it."'},
      altar:{label:'The old altar', cond:()=>F.sawAltar, text:()=>'"So you found the kneeling stone, away in the south-east wilds. Older than my art, older than the Vigil maybe. The wax is fresh because the Path\'s missionaries pray there — to what, they never say. Mark this: they chose an altar far from every road and every witness."'},
      shrine:{label:'The old shrine', cond:()=>F.sawShrine, text:()=>'"So you stood at the Vigil and it let you stand there. Three circles interlocked: Truth, Love, Courage — the old triad. Now mark what the Radiant Path preaches: Unity. Trust. Worthiness. Say the two triads aloud, one after the other, and hear which one asks things OF you... and which one asks things FOR itself."'},
@@ -818,7 +819,8 @@ function openBag(){
     ['leather','Leather Jerkin','Worn. Turns a claw. (Armour 1)'],
     ['iron','Iron Hauberk','Worn. Turns most teeth. (Armour 2)'],
     ['medallion','Silver Medallion','A sunburst. Cold to the touch.'],
-    ['satchel','Courier\'s Satchel','Sunburst-stamped. Straps cut, not unbuckled.']
+    ['satchel','Courier\'s Satchel','Sunburst-stamped. Straps cut, not unbuckled.'],
+    ['heartwood','Pale Heartwood','Warm as a held hand. It remembers.']
   ];
   let any=false;
   for(const [id,nm,sub] of rows){
@@ -893,6 +895,7 @@ const ATLAS_DEF = (()=>{
   MB.forEach((m,j)=>{ d[m+'A']=[j*32,392,16,16]; d[m+'B']=[j*32+16,392,16,16]; });
   /* cave furnishings */
   d.cavefloor=[96,32,16,16]; d.chest=[112,32,16,16]; d.exitrune=[0,408,16,16];
+  d.wardenA=[16,408,16,16]; d.wardenB=[32,408,16,16];
   return d;
 })();
 /*ATLAS_DEF_END*/
@@ -1014,7 +1017,7 @@ function drawSprite(name,sx,sy,flip){
     ctx.restore();
   } else ctx.drawImage(atlasCv,r[0]*s,r[1]*s,w,h,sx,dy,w,h);
 }
-const OBJ_CELL={ herb:'herb', mushroom:'mushroom', body:'body' };
+const OBJ_CELL={ herb:'herb', mushroom:'mushroom', body:'body', chest:'chest' };
 const npcCell = n => 'npc'+Math.max(0,NPC_COLORS.indexOf(n.c));
 
 /* ---------- NPC wandering: a few steps around their post ----------------- */
@@ -1045,8 +1048,13 @@ const MOB_TYPES = {
   slime:{ nm:'marsh slime',  hp:3, dmg:1, evil:true,  spr:'slime' },
   bat:  { nm:'dusk bat',     hp:2, dmg:1, evil:true,  spr:'bat' },
   log:  { nm:'bough-fiend',  hp:8, dmg:2, evil:true,  spr:'log' },
-  wisp: { nm:'pale wisp',    hp:1, dmg:0, evil:false, spr:'wisp' }
+  wisp: { nm:'pale wisp',    hp:1, dmg:0, evil:false, spr:'wisp' },
+  warden:{nm:'the Hollow Warden', hp:15, dmg:3, evil:true, spr:'warden', big:true }
 };
+function placeWarden(){
+  if(F.wardenSlain || mobs.some(m=>m.type==='warden')) return;
+  mobs.push({ type:'warden', hp:MOB_TYPES.warden.hp, x:120, y:119, rx:120, ry:119, dir:'left' });
+}
 let hurtAt=-1e9;
 const isTownArea=(x,y)=> (x>=12&&x<=30&&y>=95&&y<=111)||(x>=98&&x<=116&&y>=10&&y<=26)
   ||(x>=54&&x<=64&&y>=95&&y<=103);   // the waystation keeps its hearth too
@@ -1083,7 +1091,7 @@ function spawnMobs(){
   }
   for(let i=mobs.length-1;i>=0;i--){
     const m=mobs[i];
-    if(Math.abs(m.x-P.x)+Math.abs(m.y-P.y)>34) mobs.splice(i,1);
+    if(m.type!=='warden' && Math.abs(m.x-P.x)+Math.abs(m.y-P.y)>34) mobs.splice(i,1);
   }
 }
 setInterval(spawnMobs, 2500);
@@ -1109,6 +1117,7 @@ function mobTick(){
       } else say('The '+t.nm+' snaps at you; your armour turns it.');
       continue;
     }
+    if(m.type==='warden' && dist>3) continue;   // it guards; it does not hunt
     let step=null;
     if(t.evil && dist<=6 && Math.random()<0.85){
       const opts=[];
@@ -1136,8 +1145,16 @@ function attackMob(m){
     return;
   }
   m.hp-=weaponDmg();
+  m.hitAt=performance.now();
+  m.rx=m.x+(m.x-P.x)*0.35; m.ry=m.y+(m.y-P.y)*0.35;   // knocked back a breath
   if(m.hp<=0){
     mobs.splice(mobs.indexOf(m),1);
+    if(m.type==='warden'){
+      F.wardenSlain=true; inv.heartwood=1; inv.gold+=30; updHud();
+      virtue('courage',2);
+      say('<b>The Hollow Warden splits along its grain and goes still.</b> In the wreck of it: 30 gold that was never spent, and a knot of pale heartwood, warm as a held hand. <i>(The seer reads stranger things than water.)</i>');
+      return;
+    }
     const g = m.type==='log' ? 6 : 2+(Math.random()*3|0);
     inv.gold+=g; updHud();
     if(!F.firstBlood){ F.firstBlood=true; virtue('courage',1); }
@@ -1214,8 +1231,22 @@ function draw(now){
   for(const m of mobs){
     if(!visible.has(m.x+','+m.y)) continue;
     const sx=m.rx*ts-camX, sy=m.ry*ts-camY;
-    if(sx<-ts||sy<-ts||sx>vw||sy>vh) continue;
-    drawSprite(MOB_TYPES[m.type].spr+(Math.floor(now/300)%2?'B':'A'), Math.round(sx), Math.round(sy));
+    if(sx<-2*ts||sy<-2*ts||sx>vw+ts||sy>vh+ts) continue;
+    const t=MOB_TYPES[m.type], spr=t.spr+(Math.floor(now/300)%2?'B':'A');
+    if(t.big){
+      const s=ts/16, r=ATLAS_DEF[spr], k=1.45;
+      const w=r[2]*s*k, h=r[3]*s*k;
+      ctx.drawImage(atlasCv,r[0]*s,r[1]*s,r[2]*s,r[3]*s,
+        Math.round(sx-(w-r[2]*s)/2), Math.round(sy-(h-16*s)), w, h);
+    } else drawSprite(spr, Math.round(sx), Math.round(sy));
+    const hitAge = now-(m.hitAt||-1e9);
+    if(hitAge>=0 && hitAge<180){
+      ctx.strokeStyle='rgba(255,255,255,'+(0.8*(1-hitAge/180)).toFixed(2)+')';
+      ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.arc(sx+ts/2, sy+ts/2, ts*(0.3+0.5*hitAge/180), 0, 7);
+      ctx.stroke();
+    }
   }
   const walking = path.length>0 || Math.abs(P.x-P.rx)+Math.abs(P.y-P.ry)>0.02;
   drawSprite(personFrame('player',P.dir,walking),
@@ -1386,6 +1417,7 @@ if(loadGame()){
   started=true; $('intro').style.display='none';
   say('The vale remembers you. Your road resumes where it paused.');
 }
+placeWarden();
 computeFOV();
 updHud();
 setInterval(saveGame, 4000);

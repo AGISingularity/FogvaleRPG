@@ -50,6 +50,7 @@ const ATLAS_DEF = (()=>{
   MB.forEach((m,j)=>{ d[m+'A']=[j*32,392,16,16]; d[m+'B']=[j*32+16,392,16,16]; });
   /* cave furnishings */
   d.cavefloor=[96,32,16,16]; d.chest=[112,32,16,16]; d.exitrune=[0,408,16,16];
+  d.wardenA=[16,408,16,16]; d.wardenB=[32,408,16,16];
   return d;
 })();
 /*ATLAS_DEF_END*/
@@ -297,6 +298,21 @@ sm('wispB',[
   '....hmccmh......','.....hmmh.......','......hh........','................',
   '................','................','................','................',
 ],{ c:'#fff8d8', m:'#ffe89a', h:'rgba(255,232,150,.35)' });
+
+/* the Hollow Warden: an ashen, bleached bough-fiend */
+for(const [src,dst] of [['logA','wardenA'],['logB','wardenB']]){
+  const [sx,sy,w,h]=at(src), [dx,dy]=at(dst);
+  ctx.drawImage(atlas,sx,sy,w,h,dx,dy,w,h);
+  const d=ctx.getImageData(dx,dy,w,h);
+  for(let p=0;p<d.data.length;p+=4){
+    if(!d.data[p+3]) continue;
+    const g=(d.data[p]+d.data[p+1]+d.data[p+2])/3;
+    d.data[p]  =Math.min(255, g*0.85+62);
+    d.data[p+1]=Math.min(255, g*0.9+66);
+    d.data[p+2]=Math.min(255, g+84);
+  }
+  ctx.putImageData(d,dx,dy);
+}
 
 /* ---------------- cave furnishings ---------------------------------------- */
 // cavern floor: dark stone, speckled

@@ -299,6 +299,36 @@ try {
   ok(run.seen, 'runners: witnessed at close range, remembered');
   ok(run.gone, 'runners: gone by first light');
 
+  // -- closing time: shops trade by day, bar the counter at night -----------
+  const hours = await page.evaluate(() => {
+    const tobin = npcs.find(n => n.id === 'tobin');
+    time = 60; openDlg(tobin);
+    const dayTrade = [...document.querySelectorAll('#dlgChips button')]
+      .some(b => b.textContent === 'Trade');
+    closeDlg();
+    time = 320; openDlg(tobin);
+    const nightTrade = [...document.querySelectorAll('#dlgChips button')]
+      .some(b => b.textContent === 'Trade');
+    const closedLine = document.getElementById('dlgTxt').innerHTML.includes('Sunup');
+    closeDlg(); time = 60; computeFOV();
+    return { dayTrade, nightTrade, closedLine };
+  });
+  ok(hours.dayTrade, 'shops: trade by day');
+  ok(!hours.nightTrade && hours.closedLine, 'shops: barred at night, with a word about it');
+
+  // -- small lights: a spared wisp drifts to hidden things ------------------
+  const wispy = await page.evaluate(() => {
+    mobs.length = 0;
+    const stash = objects.splice(0);             // a controlled, empty world
+    objects.push({ x: 70, y: 80, type: 'herb' });
+    mobs.push({ type:'wisp', hp:1, x:64, y:80, rx:64, ry:80, dir:'right' });
+    for (let i = 0; i < 60 && mobs.length; i++) mobTick();
+    const settled = mobs.length === 0;
+    objects.splice(0); objects.push(...stash);   // restore the vale
+    return { settled };
+  });
+  ok(wispy.settled, 'wisps: drift to the hidden thing and go out upon it');
+
   // -- zero page errors, checked last so it covers everything above ---------
   ok(pageErrors.length === 0, 'zero page errors', pageErrors.join(' | '));
 } finally {

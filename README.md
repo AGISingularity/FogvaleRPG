@@ -44,8 +44,10 @@ server required. Open it in any mobile or desktop browser.
   weapon ladder runs fists (1) → Tobin's hunting knife (2) → the star-metal sword (3), and the Forgeworks in Ironvale sells
   leather and iron armour that absorb hits. Creatures great and small roam the wilds
   (marsh slimes, dusk bats, bough-fiends near the woods) and shy away from towns;
-  night breeds more. Not all are evil — pale wisps drift harmlessly, and striking
-  one is silently, permanently noticed by the hidden virtues. Falling in battle
+  night breeds more. Not all are evil — pale wisps drift toward hidden things
+  (herbs, bluecaps, buried chests) and go out upon them like a marker; striking
+  one is silently, permanently noticed by the hidden virtues. Shops trade by
+  day and bar the counter at night — the inn is the only midnight business. Falling in battle
   means waking at the seer's door, lighter of purse — never a lost save.
 - **A living village** — every character has full 4-direction walk animation
   (player and NPCs alike); NPCs idle-wander near their posts, keep to their own

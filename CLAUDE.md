@@ -77,6 +77,10 @@ it also profiles frame time under 4× CPU throttle.
   route (chapel → bridge → ridge cave) in dark-recolored hero frames; close
   sighting sets F.sawRunner (+Courage once) and unlocks Bren's counting-them
   dialogue. Chapter Two's runners are now a thing you can witness.
+- v0.13.0: shop hours (Trade chip hidden at night, per-keeper closing lines) and
+  wisp guidance (wisps drift to the nearest object within 12 and fade upon it —
+  sparing good creatures now pays in found treasure). Remaining schedule work:
+  none pressing; the vale keeps sensible hours.
 - Settlements: the Bridge Rest waystation shipped v0.8.0 (Orla, 11th NPC: paid bed =
   full heal + advance to morning; rumor dialogue seeds the far places; satchel
   corroboration). Room for more hamlets later if wanted.

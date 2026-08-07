@@ -125,6 +125,9 @@ a service worker, and an in-game notice when a newer telling exists.
 - **Hidden virtue triad** — Truth, Love, and Courage are silently scored by your choices
   (lying to the Elder, giving to the beggar, pressing Brother Malvo, walking to the
   shrine at night). No meter is ever shown; a seer will read the water for you.
+- **Sound** — a tiny procedural audio layer (no files, works offline): footfalls,
+  combat, pickups, doors, a chime when the draught deepens your heart. A speaker
+  toggle in the HUD mutes it, and remembers.
 - **The draught** — the seer brews bluecaps into a sturdier heart: ten caps for
   +3 utmost health, fifteen for three more, and never a third cup. The under-dark
   grows them thickest; the fighting system finally has a body that toughens.

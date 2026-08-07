@@ -49,6 +49,14 @@ it also profiles frame time under 4× CPU throttle.
 
 ## Roadmap — next level (in priority order)
 
+### Polish — sound (v0.31.0)
+- Procedural WebAudio SFX, no asset files (offline-safe): footfalls, combat
+  hit/hurt/death, pickup/coin, door creak, dialogue blip, draught level chime.
+  audioWake() resumes the ctx on first gesture (beginBtn / any canvas tap /
+  mute button); every cue is fully guarded so headless (or a blocked ctx)
+  never throws. Mute toggle in the HUD (🔊/🔇), persisted to fogvale_mute.
+  Ambient day/night beds are a candidate next.
+
 ### 1. Better graphics — DONE (Aug 2026)
 - SNES-style art composited from ArMM1998's CC0 Zelda-like pack (v0.3.0): textured
   terrain, stone buildings, castle doors, tall trees and 16×24 characters

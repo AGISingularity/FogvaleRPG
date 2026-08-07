@@ -697,6 +697,23 @@ try {
     'anew: the fog forgets, and the dying tale cannot save itself');
   ok(anew.titled, 'anew: the vale owns its three chapters');
 
+  // -- sound: procedural, mute-able, and above all never throwing ----------
+  const sound = await page.evaluate(() => {
+    audioWake();
+    // fire every cue; guarded code must survive whatever the headless ctx is
+    ['step','hit','hurt','death','pickup','coin','door','talk','level'].forEach(sfx);
+    const was = SND.on;
+    document.getElementById('muteBtn').click();   // toggle off
+    const flipped = SND.on !== was;
+    const persisted = localStorage.getItem('fogvale_mute') === (SND.on ? '0' : '1');
+    const icon = document.getElementById('muteBtn').textContent.length > 0;
+    document.getElementById('muteBtn').click();    // back on
+    return { flipped, persisted, icon };
+  });
+  ok(sound.flipped && sound.persisted, 'sound: the mute toggle flips and is remembered');
+  ok(sound.icon, 'sound: the HUD wears a speaker');
+  // (its real proof is the zero-page-errors check below — no cue may throw)
+
   // -- the vale installs: manifest, worker, and a lantern that works offline
   const { readFileSync: rf } = await import('node:fs');
   const idxSrc = rf(join(ROOT, 'index.html'), 'utf8');

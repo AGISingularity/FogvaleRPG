@@ -85,6 +85,7 @@
   <span id="hp" style="color:#e06a6a">♥ 10</span>
   <span id="clock">☀ Day</span>
   <span class="spacer"></span>
+  <button id="muteBtn" aria-label="sound">🔊</button>
   <button id="bagBtn">Bag</button>
   <button id="helpBtn">?</button>
 </div>
@@ -167,7 +168,7 @@
 
 <script>
 'use strict';
-const VERSION='0.30.0';
+const VERSION='0.31.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -600,7 +601,7 @@ const npcs = [
          return '"Bluecaps. '+need+' of them, whole, and I will brew you a body that argues harder with teeth. The deep wood grows them \u2014 and deeper places grow them thicker." She eyes your bag. "You carry '+inv.mushroom+'."';
        inv.mushroom -= need;
        if(F.draught1) F.draught2=true; else F.draught1=true;
-       P.maxHp += 3; P.hp = P.maxHp; updHud(); saveGame();
+       P.maxHp += 3; P.hp = P.maxHp; updHud(); saveGame(); sfx('level');
        return F.draught2
          ? 'The second cup is worse than the first, which she says is how you know it is working. Your heart bangs twice, then settles into something sturdier. <b>(+3 to your utmost health.)</b> "That is the last, stranger. The third cup would stop your heart. Even the deep wood has a bottom."'
          : 'It tastes of cellar and starlight. Somewhere behind your ribs, a door you did not know was ajar closes snug. <b>(+3 to your utmost health.)</b> "One more brewing is in you, if you bring fifteen. After that we are testing the water\u2019s patience."'; }},
@@ -981,6 +982,58 @@ setInterval(runnerTick, 400);
    UI — dialogue, shop, bag, hud
    =================================================================== */
 const $=id=>document.getElementById(id);
+
+/* ---------- sound: tiny, procedural, mute-able (no asset files) --------- */
+const SND={ on:true, ctx:null };
+try{ SND.on = localStorage.getItem('fogvale_mute')!=='1'; }catch(e){}
+function audioWake(){
+  try{
+    if(!SND.ctx) SND.ctx=new (window.AudioContext||window.webkitAudioContext)();
+    if(SND.ctx.state==='suspended') SND.ctx.resume();
+  }catch(e){ SND.ctx=null; }
+}
+function tone(freq,dur,type,vol,slideTo,delay){
+  const c=SND.ctx, t=c.currentTime+(delay||0);
+  const o=c.createOscillator(), g=c.createGain();
+  o.type=type||'sine'; o.frequency.setValueAtTime(freq,t);
+  if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo,t+dur);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol,t+0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(c.destination); o.start(t); o.stop(t+dur+0.03);
+}
+function noise(dur,vol,hp){
+  const c=SND.ctx, t=c.currentTime, n=Math.floor(c.sampleRate*dur);
+  const buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+  const src=c.createBufferSource(); src.buffer=buf;
+  const g=c.createGain(); g.gain.value=vol; let node=src;
+  if(hp){ const f=c.createBiquadFilter(); f.type='highpass'; f.frequency.value=hp; src.connect(f); node=f; }
+  node.connect(g).connect(c.destination); src.start(t); src.stop(t+dur);
+}
+let lastStep=0;
+function sfx(name){
+  if(!SND.on || !SND.ctx || SND.ctx.state!=='running') return;
+  try{ switch(name){
+    case 'step':  { const now=SND.ctx.currentTime; if(now-lastStep<0.09) return; lastStep=now;
+                    tone(84+Math.random()*22,0.05,'sine',0.05); break; }
+    case 'hit':   noise(0.09,0.14,900); tone(170,0.08,'square',0.05,80); break;
+    case 'hurt':  noise(0.17,0.17,280); tone(120,0.14,'sawtooth',0.06,64); break;
+    case 'death': tone(300,0.30,'sawtooth',0.09,58); break;
+    case 'pickup':tone(520,0.07,'sine',0.08); tone(780,0.09,'sine',0.08,0,0.07); break;
+    case 'coin':  tone(880,0.06,'square',0.06); tone(1180,0.08,'square',0.06,0,0.055); break;
+    case 'door':  tone(150,0.34,'sawtooth',0.06,66); break;
+    case 'talk':  tone(440,0.05,'triangle',0.05); break;
+    case 'level': tone(523,0.12,'sine',0.09); tone(659,0.12,'sine',0.09,0,0.11); tone(880,0.20,'sine',0.09,0,0.22); break;
+  }}catch(e){}
+}
+function updMute(){ $('muteBtn').textContent = SND.on ? '🔊' : '🔇'; }
+$('muteBtn').onclick=()=>{
+  SND.on=!SND.on;
+  try{ localStorage.setItem('fogvale_mute', SND.on?'0':'1'); }catch(e){}
+  updMute(); if(SND.on){ audioWake(); sfx('talk'); }
+};
+updMute();
 let activeNpc=null, shopTab='buy', activeShop=null;
 
 function updHud(){
@@ -993,7 +1046,7 @@ function anySheetOpen(){ return ['dlg','shop','bag'].some(i=>$(i).style.display=
   ['intro','endcard','help'].some(i=>$(i).style.display==='block'); }
 
 function openDlg(npc){
-  activeNpc=npc; path=[]; pending=null;
+  activeNpc=npc; path=[]; pending=null; sfx('talk');
   const ddx=P.x-npc.x, ddy=P.y-npc.y;   // turn to face the player
   npc.dir = Math.abs(ddx)>Math.abs(ddy) ? (ddx>0?'right':'left') : (ddy>0?'down':'up');
   $('dlgName').textContent = npc.name;
@@ -1056,7 +1109,7 @@ function renderShop(){
       const b=document.createElement('button');
       b.textContent = owned ? 'Owned' : it.price+' ⛁';
       b.disabled = owned || inv.gold<it.price;
-      b.onclick=()=>{ inv.gold-=it.price; inv[it.id]=(inv[it.id]||0)+1; updHud(); renderShop();
+      b.onclick=()=>{ inv.gold-=it.price; inv[it.id]=(inv[it.id]||0)+1; updHud(); renderShop(); sfx('coin');
         if(it.id==='torch') say('You buy the torch. Night will be four steps wide now instead of two.');
         else if(it.id==='lantern') say('The brass lantern is heavy and warm. Night just became a wide room.');
         else if(it.id==='sword') say('The star-metal blade hums against your palm. It is no longer waiting.');
@@ -1074,7 +1127,7 @@ function renderShop(){
       const b=document.createElement('button');
       b.textContent = '+'+it.price+' ⛁';
       b.disabled = !(inv[it.id]>0);
-      b.onclick=()=>{ inv[it.id]--; inv.gold+=it.price; updHud(); renderShop(); };
+      b.onclick=()=>{ inv[it.id]--; inv.gold+=it.price; updHud(); renderShop(); sfx('coin'); };
       row.appendChild(b); box.appendChild(row);
     }
     const hint=document.createElement('div'); hint.className='sub'; hint.style.padding='8px 2px';
@@ -1151,7 +1204,7 @@ $('runeGo').onclick=()=>{
 };
 $('helpClose').onclick=()=>{$('help').style.display='none';};
 $('endClose').onclick=()=>{$('endcard').style.display='none';};
-$('beginBtn').onclick=()=>{ $('intro').style.display='none'; started=true; saveGame();
+$('beginBtn').onclick=()=>{ audioWake(); $('intro').style.display='none'; started=true; saveGame();
   say('Brookhollow. Smoke from a few chimneys; a road; silence of the wrong kind.');
   say('<i>(Tap the ground to walk. The elder\'s letter mentioned her house near the village square.)</i>'); };
 
@@ -1355,7 +1408,7 @@ function npcTick(){
         n.x=nxt.x; n.y=nxt.y;
         if(grid[n.y][n.x]==='+' && !openDoors.has(n.x+','+n.y)){
           openDoors.add(n.x+','+n.y); patchTerrainTile(n.x,n.y);
-          if(visible.has(n.x+','+n.y)) say('A door opens somewhere, with a complaint of hinges.');
+          if(visible.has(n.x+','+n.y)){ say('A door opens somewhere, with a complaint of hinges.'); sfx('door'); }
         }
       } else n.commute=null;      // blocked — try a fresh path next tick
       continue;
@@ -1457,7 +1510,7 @@ function mobTick(){
       m.dir = Math.abs(dx)>Math.abs(dy) ? (dx>0?'right':'left') : (dy>0?'down':'up');
       const dmg=Math.max(0, t.dmg + (isNight()&&m.type==='bat'?1:0) - armorVal());
       if(dmg>0){
-        P.hp-=dmg; hurtAt=performance.now(); updHud();
+        P.hp-=dmg; hurtAt=performance.now(); updHud(); sfx('hurt');
         say('The '+t.nm+' strikes — '+dmg+' harm.');
         if(P.hp<=0){ playerDown(); return; }
       } else say('The '+t.nm+' snaps at you; your armour turns it.');
@@ -1531,12 +1584,12 @@ function attackMob(m){
   const dx=m.x-P.x, dy=m.y-P.y;
   P.dir = Math.abs(dx)>Math.abs(dy) ? (dx>0?'right':'left') : (dy>0?'down':'up');
   if(!t.evil){
-    mobs.splice(mobs.indexOf(m),1);
+    mobs.splice(mobs.indexOf(m),1); sfx('death');
     virtue('love',-2);
     say('Your blow passes through the '+t.nm+' like breath through frost. It comes apart, softly, and the night is one light poorer.');
     return;
   }
-  m.hp-=weaponDmg();
+  m.hp-=weaponDmg(); sfx(m.hp<=0?'death':'hit');
   m.hitAt=performance.now();
   if(m.hp>0 && m.type!=='warden' && !m.fleeing && m.hp <= MOB_TYPES[m.type].hp/3){
     m.fleeing=true; m.angry=false;
@@ -1719,6 +1772,7 @@ function routeTo(tx,ty,adjacentOk){
   if(p){ path=p; } else say("No path leads there that you can find.");
 }
 cv.addEventListener('pointerdown', e=>{
+  audioWake();
   if(anySheetOpen()) return;
   const camX=P.rx*ts+ts/2-vw/2, camY=P.ry*ts+ts/2-vh/2;
   const tx=Math.floor((e.clientX+camX)/ts), ty=Math.floor((e.clientY+camY)/ts);
@@ -1776,19 +1830,19 @@ function step(){
   if(nxt.y>P.y) P.dir='down'; else if(nxt.y<P.y) P.dir='up';
   else if(nxt.x>P.x) P.dir='right'; else if(nxt.x<P.x) P.dir='left';
   P.x=nxt.x; P.y=nxt.y;
-  time++;
+  time++; sfx('step');
   if(grid[P.y][P.x]==='+' && !openDoors.has(P.x+','+P.y)){
-    openDoors.add(P.x+','+P.y); say('The door opens with a complaint of hinges.');
+    openDoors.add(P.x+','+P.y); say('The door opens with a complaint of hinges.'); sfx('door');
     patchTerrainTile(P.x,P.y);
   }
   const o=objectAt(P.x,P.y);
   if(o && (o.type==='herb'||o.type==='mushroom')){
     objects.splice(objects.indexOf(o),1);
-    inv[o.type]++;
+    inv[o.type]++; sfx('pickup');
     say(o.type==='herb' ? 'You gather a sprig of wortleaf. ('+inv.herb+')' : 'A bluecap mushroom — the deep wood\'s small treasure. ('+inv.mushroom+')');
   } else if(o && o.type==='chest'){
     objects.splice(objects.indexOf(o),1);
-    inv.gold+=o.gold; updHud();
+    inv.gold+=o.gold; updHud(); sfx('coin');
     if(o.item==='satchel'){
       inv.satchel=1; F.foundSatchel=true; learn('satchel');
       say('A chest shut fast with rust. Inside: '+o.gold+' gold — and a courier\'s satchel stamped with a sunburst, its straps <b>cut</b>, not unbuckled. <i>(Dag knows every kit that crosses the ridge.)</i>');

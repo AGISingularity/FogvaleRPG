@@ -168,7 +168,7 @@
 
 <script>
 'use strict';
-const VERSION='0.32.0';
+const VERSION='0.33.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -465,7 +465,7 @@ const TOPIC_LABEL = {
   ironvale:'Ironvale', radiantpath:'the Radiant Path', malvo:'Brother Malvo',
   stranger:'the robed stranger', shrine:'the old shrine', codex:'the Codex',
   found:'what I found', slip:"Malvo's slip", coin:'his plea', reading:'a reading',
-  bluecaps:'bluecaps', satchel:'the satchel', ledger:'the ledger', blanks:'the silver blanks', vigil:'the Vigil', gardener:'the Gardener', gate:'the Hollow Gate', joren:'Joren'
+  bluecaps:'bluecaps', satchel:'the satchel', ledger:'the ledger', blanks:'the silver blanks', vigil:'the Vigil', gardener:'the Gardener', gate:'the Hollow Gate', joren:'Joren', below:'the Door Below'
 };
 function learn(...keys){
   for(const k of keys){
@@ -591,6 +591,7 @@ const npcs = [
        return 'She stirs the bowl once. "Three things move in the water.\n\n' + t + '\n' + l + '\n' + c + '\n\nNo number measures these, stranger. But doors you cannot see are already deciding whether to open for you."'; }},
      ledger:{label:'The ledger', cond:()=>knownTopics.has('ledger'), text:()=>'"So it has pages now." She does not ask what you risked to read it. "Understand what you saw, stranger: the old triad asks what you ARE. Their ledger prices what you\'re WORTH. Between those two words is every grave the Path has ever dug — and the water says it has dug more than one."'},
      joren:{label:'Joren', cond:()=>knownTopics.has('joren'), text:()=>'"A child. Of course a child \u2014 the old craft passes through blood, and the barley-folk have coaxed things green for a hundred generations. The Path did not find a gardener, stranger. It found a GIFT, nine years old, and bent it to a nursery of guards." She finally uncovers the water, and her hands are steady again, and that is somehow worse. "A child cannot be blamed. But a child can be USED \u2014 and that is the blackest line in their ledger yet."'},
+     below:{label:'The Door Below', cond:()=>knownTopics.has('below'), text:()=>'"You HEARD it." She does not reach for the water \u2014 she pushes the bowl away. "Then hear this from me, keeper, once, while I can still say it plainly. The Path never invented their three lights. They knelt at the wrong door, and heard the RIGHT voice \u2014 THAT voice \u2014 and mistook a prisoner\u2019s bargain for scripture. Unity. Trust. Worth. That is not a creed, stranger. It is the shape of the thing below, promising to make all of creation as changeless and quiet as itself." Her hands shake, and she lets you watch them. "The whole vale was a lure on a long line. And now the hook knows your name."'},
      gate:{label:'The Hollow Gate', cond:()=>knownTopics.has('gate'), text:()=>'"So they found the door." She says it the way one confirms a death long feared. "The Vigil watches; the Gate is WHAT it watches. Three circles a hand deep, and every scratch the Path leaves on it costs them a drill and gains them nothing \u2014 because that seal does not answer to iron. It answers to what the circles MEAN, stranger. Pray they never learn the difference."'},
      gardener:{label:'The Gardener', cond:()=>knownTopics.has('gardener'), text:()=>'"A nursery. Rows. FRAMES." She is quiet for longer than you have ever seen her quiet. "They grew the guards from Vigil-stock like beans, stranger \u2014 and the hand that tends them is small." She looks at the covered water bowl and does not uncover it. "I have read many things in that water. This is the first time I have been afraid to."'},
      vigil:{label:'The Vigil', cond:()=>knownTopics.has('vigil'), text:()=>'"So the stone finally spoke, and you were worth speaking to." She covers the water bowl, gently, as if letting it sleep. "A watch-stone. Older than the vale\u2019s name. The old folk set three circles over the deep ways and swore nothing crooked would pass below \u2014 and now a smiling charity mints lies a mile from its feet and grows guardians from its grove." She looks at you, and for once there is nothing cryptic in it. "The Path has a gardener, stranger. Chapter Three will want a name."'},
@@ -720,6 +721,11 @@ function visitShrine(){
 }
 
 function gateStone(){
+  if(F.watchPassed){
+    if(!F.gateHinted){ F.gateHinted=true;
+      say('The seal is warm where your choices touched it \u2014 you are its keeper now. On the far side, something waits to be heard. <i>(Tap the Gate.)</i>'); }
+    return;
+  }
   if(F.foundGate && F.jorenHome && !F.watchPassed){
     if(V.truth>0 && V.love>0 && V.courage>0){
       F.watchPassed=true;
@@ -800,7 +806,17 @@ const GARDENERS_ROW = { name:'The Gardener\u2019s Row', shop:null,
       learn('gardener'); placeWarden();
       return 'Half-buried by the stump: a garden trowel, kept sharp, kept clean. <b>The trowel is small. The handprint dried into its grip is smaller.</b> <i>(The seer should hear this. Perhaps the chapel should not.)</i>'; }}
   }};
+const DOOR_BELOW = { name:'The Door Below', shop:null,
+  greet:()=>'Three circles, a hand deep, and you on the near side of them. The stone is warm where your choices touched it. Set your ear to the seal, and whatever waits on the far side will know that you are listening.',
+  topics:{
+    listen:{label:'Set your ear to the seal', cond:()=>true, text(){
+      if(F.heardBelow) return 'You listen again. It says only, patiently: "Still new. Still brief." It is content to repeat itself. It has the time to.';
+      F.heardBelow=true; learn('below'); virtue('courage',1);
+      return 'A voice with no breath behind it finds the shape of your name \u2014 the one even you do not use. "Keeper. How new you are. How briefly." It is not angry; that is the worst of it. "They dug for me with silver and children and never understood the door. It was never locked from your side. It was locked from MINE \u2014 to keep me from the mercy of getting out." The cold deepens against your ear. "Unseal it, and I will give you a unity with no lies left in it. A trust that cannot break, because none will remain to break it. A worth beyond all weighing \u2014 for the scales, and the hands, and the weighing, will finally be still." The seal cools. The offer does not go anywhere. It can wait longer than you can live.'; }},
+    leave:{label:'Take your ear from the stone', cond:()=>F.heardBelow, text:()=>'You step back. The silence that follows is not empty. It is attentive.'}
+  }};
 function openAltar(x,y){
+  if(grid[y][x]==='H'){ openDlg(DOOR_BELOW); return; }
   if(grid[y][x]==='G'){ openDlg(GARDENERS_ROW); return; }
   openDlg(Math.abs(x-10)<=1 && Math.abs(y-78)<=1 ? WEEPING_ALTAR : KNEELING_ALTAR);
 }
@@ -1805,7 +1821,7 @@ cv.addEventListener('pointerdown', e=>{
     return;
   }
   // an altar, or the row?
-  if((grid[ty][tx]==='A'||grid[ty][tx]==='G') && explored.has(k)){
+  if((grid[ty][tx]==='A'||grid[ty][tx]==='G'||(grid[ty][tx]==='H'&&F.watchPassed)) && explored.has(k)){
     if(Math.abs(tx-P.x)<=1 && Math.abs(ty-P.y)<=1) openAltar(tx,ty);
     else { pending={type:'altar',x:tx,y:ty}; routeTo(tx,ty,true); }
     return;

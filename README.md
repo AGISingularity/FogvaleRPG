@@ -42,6 +42,11 @@ a service worker, and an in-game notice when a newer telling exists.
   bread for the hungry dead, a pelt for their warmth — paid silently in Love;
   the wax at the Path's altar reads once, in Truth: two sets of knee-prints,
   and the small set dug deeper.
+- **The Door Below** (Chapter Four opens) — become the Gate's keeper and you can
+  set your ear to the seal. What answers reframes everything: the Radiant Path's
+  three false lights were an echo of the thing sealed below, promising a unity,
+  trust, and worth perfected into silence. The vale was a lure — and now the hook
+  knows your name.
 - **The watch passes** — walk Joren home ('he does not take your hand — nine is
   nine — but he walks so close your shadows are one shadow') and a small figure
   stays by the stable wall, waking angry about porridge, like a boy. Then stand

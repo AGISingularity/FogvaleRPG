@@ -49,6 +49,16 @@ it also profiles frame time under 4× CPU throttle.
 
 ## Roadmap — next level (in priority order)
 
+### Chapter Four — OPENED (v0.33.0)
+- "The Door Below": once F.watchPassed (you finished Ch3 as the Gate's keeper),
+  tapping the Hollow Gate 'H' tile opens the DOOR_BELOW pseudo-dialogue. Listening
+  sets F.heardBelow, learns 'below', +1 courage; the thing offers a perfected
+  (annihilating) Unity/Trust/Worth. Yseult's 'below' reaction reframes the whole
+  saga: the Radiant Path's counterfeit triad was an echo of the sealed thing's
+  bargain — the vale was a lure. Gated so only keepers reach it. Chapter Four's
+  antagonist is now established without a new map or combat. Next threads: what
+  unsealing would cost, the Path's next move now the Gate has a keeper, Malvo.
+
 ### Polish — combat feel (v0.32.0)
 - Auto-retaliation: at the end of mobTick, the player strikes one foe in melee
   range (Manhattan dist 1) via attackMob — but only evil, non-fleeing mobs, so

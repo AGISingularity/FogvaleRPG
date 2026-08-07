@@ -697,6 +697,22 @@ try {
     'anew: the fog forgets, and the dying tale cannot save itself');
   ok(anew.titled, 'anew: the vale owns its three chapters');
 
+  // -- Chapter Four opens: the keeper listens at the Door Below -------------
+  const below = await page.evaluate(() => {
+    const y = npcs.find(n => n.id === 'yseult');
+    F.watchPassed = true; F.heardBelow = false; knownTopics.delete('below');
+    const preSeer = y.topics.below.cond();          // nothing to say until you've heard it
+    const first = DOOR_BELOW.topics.listen.text();
+    const heard = F.heardBelow && knownTopics.has('below') && first.includes('How new you are');
+    const seerNow = y.topics.below.cond();
+    const again = DOOR_BELOW.topics.listen.text();  // patient; repeats itself
+    const repeats = again.includes('Still new');
+    return { preSeer, heard, seerNow, repeats };
+  });
+  ok(!below.preSeer, 'below: the seer has nothing to say until you have listened');
+  ok(below.heard && below.seerNow, 'below: the keeper hears the door, and the seer names the lure');
+  ok(below.repeats, 'below: the thing is patient, and repeats itself');
+
   // -- auto-retaliation: you fight back on your own, but never the innocent -
   const retal = await page.evaluate(() => {
     const stash = objects.splice(0);             // no herbs for the wisp to drift to

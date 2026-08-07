@@ -49,6 +49,13 @@ it also profiles frame time under 4× CPU throttle.
 
 ## Roadmap — next level (in priority order)
 
+### Polish — combat feel (v0.32.0)
+- Auto-retaliation: at the end of mobTick, the player strikes one foe in melee
+  range (Manhattan dist 1) via attackMob — but only evil, non-fleeing mobs, so
+  wisps are never auto-hit (good/evil choice preserved) and spared beasts still
+  flee (mercy preserved). Tap-to-strike kept for closing/target-picking. This
+  resolved the user's wolf report (they chose auto-retaliation over tap-only).
+
 ### Polish — sound (v0.31.0)
 - Procedural WebAudio SFX, no asset files (offline-safe): footfalls, combat
   hit/hurt/death, pickup/coin, door creak, dialogue blip, draught level chime.

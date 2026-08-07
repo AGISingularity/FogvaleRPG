@@ -99,7 +99,8 @@ a service worker, and an in-game notice when a newer telling exists.
   the outcrop a further stair descends to the under-dark — a second level where
   even the lantern gutters to five paces, the chests run richer, and bluecaps
   grow thickest.
-- **Steel and teeth** — a fighting system: tap an adjacent creature to strike; the
+- **Steel and teeth** — a fighting system: stand beside a hostile creature and you
+  trade blows automatically (tap to close on a distant one or pick a target); the
   weapon ladder runs fists (1) → Tobin's hunting knife (2) → the star-metal sword (3), and the Forgeworks in Ironvale sells
   leather and iron armour that absorb hits. Creatures great and small roam the wilds
   (marsh slimes, dusk bats, bough-fiends near the woods) and shy away from towns;

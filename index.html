@@ -142,7 +142,7 @@
   Shops buy them — and pay far better the further the town is from where things grow.</p>
   <p><b>Night</b> — when night falls your sight closes to a few steps. A torch helps.
   A lantern helps more. Both are for sale... somewhere.</p>
-  <p><b>Fight</b> — tap a creature beside you to strike it. Wounded beasts may break and run; what you do then is between you and the fog. A sword bites deeper; armour
+  <p><b>Fight</b> — stand beside a hostile creature and you trade blows with it on your own; tap one to close the distance or choose your target. Wounded beasts may break and run; what you do then is between you and the fog. A sword bites deeper; armour
   from the Ironvale forge turns teeth. If the fog takes you, you wake at the seer's door,
   lighter of purse. And mind: not everything that glows in the dark is your enemy —
   think before you swing.</p>
@@ -168,7 +168,7 @@
 
 <script>
 'use strict';
-const VERSION='0.31.0';
+const VERSION='0.32.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -1576,6 +1576,12 @@ function mobTick(){
     }
     if(step){ m.dir=step[2]; m.x+=step[0]; m.y+=step[1]; }
   }
+  // auto-retaliation: you trade blows with whatever can bite you — but never
+  // a wisp (evil:false) and never a beast already fleeing. Tap still lets you
+  // close on a distant foe or pick your target.
+  const foe = mobs.find(m => MOB_TYPES[m.type].evil && !m.fleeing
+    && Math.abs(m.x-P.x)+Math.abs(m.y-P.y)===1);
+  if(foe) attackMob(foe);
 }
 setInterval(mobTick, 500);
 

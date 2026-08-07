@@ -697,6 +697,27 @@ try {
     'anew: the fog forgets, and the dying tale cannot save itself');
   ok(anew.titled, 'anew: the vale owns its three chapters');
 
+  // -- auto-retaliation: you fight back on your own, but never the innocent -
+  const retal = await page.evaluate(() => {
+    const stash = objects.splice(0);             // no herbs for the wisp to drift to
+    mobs.length = 0; inv.sword = 1; inv.knife = 0; P.hp = P.maxHp;
+    const love0 = V.love;
+    mobs.push({ type:'wolf', hp:5, x:P.x+1, y:P.y, rx:P.x+1, ry:P.y, dir:'left' });
+    mobs.push({ type:'wisp', hp:1, x:P.x-1, y:P.y, rx:P.x-1, ry:P.y, dir:'right' });
+    let ticks = 0;
+    while (mobs.some(m => m.type === 'wolf') && ticks < 12) { mobTick(); ticks++; }
+    const out = {
+      wolfDead: !mobs.some(m => m.type === 'wolf'),
+      wispAlive: mobs.some(m => m.type === 'wisp'),
+      loveKept: V.love === love0,                // the wisp was never struck for us
+    };
+    mobs.length = 0; inv.sword = 0; P.hp = P.maxHp; updHud();
+    objects.splice(0); objects.push(...stash);
+    return out;
+  });
+  ok(retal.wolfDead, 'retaliation: an adjacent wolf falls without a single tap');
+  ok(retal.wispAlive && retal.loveKept, 'retaliation: the good wisp is never struck for you');
+
   // -- sound: procedural, mute-able, and above all never throwing ----------
   const sound = await page.evaluate(() => {
     audioWake();

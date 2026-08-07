@@ -167,7 +167,7 @@
 
 <script>
 'use strict';
-const VERSION='0.29.0';
+const VERSION='0.30.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -1637,7 +1637,7 @@ function draw(now){
     if(!visible.has(n.x+','+n.y)) continue;
     const moving = Math.abs(n.x-n.rx)+Math.abs(n.y-n.ry)>0.05;
     drawSprite(personFrame(npcCell(n),n.dir,moving),
-      Math.round(n.rx*ts-camX), Math.round(n.ry*ts-camY), n.dir==='right');
+      Math.round(n.rx*ts-camX), Math.round(n.ry*ts-camY), n.dir==='left');
   }
   for(const m of mobs){
     if(!visible.has(m.x+','+m.y)) continue;
@@ -1675,11 +1675,11 @@ function draw(now){
     runner.rx+=(runner.x-runner.rx)*0.3; runner.ry+=(runner.y-runner.ry)*0.3;
     const dch = runner.dir==='up' ? 'U' : (runner.dir==='left'||runner.dir==='right') ? 'L' : 'D';
     drawSprite('runner'+dch+(ph?1:2),
-      Math.round(runner.rx*ts-camX), Math.round(runner.ry*ts-camY), runner.dir==='right');
+      Math.round(runner.rx*ts-camX), Math.round(runner.ry*ts-camY), runner.dir==='left');
   }
   const walking = path.length>0 || Math.abs(P.x-P.rx)+Math.abs(P.y-P.ry)>0.02;
   drawSprite(personFrame('player',P.dir,walking),
-    Math.round(P.rx*ts-camX), Math.round(P.ry*ts-camY), P.dir==='right');
+    Math.round(P.rx*ts-camX), Math.round(P.ry*ts-camY), P.dir==='left');
 
   // 5. fog & night, upscaled from the lightmap with smoothing for soft edges
   ctx.imageSmoothingEnabled=true;

@@ -150,6 +150,10 @@ it also profiles frame time under 4× CPU throttle.
   updates land, cache-first assets, old-cache cleanup, update notice via say()),
   OG tags. Release checklist: bump VERSION in index.html AND the two version
   strings in sw.js — test/run.mjs fails if they drift.
+- v0.30.0: fixed reversed L/R walk facing — the profile art faces RIGHT, so the
+  horizontal flip belongs on dir==='left' (was 'right') at all three sprite call
+  sites (player, npcs, runner). Visual-only; the suite can't catch facing, so
+  verify by eye on any change here.
 - v0.29.0: begin-anew (two-tap wipe on the Help screen, reusing the restoring
   latch so the unload autosave can't resurrect the wiped tale) and presentation
   updated from 'Chapter One' to the three-chapter game.

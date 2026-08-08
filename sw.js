@@ -1,10 +1,10 @@
 /* Fogvale service worker — offline shell + versioned asset cache.
    CACHE must match VERSION in index.html; test/run.mjs enforces the sync. */
-const CACHE = 'fogvale-0.33.0';
+const CACHE = 'fogvale-0.34.0';
 const SHELL = [
   'index.html',
   'manifest.webmanifest',
-  'assets/tiles.png?v=0.33.0',
+  'assets/tiles.png?v=0.34.0',
   'assets/icon-192.png',
   'assets/icon-512.png',
 ];

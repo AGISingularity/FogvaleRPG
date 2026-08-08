@@ -168,7 +168,7 @@
 
 <script>
 'use strict';
-const VERSION='0.33.0';
+const VERSION='0.34.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -620,6 +620,7 @@ const npcs = [
      job:{label:'Job', text(){ learn('bluecaps');
        return '"Goods and coin. The lantern\'s my best stock — brass, burns steady, turns night into a wide room. Dear, yes. So is walking blind."'; }},
      bluecaps:{label:'Bluecaps', cond:()=>knownTopics.has('bluecaps'), text:()=>'"They grow only in the deep wood past Brookhollow, which is why they\'re worth twelve here and five there. Distance is the oldest alchemy — it turns mushrooms into silver."'},
+     below:{label:'The chapel', cond:()=>F.toldMalvo, text:()=>'"Something\u2019s gone out of the chapel." Serra weighs the words like silver. "Malvo hasn\u2019t opened the doors in three days. The sworn ones drift up, knock, drift off looking like folk who\u2019ve misplaced a limb. Half this town was mortgaged to that smile, keeper \u2014 and the smile\u2019s gone." She does not quite dare to look grateful. She manages it anyway.'},
      blanks:{label:'The silver blanks', cond:()=>knownTopics.has('blanks'), text:()=>'"Give it here \u2014 I know chapel silver when I\u2014" She stops. Weighs it twice. "Thin. Half tin under a bright skin. Their medallions, their charity, their WAGES \u2014 poured from this. The Path pays its faithful in silver that is mostly lie, stranger, and the faithful pay it forward at full weight."'},
      medallion:{label:'The medallion', cond:()=>F.hasMedallion, text(){ learn('radiantpath','malvo');
        return 'She glances at it, then at her own door. "Radiant Path work. The sunburst — every sworn member wears one, poured right here in Ironvale at the chapel\'s own bench." Quieter: "Half this town wears it now. They pay in silver that shines a little too bright. If you\'re asking questions about that medallion, ask Brother Malvo at the chapel — and stranger? Ask them near the open door."'; }},
@@ -657,6 +658,12 @@ const npcs = [
        if(F.jorenHome)
          return '"...The fellowship does not forget withdrawals, friend." He is looking at the ledger-shaped absence on the bench when he says it, and his voice is a vault door closing. "Enjoy the boy\u2019s laughter. Some crops reseed."';
        return '"...You have been busy, friend." There is no smile at all now, and the room is suddenly the temperature of the chapel\u2019s silver. "The boy is beloved of the fellowship. He eats. He learns. He MATTERS \u2014 which is more than the barley ever offered him." A pause, measured to the drop. "Do not make the fellowship choose between its gardener and a stranger."'; }},
+     below:{label:'What is truly below', cond:()=>knownTopics.has('below') && !F.toldMalvo && !F.sparedMalvo,
+       choice:{ prompt:'You speak one word \u2014 "below" \u2014 and for the first time his smile does not arrive at all. "...You have stood at the door." A statement; he has always known where it was. "Say your piece, keeper." The parishioners by the wall have stopped smiling too.',
+         a:{label:'Tell him what answered', text(){ F.toldMalvo=true; virtue('truth',2); virtue('courage',1);
+             return 'You tell him \u2014 not the sermon of it, the SOUND of it. The breathless voice. The bargain. The door that locks from the inside. That his three lights are one light\u2019s reflection on the water of a very deep well, and the thing at the bottom is no god but an inmate, promising to make the whole world its cell so it need never sit alone in one. Malvo does not argue. That is how you know it lands. The smile is gone, and nothing refills it. "...I gave it thirty years," he says, to no one. "I gave it a BOY." He sits on the chapel step like a man whose legs have been repealed. The parishioners look at him, then the door, then leave through it. Something in Ironvale ends, quietly, just then.'; }},
+         b:{label:'Leave him his god', text(){ F.sparedMalvo=true; virtue('love',1);
+             return '"Nothing," you say. "A traveler\u2019s fancy." You let him keep the door shut. Some men have built their whole house against it, and the house is all they have left. His smile refills \u2014 slower than it used to, with something behind it that neither of you will name. "The Path provides," he says. It is a lie. You leave him inside it.'; }} }},
      gardener:{label:'The Gardener', cond:()=>knownTopics.has('gardener'), text(){ F.askedMalvoGardener=true;
        return '"...The chapel keeps no garden, friend." His voice is perfectly level. Every candle in the room leans, very slightly, toward the door. "Whoever has been walking the deep wood should stop. The wood is not OURS to forgive trespass in."'; }},
      slip:{label:'His slip', cond:()=>F.malvoSlip, text:()=>'"The chapel is CLOSING, friend." Two large parishioners have appeared by the door. They are also smiling. It runs in the fellowship, apparently.'}

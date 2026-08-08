@@ -713,6 +713,22 @@ try {
   ok(below.heard && below.seerNow, 'below: the keeper hears the door, and the seer names the lure');
   ok(below.repeats, 'below: the thing is patient, and repeats itself');
 
+  // -- Malvo confronted with what he actually serves -----------------------
+  const confront = await page.evaluate(() => {
+    const mv = npcs.find(n => n.id === 'malvo'), se = npcs.find(n => n.id === 'serra');
+    knownTopics.add('below'); F.toldMalvo = false; F.sparedMalvo = false;
+    const offered = mv.topics.below.cond();
+    const t0 = V.truth;
+    mv.topics.below.choice.a.text();                // tell him the truth
+    const told = F.toldMalvo && V.truth === t0 + 2;
+    const closed = !mv.topics.below.cond();          // the choice is spent
+    const serra = se.topics.below.cond();            // Ironvale feels it
+    return { offered, told, closed, serra };
+  });
+  ok(confront.offered, 'malvo: the keeper can name the thing under his faith');
+  ok(confront.told && confront.closed, 'malvo: the truth lands once, and Truth remembers');
+  ok(confront.serra, 'malvo: the chapel goes quiet, and Ironvale notices');
+
   // -- auto-retaliation: you fight back on your own, but never the innocent -
   const retal = await page.evaluate(() => {
     const stash = objects.splice(0);             // no herbs for the wisp to drift to

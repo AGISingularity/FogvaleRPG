@@ -49,6 +49,15 @@ it also profiles frame time under 4× CPU throttle.
 
 ## Roadmap — next level (in priority order)
 
+### Chapter Four (cont.) — the confrontation (v0.34.0)
+- Malvo 'below' topic (gated knownTopics.has('below'), one-shot): a choice —
+  tell him what answered at the door (F.toldMalvo, +2 truth +1 courage; his smile
+  finally, permanently fails) or leave him his god (F.sparedMalvo, +1 love, mercy).
+  Serra's 'below' topic (gated F.toldMalvo) reports the chapel gone quiet. The
+  game's truth-vs-mercy theme applied to its own antagonist.
+- NOTE: scripted python edits with trailing .replace() quote-hacks keep leaking
+  doubled quotes / literal .replace() text — prefer clean Edit calls for dialogue.
+
 ### Chapter Four — OPENED (v0.33.0)
 - "The Door Below": once F.watchPassed (you finished Ch3 as the Gate's keeper),
   tapping the Hollow Gate 'H' tile opens the DOOR_BELOW pseudo-dialogue. Listening

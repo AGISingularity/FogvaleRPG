@@ -691,11 +691,11 @@ try {
     const stayedClear = !localStorage.getItem('fogvale_ch1');
     restoring = false;
     return { hadSave, cleared, stayedClear,
-             titled: document.title.includes('Three Chapters') };
+             titled: document.title.includes('Four Chapters') };
   });
   ok(anew.hadSave && anew.cleared && anew.stayedClear,
     'anew: the fog forgets, and the dying tale cannot save itself');
-  ok(anew.titled, 'anew: the vale owns its three chapters');
+  ok(anew.titled, 'anew: the vale owns its four chapters');
 
   // -- Chapter Four opens: the keeper listens at the Door Below -------------
   const below = await page.evaluate(() => {
@@ -712,6 +712,41 @@ try {
   ok(!below.preSeer, 'below: the seer has nothing to say until you have listened');
   ok(below.heard && below.seerNow, 'below: the keeper hears the door, and the seer names the lure');
   ok(below.repeats, 'below: the thing is patient, and repeats itself');
+
+  // -- the climax: answering the door, both ways ----------------------------
+  const climax = await page.evaluate(() => {
+    F.watchPassed = true; F.heardBelow = true;
+    F.answeredGate = false; F.ch4Ended = false; F.unsealed = false; F.sealed = false;
+    const offered = DOOR_BELOW.topics.answer.cond();
+    DOOR_BELOW.topics.answer.choice.b.text();       // unseal
+    return { offered, unsealed: F.unsealed && F.answeredGate,
+             spent: !DOOR_BELOW.topics.answer.cond() };
+  });
+  await page.waitForTimeout(1100);
+  climax.darkCard = await page.evaluate(() => {
+    const s = document.getElementById('endcard').style.display === 'block'
+      && document.getElementById('endTxt').innerHTML.includes('you opened')
+      && document.getElementById('endHdr').textContent.includes('ENDING OF FOGVALE');
+    document.getElementById('endcard').style.display = 'none';
+    // reset and take the whole-hearted true ending
+    F.answeredGate = false; F.ch4Ended = false; F.unsealed = false;
+    V.truth = 1; V.love = 1; V.courage = 1;
+    DOOR_BELOW.topics.answer.choice.a.text();       // keep the watch
+    return s;
+  });
+  await page.waitForTimeout(1100);
+  climax.trueCard = await page.evaluate(() => {
+    const s = document.getElementById('endcard').style.display === 'block'
+      && document.getElementById('endTxt').innerHTML.includes('watch is kept')
+      && document.getElementById('endHdr').textContent === 'END OF CHAPTER FOUR';
+    document.getElementById('endcard').style.display = 'none';
+    F.answeredGate = false; F.ch4Ended = false; F.sealed = false;
+    return s;
+  });
+  ok(climax.offered, 'climax: the keeper may finally answer the door');
+  ok(climax.unsealed && climax.spent, 'climax: unsealing is a deliberate, final act');
+  ok(climax.darkCard, 'climax: the dark ending — sameness floods the vale');
+  ok(climax.trueCard, 'climax: the whole-hearted ending — the watch is kept');
 
   // -- the thing's own move: the dream at the inn --------------------------
   const dream = await page.evaluate(() => {

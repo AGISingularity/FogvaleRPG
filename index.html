@@ -11,7 +11,7 @@
 <meta property="og:description" content="A phone-first fog-of-war RPG: keyword dialogue, a hidden virtue triad, and a friendly-faced cult. Three chapters, one vale.">
 <meta property="og:image" content="https://agisingularity.github.io/FogvaleRPG/assets/icon-512.png">
 <meta property="og:type" content="website">
-<title>Fogvale — Three Chapters, One Vale</title>
+<title>Fogvale — Four Chapters, One Vale</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#07080f;
@@ -121,13 +121,13 @@
   as your own two eyes allow — no further. Tap the land to walk it. Tap people to speak.
   What you learn from one mouth, you may ask of another.</p>
   <button id="beginBtn">Enter the Vale</button>
-  <div class="note">Three chapters, one vale · your tale is remembered on this device</div>
+  <div class="note">Four chapters, one vale · your tale is remembered on this device</div>
   <div class="note" id="verNote"></div>
 </div>
 
 <div id="endcard" class="full">
   <h1>⁂</h1>
-  <h2>END OF CHAPTER ONE</h2>
+  <h2 id="endHdr">END OF CHAPTER ONE</h2>
   <div id="endTxt"></div>
   <button id="endClose">Keep Wandering</button>
 </div>
@@ -168,7 +168,7 @@
 
 <script>
 'use strict';
-const VERSION='0.35.0';
+const VERSION='0.36.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -826,7 +826,15 @@ const DOOR_BELOW = { name:'The Door Below', shop:null,
       if(F.heardBelow) return 'You listen again. It says only, patiently: "Still new. Still brief." It is content to repeat itself. It has the time to.';
       F.heardBelow=true; learn('below'); virtue('courage',1);
       return 'A voice with no breath behind it finds the shape of your name \u2014 the one even you do not use. "Keeper. How new you are. How briefly." It is not angry; that is the worst of it. "They dug for me with silver and children and never understood the door. It was never locked from your side. It was locked from MINE \u2014 to keep me from the mercy of getting out." The cold deepens against your ear. "Unseal it, and I will give you a unity with no lies left in it. A trust that cannot break, because none will remain to break it. A worth beyond all weighing \u2014 for the scales, and the hands, and the weighing, will finally be still." The seal cools. The offer does not go anywhere. It can wait longer than you can live.'; }},
-    leave:{label:'Take your ear from the stone', cond:()=>F.heardBelow, text:()=>'You step back. The silence that follows is not empty. It is attentive.'}
+    answer:{label:'Give it your answer', cond:()=>F.watchPassed && F.heardBelow && !F.answeredGate,
+      choice:{ prompt:'Your palm hovers over the seal. It would open — a hand’s breadth of cold stone is all that stands between the vale and a mercy that never ends, never grieves, never lets go. The voice says nothing now. It has said everything. It only waits to see which you are.',
+        a:{label:'Keep the watch — forever', text(){ F.answeredGate=true; F.sealed=true;
+            if(!F.ch4Ended){ F.ch4Ended=true; setTimeout(()=>chapter4End(false), 900); }
+            return 'You take your hand from the stone.'; }},
+        b:{label:'Unseal the door', text(){ F.answeredGate=true; F.unsealed=true;
+            if(!F.ch4Ended){ F.ch4Ended=true; setTimeout(()=>chapter4End(true), 900); }
+            return 'You set your palm flat to the seal.'; }} }},
+    leave:{label:'Take your ear from the stone', cond:()=>F.heardBelow && !F.answeredGate, text:()=>'You step back. The silence that follows is not empty. It is attentive.'}
   }};
 const DREAM = { name:'A Voice in Sleep', shop:null,
   greet:()=>'You sleep, and it is already there — the way a well waits at the end of a rope. No walls to this room; only the voice, closer now, wearing the manners of a friend. "Keeper. You hold a door for people who will never thank you, against a mercy you will not let yourself understand. Let me show you the mercy."',
@@ -899,6 +907,7 @@ function exitCave(){
 }
 
 function chapter2End(){
+  document.getElementById('endHdr').textContent='END OF CHAPTER TWO';
   document.getElementById('endTxt').innerHTML =
     '<p>The ledger prices every soul. The satchels feed a buried mint. The Wardens were grown, not born \u2014 and the Vigil was set, long before roads, to keep something below from being disturbed.</p>' +
     '<p><b>The Path is not digging for silver. Silver is what it spends on the way down.</b></p>' +
@@ -908,6 +917,7 @@ function chapter2End(){
 }
 
 function chapter3End(){
+  document.getElementById('endHdr').textContent='END OF CHAPTER THREE';
   document.getElementById('endTxt').innerHTML =
     '<p>The mint is found, the ledger read, the runners counted, the nursery named. A boy sleeps against a stable wall, waking angry about porridge, like a boy.</p>' +
     '<p><b>And the Hollow Gate keeps \u2014 because the vale, patient as moss, grew itself a keeper.</b> Not from Vigil-stock. From choices no one saw and nothing rewarded, weighed in the dark, found true.</p>' +
@@ -916,8 +926,32 @@ function chapter3End(){
   document.getElementById('endcard').style.display='block';
 }
 
+function chapter4End(unsealed){
+  document.getElementById('dlg').style.display='none';
+  document.getElementById('endHdr').textContent = unsealed ? 'AN ENDING OF FOGVALE' : 'END OF CHAPTER FOUR';
+  const box=document.getElementById('endTxt');
+  if(unsealed){
+    box.innerHTML =
+      '<p>You set your palm to the seal, and it opens like a held breath let go.</p>' +
+      '<p>What comes through is not a monster. It is worse. It is <b>sameness</b>. The river stops arguing with its banks. Piet breathes again in the stable — and so, in a while, does everyone, all at once, forever, the same breath. There is no more grief in the vale. Soon there is no more vale. Only unity, and it is very quiet, and it need never be lonely again.</p>' +
+      '<p style="color:#8f96b8;font-size:13px">The door you were made to keep, you opened. — an ending of Fogvale</p>';
+  } else {
+    const whole = V.truth>0 && V.love>0 && V.courage>0;
+    box.innerHTML = whole
+      ? '<p>You do not open it. You pour everything you are into the three circles — every lie refused, every hand opened, every dark place you walked toward on purpose — and the seal drinks it and holds. Not by your strength. By the shape of what you chose when no one was watching.</p>' +
+        '<p><b>The watch is kept.</b> The vale wakes exactly as flawed and free and mortal and ALIVE as it went to sleep, and never learns how near the quiet came. Far down, a patient thing settles in for another age of waiting.</p>' +
+        '<p><i>Let it wait. You have a vale to live in.</i></p>' +
+        '<p style="color:#8f96b8;font-size:13px">The door you were made to keep, you kept — and kept whole. Thank you for walking all of Fogvale.</p>'
+      : '<p>You refuse — and the door holds. But by will alone, by your two cold hands on colder stone, because the ledger of your quieter choices did not, in the end, weigh quite enough to hold it for you.</p>' +
+        '<p>It will hold as long as you do. The vale stays free, and mortal, and yours to guard — every night, without thanks, without rest. Perhaps that, too, is a kind of unity.</p>' +
+        '<p style="color:#8f96b8;font-size:13px">The door holds, and the holding is yours alone. Thank you for walking all of Fogvale.</p>';
+  }
+  document.getElementById('endcard').style.display='block';
+}
+
 /* ---------- chapter end ---------- */
 function chapterEnd(){
+  document.getElementById('endHdr').textContent='END OF CHAPTER ONE';
   document.getElementById('endTxt').innerHTML =
     '<p>The Path did not hear of the murder. <b>The Path was here for it.</b></p>' +
     '<p>A dead errand-boy who ran packages by night. A medallion poured at the chapel\'s own bench. A missionary who knows names he was never told. And through it all, three lights that sound almost — almost — like the old triad on the shrine stone.</p>' +

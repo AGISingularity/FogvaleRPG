@@ -49,6 +49,17 @@ it also profiles frame time under 4× CPU throttle.
 
 ## Roadmap — next level (in priority order)
 
+### Chapter Four — THE CLIMAX / game ending (v0.36.0)
+- The Door Below gains the 'answer' topic (cond watchPassed && heardBelow &&
+  !answeredGate): keep the watch → chapter4End(false); unseal → chapter4End(true).
+  The TRUE ending forks on the hidden triad: all of V.truth/love/courage > 0 ->
+  the whole-hearted "the watch is kept"; else the bittersweet "holds by will
+  alone". The dark ending: sameness floods the vale. This is the payoff of the
+  entire no-numbers virtue system. Title/intro now say FOUR chapters.
+- FIXED a latent bug the ending screenshot caught: the endcard <h2> was hardcoded
+  'END OF CHAPTER ONE', so Ch2/Ch3/Ch4 ends all showed 'CHAPTER ONE'. Now each
+  chapterNEnd sets #endHdr. (Visual verification earns its keep again.)
+
 ### Chapter Four (cont.) — the thing's first move (v0.35.0)
 - The Door gets agency: after F.heardBelow, the first paid sleep at the Bridge
   Rest triggers the DREAM pseudo-dialogue (setTimeout openDlg after the rest

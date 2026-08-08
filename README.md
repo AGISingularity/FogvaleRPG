@@ -1,7 +1,7 @@
 # Fogvale — Three Chapters, One Vale
 
 A phone-first, browser-based RPG inspired by *Ultima VII: The Black Gate* (and the
-virtue system of *Ultima IV/V*). The game is **`index.html`** plus one pixel-art
+virtue system of *Ultima IV/V*). Four complete chapters, two endings. The game is **`index.html`** plus one pixel-art
 spritesheet (**`assets/tiles.png`**) — no build step, no runtime dependencies, no
 server required. Open it in any mobile or desktop browser — or install it:
 it's a PWA now, with a Vigil-mark icon, home-screen install, offline play via
@@ -42,6 +42,12 @@ a service worker, and an in-game notice when a newer telling exists.
   bread for the hungry dead, a pelt for their warmth — paid silently in Love;
   the wax at the Path's altar reads once, in Truth: two sets of knee-prints,
   and the small set dug deeper.
+- **The watch, answered** (the ending) — as keeper you may at last set your hand to
+  the seal. Unseal it, and a counterfeit unity floods the vale into changeless
+  silence. Or keep the watch forever — and the three circles read the whole hidden
+  ledger of your choices one final time: refuse whole-hearted and the seal holds by
+  the shape of what you chose when no one watched; refuse with a lighter ledger and
+  it holds by your two hands alone. The no-numbers triad, decided in the open at last.
 - **The voice in sleep** — once you have heard the Door, it comes for you at rest:
   sleep at the Bridge Rest and it offers, gently, to give back Piet — the murdered
   boy the whole tale grew around — if you will only unseal it. Refuse, and hold the

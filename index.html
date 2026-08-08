@@ -168,7 +168,7 @@
 
 <script>
 'use strict';
-const VERSION='0.36.0';
+const VERSION='0.37.0';
 /* =====================================================================
    FOGVALE — Chapter One: The Stable Door
    A single-file, phone-first, Ultima-VII-inspired browser RPG prototype.
@@ -890,7 +890,7 @@ function enterCave(key){
   const c=CAVES[key];
   path=[]; pending=null;
   P.x=c.inside[0]; P.y=c.inside[1]; P.rx=P.x; P.ry=P.y;
-  computeFOV(); saveGame();
+  computeFOV(); saveGame(); ambientTune();
   say('You duck under the stone lip. The dark takes most of your light and gives back only walls. Somewhere, water is counting the seconds. <i>(The pale stair-stone leads out.)</i>');
 }
 function exitCave(){
@@ -899,7 +899,7 @@ function exitCave(){
     if(P.x>=c.rect[0]&&P.x<=c.rect[2]&&P.y>=c.rect[1]&&P.y<=c.rect[3]){
       path=[]; pending=null;
       P.x=c.outside[0]; P.y=c.outside[1]; P.rx=P.x; P.ry=P.y;
-      computeFOV(); saveGame();
+      computeFOV(); saveGame(); ambientTune();
       say('You climb back into the raw grey daylight. It has never looked so wealthy.');
       return;
     }
@@ -1065,7 +1065,38 @@ function audioWake(){
   try{
     if(!SND.ctx) SND.ctx=new (window.AudioContext||window.webkitAudioContext)();
     if(SND.ctx.state==='suspended') SND.ctx.resume();
+    ambientStart();
   }catch(e){ SND.ctx=null; }
+}
+/* a soft looping bed: filtered wind by day, a lower hush by night */
+let ambient=null;
+function ambientStart(){
+  if(ambient || !SND.ctx) return;
+  try{
+    const c=SND.ctx, n=Math.floor(c.sampleRate*3);
+    const buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<n;i++) d[i]=Math.random()*2-1;
+    const src=c.createBufferSource(); src.buffer=buf; src.loop=true;
+    const flt=c.createBiquadFilter(); flt.type='lowpass'; flt.frequency.value=420;
+    const g=c.createGain(); g.gain.value=0.0001;
+    src.connect(flt).connect(g).connect(c.destination); src.start();
+    ambient={src,flt,g}; ambientTune(true);
+  }catch(e){ ambient=null; }
+}
+function ambientTune(instant){
+  if(!ambient || !SND.ctx) return;
+  try{
+    const c=SND.ctx, t=c.currentTime, dark=isNight()||inCave();
+    const vol = SND.on ? (dark?0.020:0.013) : 0.0001;   // very quiet; muted → all but silent
+    const freq = dark?200:500;
+    const ramp = instant?0.05:2.5;
+    ambient.g.gain.cancelScheduledValues(t);
+    ambient.g.gain.setValueAtTime(Math.max(0.0001,ambient.g.gain.value),t);
+    ambient.g.gain.linearRampToValueAtTime(Math.max(0.0001,vol),t+ramp);
+    ambient.flt.frequency.cancelScheduledValues(t);
+    ambient.flt.frequency.setValueAtTime(ambient.flt.frequency.value,t);
+    ambient.flt.frequency.linearRampToValueAtTime(freq,t+ramp);
+  }catch(e){}
 }
 function tone(freq,dur,type,vol,slideTo,delay){
   const c=SND.ctx, t=c.currentTime+(delay||0);
@@ -1106,7 +1137,7 @@ function updMute(){ $('muteBtn').textContent = SND.on ? '🔊' : '🔇'; }
 $('muteBtn').onclick=()=>{
   SND.on=!SND.on;
   try{ localStorage.setItem('fogvale_mute', SND.on?'0':'1'); }catch(e){}
-  updMute(); if(SND.on){ audioWake(); sfx('talk'); }
+  updMute(); ambientTune(true); if(SND.on){ audioWake(); sfx('talk'); }
 };
 updMute();
 let activeNpc=null, shopTab='buy', activeShop=null;
@@ -1977,7 +2008,7 @@ function step(){
       : inv.torch ? 'Night falls. Your torch keeps a small room of light around you.'
       : '<b>Night falls.</b> The world closes to arm\'s reach. Roads are honest; the dark beside them is not.');
     else say('Dawn. The vale gives itself back, one treeline at a time.');
-    updHud();
+    updHud(); ambientTune();
   }
   computeFOV();
   if(!path.length && pending){

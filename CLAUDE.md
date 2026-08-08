@@ -49,6 +49,12 @@ it also profiles frame time under 4× CPU throttle.
 
 ## Roadmap — next level (in priority order)
 
+### Polish — ambient sound (v0.37.0)
+- Looping ambient bed (filtered noise): quiet wind by day (lowpass 500, gain .013),
+  a lower hush by night/underground (200, .020). Cross-fades 2.5s on day/night
+  transition; retunes on cave enter/exit and mute. Starts via ambientStart() from
+  audioWake (gesture-gated), fully guarded. Completes the Sound & polish goal.
+
 ### Chapter Four — THE CLIMAX / game ending (v0.36.0)
 - The Door Below gains the 'answer' topic (cond watchPassed && heardBelow &&
   !answeredGate): keep the watch → chapter4End(false); unseal → chapter4End(true).

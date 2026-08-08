@@ -817,6 +817,15 @@ try {
   });
   ok(sound.flipped && sound.persisted, 'sound: the mute toggle flips and is remembered');
   ok(sound.icon, 'sound: the HUD wears a speaker');
+  const ambient = await page.evaluate(() => {
+    audioWake(); ambientStart();
+    const exists = ambient !== null || SND.ctx === null;   // created, or gracefully skipped
+    time = 60; ambientTune();          // day
+    time = 360; ambientTune();         // night
+    ambientTune(true);                  // instant
+    return { exists, safe: true };      // its real proof is zero-page-errors
+  });
+  ok(ambient.exists && ambient.safe, 'sound: the ambient bed starts and tunes without a throw');
   // (its real proof is the zero-page-errors check below — no cue may throw)
 
   // -- the vale installs: manifest, worker, and a lantern that works offline

@@ -49,6 +49,15 @@ it also profiles frame time under 4× CPU throttle.
 
 ## Roadmap — next level (in priority order)
 
+### Chapter Four (cont.) — the thing's first move (v0.35.0)
+- The Door gets agency: after F.heardBelow, the first paid sleep at the Bridge
+  Rest triggers the DREAM pseudo-dialogue (setTimeout openDlg after the rest
+  text). It offers to return Piet — the murdered boy the whole game grew around.
+  refuse → F.refusedBelow (+1 truth +2 courage); waver ("show me") → F.wavered
+  (it 'takes the measure of your want'). Yseult 'dream' topic reacts to either.
+  These flags seed the eventual unsealing climax. Wrote with clean Edit calls —
+  no quote typos this time.
+
 ### Chapter Four (cont.) — the confrontation (v0.34.0)
 - Malvo 'below' topic (gated knownTopics.has('below'), one-shot): a choice —
   tell him what answered at the door (F.toldMalvo, +2 truth +1 courage; his smile

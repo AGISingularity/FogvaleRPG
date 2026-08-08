@@ -713,6 +713,23 @@ try {
   ok(below.heard && below.seerNow, 'below: the keeper hears the door, and the seer names the lure');
   ok(below.repeats, 'below: the thing is patient, and repeats itself');
 
+  // -- the thing's own move: the dream at the inn --------------------------
+  const dream = await page.evaluate(() => {
+    const y = npcs.find(n => n.id === 'yseult');
+    F.heardBelow = true; F.dreamt = false; F.refusedBelow = false; F.wavered = false;
+    const seerSilent = !y.topics.dream.cond();       // nothing until it visits
+    const offered = DREAM.topics.offer.cond();
+    const c0 = V.courage, t0 = V.truth;
+    DREAM.topics.refuse.text();                       // tell it no
+    const refused = F.refusedBelow && V.courage === c0 + 2 && V.truth === t0 + 1;
+    const spent = !DREAM.topics.offer.cond();          // the offer closes
+    const seerNow = y.topics.dream.cond();
+    return { seerSilent, offered, refused, spent, seerNow };
+  });
+  ok(dream.seerSilent && dream.offered, 'dream: it comes in sleep and offers your dead back');
+  ok(dream.refused && dream.spent, 'dream: you can tell it no, once, and Courage remembers');
+  ok(dream.seerNow, 'dream: the seer reads what you carried out of sleep');
+
   // -- Malvo confronted with what he actually serves -----------------------
   const confront = await page.evaluate(() => {
     const mv = npcs.find(n => n.id === 'malvo'), se = npcs.find(n => n.id === 'serra');

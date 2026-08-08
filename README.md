@@ -42,6 +42,11 @@ a service worker, and an in-game notice when a newer telling exists.
   bread for the hungry dead, a pelt for their warmth — paid silently in Love;
   the wax at the Path's altar reads once, in Truth: two sets of knee-prints,
   and the small set dug deeper.
+- **The voice in sleep** — once you have heard the Door, it comes for you at rest:
+  sleep at the Bridge Rest and it offers, gently, to give back Piet — the murdered
+  boy the whole tale grew around — if you will only unseal it. Refuse, and hold the
+  watch; waver, and it learns the shape of your want. The seer reads whichever you
+  carry out of the dark.
 - **The Door Below** (Chapter Four opens) — become the Gate's keeper and you can
   set your ear to the seal. What answers reframes everything: the Radiant Path's
   three false lights were an echo of the thing sealed below, promising a unity,
